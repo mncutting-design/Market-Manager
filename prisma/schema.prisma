@@ -1,0 +1,205 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("ADMIN") // ADMIN, MANAGER
+  locale       String   @default("bn")    // bn, en
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Market {
+  id        String    @id @default(cuid())
+  name      String
+  address   String?
+  notes     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  shops    Shop[]
+  expenses Expense[]
+
+  @@index([isActive])
+}
+
+model Shop {
+  id          String   @id @default(cuid())
+  marketId    String
+  shopNumber  String
+  floor       String   @default("Ground")
+  size        String?  // e.g. "180 sqft"
+  defaultRent Int      // stored in paisa (1 BDT = 100 paisa)
+  status      String   @default("VACANT") // OCCUPIED, VACANT
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  market      Market        @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  tenants     Tenant[]
+  bills       Bill[]
+  rentHistory RentHistory[]
+
+  @@unique([marketId, shopNumber])
+  @@index([marketId])
+  @@index([status])
+  @@index([isActive])
+}
+
+model Tenant {
+  id             String    @id @default(cuid())
+  shopId         String
+  name           String
+  phone          String
+  nid            String?
+  advanceDeposit Int       @default(0) // in paisa
+  rentAmount     Int       // current agreed rent in paisa
+  startDate      DateTime  @default(now())
+  endDate        DateTime?
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  bills       Bill[]
+  rentHistory RentHistory[]
+
+  @@index([shopId])
+  @@index([isActive])
+  @@index([phone])
+}
+
+model RentHistory {
+  id            String   @id @default(cuid())
+  shopId        String
+  tenantId      String?
+  rentAmount    Int      // in paisa
+  effectiveFrom DateTime // effective start month
+  note          String?
+  createdAt     DateTime @default(now())
+
+  shop   Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([shopId])
+  @@index([tenantId])
+}
+
+model ChargeType {
+  id            String   @id @default(cuid())
+  name_en       String
+  name_bn       String
+  isRecurring   Boolean  @default(true)
+  defaultAmount Int      @default(0) // in paisa
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  billItems BillItem[]
+
+  @@index([isActive])
+}
+
+model Bill {
+  id          String   @id @default(cuid())
+  shopId      String
+  tenantId    String
+  month       Int      // 1 to 12
+  year        Int      // e.g. 2026
+  rentAmount  Int      // in paisa
+  totalAmount Int      // in paisa (rent + bill items)
+  paidAmount  Int      @default(0) // in paisa
+  dueAmount   Int      // in paisa (totalAmount - paidAmount)
+  status      String   @default("DUE") // PAID, PARTIAL, DUE
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  shop      Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  billItems BillItem[]
+  payments  Payment[]
+
+  @@unique([shopId, month, year])
+  @@index([shopId])
+  @@index([tenantId])
+  @@index([month, year])
+  @@index([status])
+}
+
+model BillItem {
+  id           String      @id @default(cuid())
+  billId       String
+  chargeTypeId String?
+  description  String
+  amount       Int         // in paisa
+  createdAt    DateTime    @default(now())
+
+  bill       Bill        @relation(fields: [billId], references: [id], onDelete: Cascade)
+  chargeType ChargeType? @relation(fields: [chargeTypeId], references: [id], onDelete: SetNull)
+
+  @@index([billId])
+  @@index([chargeTypeId])
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  billId     String
+  amount     Int      // in paisa
+  paidOn     DateTime @default(now())
+  method     String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE
+  reference  String?
+  note       String?
+  receivedBy String?
+  createdAt  DateTime @default(now())
+
+  bill Bill @relation(fields: [billId], references: [id], onDelete: Cascade)
+
+  @@index([billId])
+  @@index([paidOn])
+}
+
+model ExpenseCategory {
+  id        String   @id @default(cuid())
+  name_en   String
+  name_bn   String
+  icon      String   @default("Wrench") // Lucide icon name
+  color     String   @default("#0d9488")
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  expenses Expense[]
+
+  @@index([isActive])
+}
+
+model Expense {
+  id            String   @id @default(cuid())
+  marketId      String
+  categoryId    String
+  amount        Int      // in paisa
+  date          DateTime @default(now())
+  description   String?
+  attachmentUrl String?
+  paymentMethod String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  market   Market          @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([marketId])
+  @@index([categoryId])
+  @@index([date])
+}

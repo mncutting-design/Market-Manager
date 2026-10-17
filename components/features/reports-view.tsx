@@ -1,0 +1,461 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useTranslation } from "@/lib/i18n";
+import { useApp } from "@/lib/app-context";
+import { formatCurrency, formatDate, toBanglaDigits, formatMonth, formatPercent } from "@/lib/format";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { StatusBadge } from "@/components/ui/badge";
+import { TableSkeleton } from "@/components/ui/skeleton";
+import {
+  FileSpreadsheet,
+  Download,
+  Printer,
+  Calendar,
+  Layers,
+  Users,
+  Building2,
+  TrendingUp,
+} from "lucide-react";
+import * as XLSX from "xlsx";
+
+export function ReportsView() {
+  const { t, locale } = useTranslation();
+  const { selectedMarketId, selectedMonth, selectedYear, markets } = useApp();
+
+  const [reportType, setReportType] = useState<string>("monthly_collection");
+  const [marketFilter, setMarketFilter] = useState<string>(selectedMarketId || "ALL");
+  const [reportMonth, setReportMonth] = useState<number>(selectedMonth || 10);
+  const [reportYear, setReportYear] = useState<number>(selectedYear || 2026);
+  const [tenantId, setTenantId] = useState<string>("");
+
+  const [data, setData] = useState<any>(null);
+  const [availableTenants, setAvailableTenants] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch report data
+  useEffect(() => {
+    const fetchReport = async () => {
+      try {
+        setIsLoading(true);
+        const params = new URLSearchParams({
+          type: reportType,
+          marketId: marketFilter,
+          month: String(reportMonth),
+          year: String(reportYear),
+        });
+        if (tenantId) params.set("tenantId", tenantId);
+
+        const res = await fetch(`/api/reports?${params.toString()}`);
+        if (res.ok) {
+          const json = await res.json();
+          setData(json);
+          if (json.availableTenants) {
+            setAvailableTenants(json.availableTenants);
+            if (!tenantId && json.availableTenants.length > 0) {
+              setTenantId(json.availableTenants[0].id);
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Report fetch error:", e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchReport();
+  }, [reportType, marketFilter, reportMonth, reportYear, tenantId]);
+
+  // Export to Excel (XLSX) with native numeric cells!
+  const handleExportExcel = () => {
+    if (!data) return;
+
+    let sheetData: any[] = [];
+    let fileName = `report-${reportType}-${reportYear}`;
+
+    if (reportType === "monthly_collection" && data.rows) {
+      fileName = `monthly-collection-${reportMonth}-${reportYear}`;
+      sheetData = data.rows.map((r: any) => ({
+        [t("markets.marketName")]: r.marketName,
+        [t("shops.shopNumber")]: r.shopNumber,
+        [t("shops.floor")]: r.floor,
+        [t("tenants.tenantName")]: r.tenantName,
+        [t("tenants.phone")]: r.phone,
+        [t("billing.rentAmount")]: Math.round(r.rentAmount / 100), // Numeric cell!
+        [t("billing.totalBill")]: Math.round(r.totalAmount / 100), // Numeric cell!
+        [t("billing.paidAmount")]: Math.round(r.paidAmount / 100), // Numeric cell!
+        [t("billing.dueAmount")]: Math.round(r.dueAmount / 100),   // Numeric cell!
+        [t("common.status")]: r.status,
+      }));
+    } else if (reportType === "market_pnl" && data.rows) {
+      fileName = `market-profit-loss-${reportYear}`;
+      sheetData = data.rows.map((r: any) => ({
+        [t("markets.marketName")]: r.marketName,
+        [t("markets.totalShops")]: r.totalShops,
+        [t("reports.totalRevenue")]: Math.round(r.totalCollected / 100),
+        [t("reports.totalExpenses")]: Math.round(r.totalExpenses / 100),
+        [t("reports.netIncome")]: Math.round(r.netProfit / 100),
+        [t("reports.collectionEfficiency")]: Math.round(r.collectionRate),
+      }));
+    } else if (reportType === "expense_by_category" && data.rows) {
+      fileName = `expense-by-category-${reportYear}`;
+      sheetData = data.rows.map((r: any) => ({
+        [t("expenses.category")]: locale === "bn" ? r.name_bn || r.name_en : r.name_en || r.name_bn,
+        [t("expenses.amount")]: Math.round(r.totalAmount / 100),
+        "Percentage (%)": Math.round(r.percentage),
+      }));
+    } else if (reportType === "tenant_ledger" && data.transactions) {
+      fileName = `tenant-ledger-${data.tenant?.name || "statement"}`;
+      sheetData = data.transactions.map((tr: any) => ({
+        [t("common.date")]: formatDate(tr.date, locale),
+        [t("common.details")]: tr.description,
+        Debit: Math.round(tr.debit / 100),
+        Credit: Math.round(tr.credit / 100),
+        Balance: Math.round(tr.balance / 100),
+      }));
+    }
+
+    const worksheet = XLSX.utils.json_to_sheet(sheetData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Report");
+    XLSX.writeFile(workbook, `${fileName}.xlsx`);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  return (
+    <div className="space-y-6 animate-in fade-in duration-200">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <FileSpreadsheet className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+            <span>{t("reports.title")}</span>
+          </h2>
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+            {t("reports.subtitle")}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={handleExportExcel} disabled={isLoading || !data}>
+            <Download className="w-4 h-4 mr-1.5" />
+            {t("reports.exportExcel")}
+          </Button>
+
+          <Button variant="outline" onClick={handlePrint} disabled={isLoading || !data}>
+            <Printer className="w-4 h-4 mr-1.5" />
+            {t("reports.exportPdf")}
+          </Button>
+        </div>
+      </div>
+
+      {/* Report Navigation Tabs */}
+      <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto no-scrollbar no-print">
+        {[
+          { id: "monthly_collection", labelKey: "reports.monthlyCollection" },
+          { id: "market_pnl", labelKey: "reports.marketProfitLoss" },
+          { id: "expense_by_category", labelKey: "reports.expenseByCategory" },
+          { id: "tenant_ledger", labelKey: "reports.tenantLedger" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setReportType(tab.id)}
+            className={`px-4 py-2 text-xs md:text-sm font-semibold rounded-lg shrink-0 transition-all cursor-pointer ${
+              reportType === tab.id
+                ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
+                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+            }`}
+          >
+            {t(tab.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      {/* Filter Bar (Conditional on report type) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 no-print">
+        {reportType !== "tenant_ledger" && (
+          <Select
+            label={t("collections.selectMarket")}
+            value={marketFilter}
+            onChange={(e) => setMarketFilter(e.target.value)}
+          >
+            <option value="ALL">{t("common.allMarkets")}</option>
+            {markets.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </Select>
+        )}
+
+        {reportType === "monthly_collection" && (
+          <Select
+            label={t("dashboard.selectMonth")}
+            value={reportMonth}
+            onChange={(e) => setReportMonth(Number(e.target.value))}
+          >
+            {Array.from({ length: 12 }, (_, i) => ({
+              val: i + 1,
+              name: formatMonth(i + 1, locale),
+            })).map((m) => (
+              <option key={m.val} value={m.val}>
+                {m.name}
+              </option>
+            ))}
+          </Select>
+        )}
+
+        {reportType === "tenant_ledger" && (
+          <Select
+            label={t("tenants.tenantName")}
+            value={tenantId}
+            onChange={(e) => setTenantId(e.target.value)}
+          >
+            {availableTenants.map((ten) => (
+              <option key={ten.id} value={ten.id}>
+                {ten.name} ({ten.shopNumber} - {ten.marketName})
+              </option>
+            ))}
+          </Select>
+        )}
+
+        <Select
+          label={t("dashboard.selectYear")}
+          value={reportYear}
+          onChange={(e) => setReportYear(Number(e.target.value))}
+        >
+          {[2025, 2026, 2027].map((y) => (
+            <option key={y} value={y}>
+              {locale === "bn" ? toBanglaDigits(y) : y}
+            </option>
+          ))}
+        </Select>
+      </div>
+
+      {/* Printable Report Header */}
+      <div className="print-only hidden p-4 border-b">
+        <h1 className="text-2xl font-bold">{t("common.appName")}</h1>
+        <p className="text-sm text-slate-600">
+          {reportType === "monthly_collection"
+            ? `${t("reports.monthlyCollection")} — ${formatMonth(reportMonth, locale, reportYear)}`
+            : reportType === "market_pnl"
+            ? `${t("reports.marketProfitLoss")} — ${reportYear}`
+            : reportType === "expense_by_category"
+            ? `${t("reports.expenseByCategory")} — ${reportYear}`
+            : `${t("reports.tenantLedger")} — ${data?.tenant?.name || ""}`}
+        </p>
+      </div>
+
+      {/* Report Data Display */}
+      {isLoading ? (
+        <TableSkeleton rows={8} />
+      ) : !data ? (
+        <Card className="p-12 text-center text-slate-500">{t("common.noData")}</Card>
+      ) : (
+        <div className="space-y-4">
+          {/* 1. Monthly Collection Report Table */}
+          {reportType === "monthly_collection" && data.rows && (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs md:text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="p-3.5">{t("shops.shopNumber")}</th>
+                      <th className="p-3.5">{t("tenants.tenantName")}</th>
+                      <th className="p-3.5">{t("markets.marketName")}</th>
+                      <th className="p-3.5 text-right">{t("billing.totalBill")}</th>
+                      <th className="p-3.5 text-right">{t("billing.paidAmount")}</th>
+                      <th className="p-3.5 text-right">{t("billing.dueAmount")}</th>
+                      <th className="p-3.5 text-center">{t("common.status")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.rows.map((row: any, idx: number) => (
+                      <tr
+                        key={idx}
+                        className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                      >
+                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                          {row.shopNumber}
+                        </td>
+                        <td className="p-3.5 font-medium">
+                          <p>{row.tenantName}</p>
+                          <p className="text-[11px] text-slate-400 font-mono">{row.phone}</p>
+                        </td>
+                        <td className="p-3.5 text-slate-500">{row.marketName}</td>
+                        <td className="p-3.5 text-right font-semibold">
+                          {formatCurrency(row.totalAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(row.paidAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-bold text-red-600 dark:text-red-400">
+                          {row.dueAmount > 0 ? formatCurrency(row.dueAmount, locale) : "—"}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          <StatusBadge status={row.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* 2. Market Profit & Loss Statement */}
+          {reportType === "market_pnl" && data.rows && (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs md:text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="p-3.5">{t("markets.marketName")}</th>
+                      <th className="p-3.5 text-center">{t("markets.totalShops")}</th>
+                      <th className="p-3.5 text-right">{t("reports.totalRevenue")}</th>
+                      <th className="p-3.5 text-right">{t("reports.totalExpenses")}</th>
+                      <th className="p-3.5 text-right">{t("reports.netIncome")}</th>
+                      <th className="p-3.5 text-right">{t("reports.collectionEfficiency")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.rows.map((row: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                          {row.marketName}
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {locale === "bn" ? toBanglaDigits(row.totalShops) : row.totalShops}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(row.totalCollected, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold text-amber-600 dark:text-amber-400">
+                          {formatCurrency(row.totalExpenses, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-bold text-teal-700 dark:text-teal-400">
+                          {formatCurrency(row.netProfit, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold">
+                          {formatPercent(row.collectionRate, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* 3. Expense Breakdown by Category */}
+          {reportType === "expense_by_category" && data.rows && (
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs md:text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="p-3.5">{t("expenses.category")}</th>
+                      <th className="p-3.5 text-center">Transactions</th>
+                      <th className="p-3.5 text-right">{t("expenses.amount")}</th>
+                      <th className="p-3.5 text-right">Share (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.rows.map((row: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                          <span
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: row.color || "#0d9488" }}
+                          />
+                          <span>
+                            {locale === "bn" ? row.name_bn || row.name_en : row.name_en || row.name_bn}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {locale === "bn" ? toBanglaDigits(row.count) : row.count}
+                        </td>
+                        <td className="p-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
+                          {formatCurrency(row.totalAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold">
+                          {formatPercent(row.percentage, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* 4. Tenant Ledger */}
+          {reportType === "tenant_ledger" && data.tenant && (
+            <div className="space-y-4">
+              {/* Tenant Header card */}
+              <Card className="p-5 bg-teal-50/50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {data.tenant.name}
+                    </h3>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {data.tenant.shopNumber} • {data.tenant.marketName} • Phone: {data.tenant.phone}
+                    </p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-xs text-slate-500">{t("collections.totalDue")}</p>
+                    <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                      {formatCurrency(data.currentOutstandingDue, locale)}
+                    </p>
+                  </div>
+                </div>
+              </Card>
+
+              {/* Transactions Table */}
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs md:text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                        <th className="p-3.5">{t("common.date")}</th>
+                        <th className="p-3.5">{t("common.details")}</th>
+                        <th className="p-3.5 text-right">Debit (ভাড়া দাবি)</th>
+                        <th className="p-3.5 text-right">Credit (জমা)</th>
+                        <th className="p-3.5 text-right">Balance (অবশিষ্ট বকেয়া)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {data.transactions?.map((tr: any) => (
+                        <tr key={tr.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="p-3.5 font-mono text-slate-500">
+                            {formatDate(tr.date, locale)}
+                          </td>
+                          <td className="p-3.5 font-medium">{tr.description}</td>
+                          <td className="p-3.5 text-right font-semibold text-slate-800 dark:text-slate-200">
+                            {tr.debit > 0 ? formatCurrency(tr.debit, locale) : "—"}
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                            {tr.credit > 0 ? formatCurrency(tr.credit, locale) : "—"}
+                          </td>
+                          <td className="p-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
+                            {formatCurrency(tr.balance, locale)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}

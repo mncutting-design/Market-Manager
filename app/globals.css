@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #0d9488;
+  --primary-hover: #0f766e;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --accent: #f0fdfa;
+  --accent-foreground: #0f766e;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0d9488;
+  --radius: 0.75rem;
+
+  /* Status Colors */
+  --status-paid: #059669;
+  --status-paid-bg: #ecfdf5;
+  --status-partial: #d97706;
+  --status-partial-bg: #fffbeb;
+  --status-due: #dc2626;
+  --status-due-bg: #fef2f2;
+  --status-vacant: #64748b;
+  --status-vacant-bg: #f8fafc;
+}
+
+/* ULTRA-CRISP HIGH-CONTRAST DARK THEME (Pure white text, no faded ash, solid dark backgrounds) */
+.dark {
+  --background: #101726;         /* Solid sleek dark canvas */
+  --foreground: #ffffff;         /* Pure crisp white text */
+  --card: #182234;               /* Distinct solid card surface */
+  --card-foreground: #ffffff;
+  --popover: #182234;
+  --popover-foreground: #ffffff;
+  --primary: #14b8a6;
+  --primary-hover: #2dd4bf;
+  --primary-foreground: #042f2e;
+  --secondary: #233148;          /* Bright visible buttons */
+  --secondary-foreground: #ffffff;
+  --muted: #233148;
+  --muted-foreground: #ffffff;   /* Pure white text instead of ash */
+  --accent: #134e4a;
+  --accent-foreground: #ffffff;
+  --destructive: #f87171;
+  --destructive-foreground: #ffffff;
+  --border: #2d3b52;             /* High contrast solid borders */
+  --input: #1c283c;              /* Clean input surface */
+  --ring: #14b8a6;
+
+  /* High contrast status badges */
+  --status-paid: #34d399;
+  --status-paid-bg: rgba(5, 150, 105, 0.25);
+  --status-partial: #fbbf24;
+  --status-partial-bg: rgba(217, 119, 6, 0.25);
+  --status-due: #f87171;
+  --status-due-bg: rgba(220, 38, 38, 0.25);
+  --status-vacant: #ffffff;
+  --status-vacant-bg: rgba(255, 255, 255, 0.15);
+}
+
+* {
+  border-color: var(--border);
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), var(--font-anek-bangla), sans-serif;
+  min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  overflow-x: hidden;
+}
+
+/* Dark mode body styling */
+.dark body {
+  background-color: #101726;
+  color: #ffffff;
+}
+
+/* Header fix: Dark, solid, premium, no washed out ash */
+.glass-header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dark .glass-header,
+html.dark .glass-header,
+[data-theme="dark"] .glass-header {
+  background: #101726 !important;
+  background-color: #101726 !important;
+  border-bottom: 1px solid #2d3b52 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* REPLACING ALL ASH / FADED GRAY TEXT WITH CRISP HIGH-CONTRAST PURE WHITE IN DARK MODE */
+.dark .text-slate-400,
+.dark .text-slate-500,
+.dark .text-slate-600,
+.dark .text-gray-400,
+.dark .text-gray-500,
+.dark .text-zinc-400,
+.dark .text-zinc-500,
+.dark .text-neutral-400,
+.dark .text-neutral-500,
+.dark .text-muted-foreground {
+  color: #ffffff !important;
+}
+
+.dark .text-slate-300,
+.dark .text-slate-200,
+.dark .text-slate-100 {
+  color: #ffffff !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-slate-900 {
+  color: #ffffff !important;
+}
+
+/* Dark mode cards, backgrounds, and borders */
+.dark .bg-white {
+  background-color: #182234 !important;
+}
+
+.dark .bg-slate-900,
+.dark .bg-slate-950 {
+  background-color: #182234 !important;
+}
+
+.dark .bg-slate-50 {
+  background-color: #101726 !important;
+}
+
+.dark .border-slate-800,
+.dark .border-slate-700,
+.dark .border-slate-200 {
+  border-color: #2d3b52 !important;
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: #1c283c !important;
+  color: #ffffff !important;
+  border-color: #3b4d6a !important;
+}
+
+.dark select option {
+  background-color: #182234 !important;
+  color: #ffffff !important;
+}
+
+.dark input::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Bangla specific typography rules */
+html.lang-bn body,
+html[lang="bn"] body {
+  font-family: var(--font-anek-bangla), var(--font-sans), sans-serif;
+  line-height: 1.6;
+}
+
+html.lang-bn button,
+html.lang-bn input,
+html.lang-bn select,
+html.lang-bn textarea {
+  font-family: var(--font-anek-bangla), var(--font-sans), sans-serif;
+}
+
+.custom-shadow {
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+}
+
+.dark .custom-shadow {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
+}
+
+/* Print styles for receipts */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .print-container {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+  }
+}

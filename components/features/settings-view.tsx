@@ -1,0 +1,267 @@
+"use client";
+
+import React, { useState } from "react";
+import { useTranslation } from "@/lib/i18n";
+import { useApp } from "@/lib/app-context";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Settings, Shield, KeyRound, Download, Languages, CheckCircle2, FolderArchive } from "lucide-react";
+import { toast } from "sonner";
+
+export function SettingsView() {
+  const { t, locale, setLocale } = useTranslation();
+  const { triggerRefresh } = useApp();
+
+  // Profile Form
+  const [adminName, setAdminName] = useState("প্রশাসক (Admin)");
+  const [adminEmail, setAdminEmail] = useState("admin@marketmanager.com");
+
+  // Password Form
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+  // Due Day
+  const [defaultDueDay, setDefaultDueDay] = useState<number>(10);
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) {
+      toast.error(t("validation.required"));
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error(t("validation.passwordMismatch"));
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      const res = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to change password");
+        return;
+      }
+
+      toast.success(t("settings.passwordChanged"));
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (e) {
+      toast.error("Failed to change password");
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handleSavePreferences = () => {
+    toast.success(t("settings.settingsSaved"));
+  };
+
+  const handleDownloadBackup = () => {
+    window.location.href = "/api/backup";
+  };
+
+  return (
+    <div className="max-w-4xl space-y-6 animate-in fade-in duration-200">
+      {/* Header */}
+      <div>
+        <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <Settings className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <span>{t("settings.title")}</span>
+        </h2>
+        <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          {t("settings.subtitle")}
+        </p>
+      </div>
+
+      {/* 1. Admin Profile Card */}
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Shield className="w-4 h-4 text-teal-600" />
+            <span>{t("settings.profile")}</span>
+          </CardTitle>
+          <CardDescription>{t("settings.adminName")} & {t("settings.adminEmail")}</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                {t("settings.adminName")}
+              </label>
+              <Input value={adminName} onChange={(e) => setAdminName(e.target.value)} />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                {t("settings.adminEmail")}
+              </label>
+              <Input value={adminEmail} disabled />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 2. Billing & Language Preferences */}
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Languages className="w-4 h-4 text-teal-600" />
+            <span>{t("settings.languagePref")} & {t("settings.billDueDay")}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0 space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                {t("settings.languagePref")}
+              </label>
+              <Select
+                value={locale}
+                onChange={(e) => setLocale(e.target.value as "en" | "bn")}
+              >
+                <option value="bn">বাংলা (Bangla)</option>
+                <option value="en">English</option>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                {t("settings.billDueDay")}
+              </label>
+              <Input
+                type="number"
+                min={1}
+                max={28}
+                value={defaultDueDay}
+                onChange={(e) => setDefaultDueDay(Number(e.target.value))}
+              />
+              <p className="text-xs text-slate-400 mt-1">{t("settings.billDueDayDesc")}</p>
+            </div>
+          </div>
+
+          <div className="pt-2 flex justify-end">
+            <Button onClick={handleSavePreferences}>
+              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              {t("settings.saveSettings")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* 3. Change Password */}
+      <Card className="p-6">
+        <CardHeader className="p-0 pb-4">
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <KeyRound className="w-4 h-4 text-teal-600" />
+            <span>{t("settings.changePassword")}</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-0">
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                {t("settings.currentPassword")}
+              </label>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {t("settings.newPassword")}
+                </label>
+                <Input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {t("settings.confirmPassword")}
+                </label>
+                <Input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <Button type="submit" isLoading={isChangingPassword}>
+                <KeyRound className="w-4 h-4 mr-1.5" />
+                {t("settings.changePassword")}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      {/* 4. Full Database Backup & Export */}
+      <Card className="p-6 border-teal-200 dark:border-teal-800 bg-teal-50/20 dark:bg-teal-950/10">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-base font-semibold text-teal-800 dark:text-teal-200 flex items-center gap-2">
+            <Download className="w-4 h-4 text-teal-600" />
+            <span>{t("settings.systemBackup")}</span>
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-600 dark:text-white">
+            {t("settings.backupDesc")}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 pt-4 flex justify-end">
+          <Button variant="accent" onClick={handleDownloadBackup}>
+            <Download className="w-4 h-4 mr-1.5" />
+            {t("settings.exportAllData")}
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* 5. Download Full Project ZIP */}
+      <Card className="p-6 border-teal-300 dark:border-teal-600 bg-gradient-to-br from-teal-500/10 via-transparent to-transparent">
+        <CardHeader className="p-0 pb-2">
+          <CardTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <FolderArchive className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <span>{locale === "bn" ? "প্রজেক্টের সম্পূর্ণ কোড ডাউনলোড (ZIP)" : "Download Full Project Source Code (ZIP)"}</span>
+          </CardTitle>
+          <CardDescription className="text-xs text-slate-600 dark:text-white">
+            {locale === "bn"
+              ? "সম্পূর্ণ প্রজেক্টের সমস্ত সোর্স ফাইল, কম্পোনেন্ট, প্রিজমা ডাটাবেস স্কিমা এবং ডকুমেন্টেশন একটি প্রস্তুত .zip প্যাকেজে ডাউনলোড করুন।"
+              : "Download all source code, Next.js components, Prisma database schema, and configs in a clean .zip package."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 pt-4 flex justify-end">
+          <a
+            href="/api/download-project"
+            download="market-manager-project.zip"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-teal-600 hover:bg-teal-500 text-white shadow-md active:scale-95 transition-all cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>{locale === "bn" ? "প্রজেক্ট জিপ ডাউনলোড করুন (.zip)" : "Download Project ZIP (.zip)"}</span>
+          </a>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
