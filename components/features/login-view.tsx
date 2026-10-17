@@ -58,6 +58,8 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
       if (res.ok && data.success) {
         toast.success(t("common.success"));
         onLoginSuccess();
+      } else {
+        toast.error(data.error || "Login failed");
       }
     } catch (e) {
       toast.error("Failed to login");

@@ -8,12 +8,19 @@ export async function GET() {
     return NextResponse.json({ user: null });
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.id },
-    select: { id: true, name: true, email: true, role: true, locale: true },
-  });
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      select: { id: true, name: true, email: true, role: true, locale: true },
+    });
+    if (user) {
+      return NextResponse.json({ user });
+    }
+  } catch (e) {
+    console.warn("DB user query failed in /api/auth/me, returning session:", e);
+  }
 
-  return NextResponse.json({ user });
+  return NextResponse.json({ user: session });
 }
 
 export async function PUT(req: Request) {
