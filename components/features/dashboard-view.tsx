@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/badge";
 import { CardSkeleton, TableSkeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 import {
   TrendingUp,
   TrendingDown,
@@ -53,6 +54,9 @@ export function DashboardView() {
     selectedMonth,
     selectedYear,
     refreshKey,
+    markets,
+    refreshMarkets,
+    triggerRefresh,
     openQuickCollect,
     openAddExpense,
     openGenerateBills,
@@ -168,6 +172,50 @@ export function DashboardView() {
           </Button>
         </div>
       </div>
+
+      {/* Demo Seed Banner if database is empty */}
+      {markets.length === 0 && (
+        <div className="p-4 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-white">
+          <div className="flex items-center gap-2.5">
+            <Sparkles className="w-5 h-5 text-teal-400 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-slate-900 dark:text-white">
+                {locale === "bn"
+                  ? "ডাটাবেসে কোনো মার্কেট পাওয়া যায়নি।"
+                  : "No markets found in your database yet."}
+              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                {locale === "bn"
+                  ? "৩টি ডেমো মার্কেট, ৬০টি দোকান, ভাড়াটিয়া ও বিলিং ডেটা এক ক্লিকে লোড করতে নিচের বাটনে চাপ দিন:"
+                  : "Click to populate 3 rental markets, 60 shops, tenants, and bills in 1 click:"}
+              </p>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            onClick={async () => {
+              try {
+                toast.loading(locale === "bn" ? "ডেমো ডেটা লোড হচ্ছে..." : "Loading demo data...");
+                const res = await fetch("/api/seed", { method: "POST" });
+                if (res.ok) {
+                  toast.success(locale === "bn" ? "ডেমো ডেটা সফলভাবে লোড হয়েছে!" : "Demo data loaded successfully!");
+                  await refreshMarkets();
+                  triggerRefresh();
+                  window.location.reload();
+                } else {
+                  toast.error("Failed to seed data");
+                }
+              } catch (e) {
+                toast.error("Failed to seed data");
+              }
+            }}
+            className="bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shrink-0 cursor-pointer shadow-md"
+          >
+            <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+            {locale === "bn" ? "ডেমো ডেটা লোড করুন" : "Load Demo Data"}
+          </Button>
+        </div>
+      )}
 
       {/* 6 Key Performance Indicators (KPI Cards) */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">

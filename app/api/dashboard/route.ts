@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-
+import { seedDatabase } from "@/lib/seed-db";
 
 export async function GET(req: Request) {
   try {
@@ -8,6 +8,16 @@ export async function GET(req: Request) {
     const marketId = searchParams.get("marketId") || "ALL";
     const month = searchParams.get("month") ? parseInt(searchParams.get("month")!, 10) : 10;
     const year = searchParams.get("year") ? parseInt(searchParams.get("year")!, 10) : 2026;
+
+    // Auto-seed if database is empty
+    try {
+      const count = await prisma.market.count();
+      if (count === 0) {
+        await seedDatabase();
+      }
+    } catch (e) {
+      console.warn("Auto-seed check in dashboard:", e);
+    }
 
     // Filter conditions
     const billWhere: any = { month, year };
