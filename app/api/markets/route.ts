@@ -1,21 +1,10 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { seedDatabase } from "@/lib/seed-db";
 
 export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const includeInactive = searchParams.get("includeInactive") === "true";
-
-    // Auto-seed if database is empty
-    try {
-      const count = await prisma.market.count();
-      if (count === 0) {
-        await seedDatabase();
-      }
-    } catch (e) {
-      console.warn("Auto-seed check warning:", e);
-    }
 
     const markets = await prisma.market.findMany({
       where: includeInactive ? {} : { isActive: true },
