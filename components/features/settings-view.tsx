@@ -11,14 +11,15 @@ import { Settings, Shield, KeyRound, Download, Languages, CheckCircle2, FolderAr
 import { toast } from "sonner";
 import { TenantPolicyCard } from "./settings/tenant-policy-card";
 import { AuditLogsCard } from "./settings/audit-logs-card";
+import { UsersRolesCard } from "./settings/users-roles-card";
 
 export function SettingsView() {
   const { t, locale, setLocale } = useTranslation();
-  const { triggerRefresh } = useApp();
+  const { triggerRefresh, currentUser } = useApp();
 
   // Profile Form
-  const [adminName, setAdminName] = useState("প্রশাসক (Admin)");
-  const [adminEmail, setAdminEmail] = useState("admin@marketmanager.com");
+  const [adminName, setAdminName] = useState(currentUser?.name || "NAZRUL");
+  const [adminEmail, setAdminEmail] = useState(currentUser?.email || "nazrul@marketmanager.com");
 
   // Password Form
   const [currentPassword, setCurrentPassword] = useState("");
@@ -220,6 +221,9 @@ export function SettingsView() {
           </form>
         </CardContent>
       </Card>
+
+      {/* 4. Role-Based Permissions & User Management */}
+      <UsersRolesCard />
 
       {/* 4. Full Database Backup & Export */}
       <Card className="p-6 border-teal-200 dark:border-teal-800 bg-teal-50/20 dark:bg-teal-950/10">

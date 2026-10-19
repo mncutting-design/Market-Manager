@@ -44,6 +44,10 @@ interface AppContextType {
   activeReceipt: any | null;
   setActiveReceipt: (receipt: any | null) => void;
   showReceipt: (receipt: any) => void;
+  // Change Password Modal
+  isChangePasswordOpen: boolean;
+  setIsChangePasswordOpen: (open: boolean) => void;
+  openChangePassword: () => void;
   // User Session & Approvals
   currentUser: { id: string; name: string; email: string; role: string; locale: string } | null;
   isAdmin: boolean;
@@ -83,6 +87,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [isGenerateBillsOpen, setIsGenerateBillsOpen] = useState(false);
   const [activeReceipt, setActiveReceipt] = useState<any | null>(null);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  const openChangePassword = () => {
+    setIsChangePasswordOpen(true);
+  };
 
   const fetchMarkets = async () => {
     try {
@@ -188,6 +197,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         activeReceipt,
         setActiveReceipt,
         showReceipt,
+        isChangePasswordOpen,
+        setIsChangePasswordOpen,
+        openChangePassword,
         currentUser,
         isAdmin,
         pendingApprovalsCount,

@@ -16,6 +16,7 @@ import {
   LogOut,
   ShieldCheck,
   FolderArchive,
+  KeyRound,
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { toast } from "sonner";
@@ -34,6 +35,8 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
     openApprovals,
     pendingApprovalsCount,
     triggerRefresh,
+    currentUser,
+    openChangePassword,
   } = useApp();
 
   const [isDark, setIsDark] = useState(false);
@@ -244,17 +247,23 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               aria-expanded={isProfileOpen}
             >
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center shadow-md">
-                  MM
+                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md">
+                  {(currentUser?.name || "NAZRUL").slice(0, 2).toUpperCase()}
                 </div>
                 <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-white dark:border-[#101726] rounded-full" />
               </div>
               <div className="hidden lg:flex flex-col text-left">
                 <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
-                  {t("nav.admin")}
+                  {currentUser?.name || "NAZRUL"}
                 </span>
-                <span className="text-[10px] text-teal-600 dark:text-teal-300 font-semibold leading-tight">
-                  {locale === "bn" ? "সুপার এডমিন" : "Super Admin"}
+                <span className="text-[10px] text-teal-600 dark:text-teal-300 font-bold leading-tight uppercase tracking-wider">
+                  {currentUser?.role === "ADMIN"
+                    ? (locale === "bn" ? "সুপার এডমিন" : "Super Admin")
+                    : currentUser?.role === "MANAGER"
+                    ? (locale === "bn" ? "ম্যানেজার" : "Manager")
+                    : currentUser?.role === "OPERATOR"
+                    ? (locale === "bn" ? "অপারেটর" : "Operator")
+                    : (locale === "bn" ? "দর্শক" : "Viewer")}
                 </span>
               </div>
               <ChevronDown className="hidden sm:block w-3.5 h-3.5 text-slate-500 dark:text-white" />
@@ -262,21 +271,37 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
 
             {/* Profile Dropdown Menu */}
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-60 rounded-2xl bg-white dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52] shadow-2xl py-2 z-50 animate-in fade-in-0 zoom-in-95">
+              <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52] shadow-2xl py-2 z-50 animate-in fade-in-0 zoom-in-95">
                 <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700/80">
                   <p className="text-sm font-bold text-slate-900 dark:text-white">
-                    {locale === "bn" ? "প্রশাসক (Admin)" : "Administrator"}
+                    {currentUser?.name || "NAZRUL"}
                   </p>
-                  <p className="text-xs text-slate-600 dark:text-white/80 truncate">
-                    admin@marketmanager.com
+                  <p className="text-xs text-slate-600 dark:text-white/80 truncate font-mono">
+                    {currentUser?.email || "nazrul@marketmanager.com"}
                   </p>
                   <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/80 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-700 w-fit">
                     <ShieldCheck className="w-3.5 h-3.5 text-teal-500" />
-                    <span>{locale === "bn" ? "সুপার এডমিন" : "Super Admin"}</span>
+                    <span>
+                      {currentUser?.role === "ADMIN"
+                        ? (locale === "bn" ? "সুপার এডমিন (ADMIN)" : "Super Admin (ADMIN)")
+                        : currentUser?.role || "USER"}
+                    </span>
                   </div>
                 </div>
 
                 <div className="py-1">
+                  {/* Change Password Button */}
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      openChangePassword();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors text-left cursor-pointer"
+                  >
+                    <KeyRound className="w-4 h-4 text-amber-500" />
+                    <span>{locale === "bn" ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}</span>
+                  </button>
+
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);

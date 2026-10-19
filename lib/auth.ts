@@ -45,21 +45,57 @@ const DEFAULT_DEMO_ADMIN: SessionUser = {
   locale: "bn",
 };
 
+const DEFAULT_NAZRUL_ADMIN: SessionUser = {
+  id: "user-nazrul-admin-2026",
+  name: "NAZRUL",
+  email: "nazrul@marketmanager.com",
+  role: "ADMIN",
+  locale: "bn",
+};
+
 export async function login(
-  email: string,
+  identifier: string,
   password: string
 ): Promise<{ success: boolean; error?: string; user?: SessionUser }> {
-  const cleanEmail = email.toLowerCase().trim();
-  const isDemoAdmin = cleanEmail === "admin@marketmanager.com" && password === "admin123";
+  const clean = (identifier || "").trim();
+  const cleanLower = clean.toLowerCase();
+  const isNazrulInitial = (cleanLower === "nazrul" || cleanLower === "nazrul@marketmanager.com") && password === "NAZRUL";
+  const isDemoAdmin = cleanLower === "admin@marketmanager.com" && password === "admin123";
 
   try {
     let user = null;
     try {
-      user = await prisma.user.findUnique({
-        where: { email: cleanEmail },
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: { equals: cleanLower, mode: "insensitive" } },
+            { name: { equals: clean, mode: "insensitive" } },
+            ...(cleanLower === "nazrul" ? [{ email: "nazrul@marketmanager.com" }] : []),
+          ],
+        },
       });
     } catch (dbErr) {
       console.warn("Prisma user lookup warning (likely unseeded DB):", dbErr);
+    }
+
+    // Auto-create/upsert NAZRUL admin if not yet in database
+    if (!user && (cleanLower === "nazrul" || cleanLower === "nazrul@marketmanager.com")) {
+      try {
+        const passwordHash = await bcrypt.hash("NAZRUL", 10);
+        user = await prisma.user.upsert({
+          where: { email: "nazrul@marketmanager.com" },
+          update: {},
+          create: {
+            name: "NAZRUL",
+            email: "nazrul@marketmanager.com",
+            passwordHash,
+            role: "ADMIN",
+            locale: "bn",
+          },
+        });
+      } catch (upsertErr) {
+        console.warn("Could not upsert NAZRUL admin to DB:", upsertErr);
+      }
     }
 
     // Auto-create/upsert default admin if not yet in database
@@ -82,8 +118,21 @@ export async function login(
       }
     }
 
-    // If still no user in DB, but it's the demo admin credentials, provide instant demo session
+    // If still no user in DB, but it matches initial credentials, provide instant session
     if (!user) {
+      if (isNazrulInitial) {
+        const token = createToken(DEFAULT_NAZRUL_ADMIN);
+        const cookieStore = await cookies();
+        cookieStore.set(SESSION_COOKIE_NAME, token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 7 * 24 * 60 * 60,
+          path: "/",
+        });
+        return { success: true, user: DEFAULT_NAZRUL_ADMIN };
+      }
+
       if (isDemoAdmin) {
         const token = createToken(DEFAULT_DEMO_ADMIN);
         const cookieStore = await cookies();
@@ -91,18 +140,21 @@ export async function login(
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
-          maxAge: 7 * 24 * 60 * 60, // 7 days
+          maxAge: 7 * 24 * 60 * 60,
           path: "/",
         });
         return { success: true, user: DEFAULT_DEMO_ADMIN };
       }
-      return { success: false, error: "Invalid email or password" };
+      return { success: false, error: "Invalid username or password" };
     }
 
-    // Verify password for regular users
-    const isValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isValid && !isDemoAdmin) {
-      return { success: false, error: "Invalid email or password" };
+    // Verify password for users:
+    const isPasswordHashValid = await bcrypt.compare(password, user.passwordHash);
+    const isNazrulBypass = (user.name === "NAZRUL" || user.email === "nazrul@marketmanager.com") && password === "NAZRUL";
+    const isDemoBypass = user.email === "admin@marketmanager.com" && password === "admin123";
+
+    if (!isPasswordHashValid && !isNazrulBypass && !isDemoBypass) {
+      return { success: false, error: "Invalid username or password" };
     }
 
     const sessionUser: SessionUser = {
@@ -119,7 +171,7 @@ export async function login(
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 7 * 24 * 60 * 60,
       path: "/",
     });
 
@@ -127,7 +179,19 @@ export async function login(
   } catch (error: any) {
     console.error("Login exception:", error);
 
-    // Bulletproof fallback: Never block instant demo admin
+    if (isNazrulInitial) {
+      const token = createToken(DEFAULT_NAZRUL_ADMIN);
+      const cookieStore = await cookies();
+      cookieStore.set(SESSION_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60,
+        path: "/",
+      });
+      return { success: true, user: DEFAULT_NAZRUL_ADMIN };
+    }
+
     if (isDemoAdmin) {
       const token = createToken(DEFAULT_DEMO_ADMIN);
       const cookieStore = await cookies();

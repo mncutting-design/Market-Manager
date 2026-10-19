@@ -10,7 +10,21 @@ export async function seedDatabase() {
 
     console.log("🌱 Auto-seeding Market Manager database...");
 
-    // 1. Create or ensure Admin User
+    // 1a. Create or ensure NAZRUL Admin User
+    const nazrulHash = await bcrypt.hash("NAZRUL", 10);
+    await prisma.user.upsert({
+      where: { email: "nazrul@marketmanager.com" },
+      update: {},
+      create: {
+        name: "NAZRUL",
+        email: "nazrul@marketmanager.com",
+        passwordHash: nazrulHash,
+        role: "ADMIN",
+        locale: "bn",
+      },
+    });
+
+    // 1b. Create or ensure Admin User
     const passwordHash = await bcrypt.hash("admin123", 10);
     await prisma.user.upsert({
       where: { email: "admin@marketmanager.com" },

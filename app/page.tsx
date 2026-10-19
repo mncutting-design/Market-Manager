@@ -11,6 +11,7 @@ import { MoneyReceiptModal } from "@/components/features/modals/money-receipt-mo
 import { GenerateBillsModal } from "@/components/features/modals/generate-bills-modal";
 import { AddExpenseModal } from "@/components/features/modals/add-expense-modal";
 import { ApprovalsModal } from "@/components/features/modals/approvals-modal";
+import { ChangePasswordModal } from "@/components/features/modals/change-password-modal";
 import { LoginView } from "@/components/features/login-view";
 
 // Feature Views
@@ -26,7 +27,12 @@ import { SettingsView } from "@/components/features/settings-view";
 import { PremiumLoader } from "@/components/ui/premium-loader";
 
 function MainApp() {
-  const { activeTab } = useApp();
+  const {
+    activeTab,
+    isChangePasswordOpen,
+    setIsChangePasswordOpen,
+    currentUser,
+  } = useApp();
   const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([activeTab || "dashboard"]));
 
   useEffect(() => {
@@ -88,6 +94,11 @@ function MainApp() {
       <GenerateBillsModal />
       <AddExpenseModal />
       <ApprovalsModal />
+      <ChangePasswordModal
+        isOpen={isChangePasswordOpen}
+        onClose={() => setIsChangePasswordOpen(false)}
+        userName={currentUser?.name || "NAZRUL"}
+      />
     </div>
   );
 }

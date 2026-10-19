@@ -6,7 +6,22 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("🌱 Starting Market Manager database seeding...");
 
-  // 1. Create Admin User
+  // 1. Create Primary Admin User (NAZRUL)
+  const nazrulHash = await bcrypt.hash("NAZRUL", 10);
+  const nazrulUser = await prisma.user.upsert({
+    where: { email: "nazrul@marketmanager.com" },
+    update: {},
+    create: {
+      name: "NAZRUL",
+      email: "nazrul@marketmanager.com",
+      passwordHash: nazrulHash,
+      role: "ADMIN",
+      locale: "bn",
+    },
+  });
+  console.log("✅ Primary Admin user ready:", nazrulUser.name, nazrulUser.email);
+
+  // 1b. Create Demo Admin User
   const passwordHash = await bcrypt.hash("admin123", 10);
   const user = await prisma.user.upsert({
     where: { email: "admin@marketmanager.com" },
