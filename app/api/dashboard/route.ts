@@ -204,6 +204,93 @@ export async function GET(req: Request) {
     marketRankings.sort((a, b) => b.rawNetProfit - a.rawNetProfit);
     const mostProfitableMarket = marketRankings[0] || null;
 
+    // 5. Total Advance Held (Liability) & At-Risk Tenants
+    const tenantWhere: any = { isActive: true, status: { in: ["ACTIVE", "NOTICE_GIVEN"] } };
+    if (marketId !== "ALL") {
+      tenantWhere.shop = { marketId, isActive: true };
+    }
+
+    const activeTenants = await prisma.tenant.findMany({
+      where: tenantWhere,
+      include: {
+        shop: { include: { market: true } },
+        advanceTransactions: true,
+        bills: {
+          where: { status: { in: ["DUE", "PARTIAL"] } },
+          orderBy: [{ year: "asc" }, { month: "asc" }],
+        },
+      },
+    });
+
+    let totalAdvanceHeld = 0;
+    const atRiskTenants: any[] = [];
+
+    for (const t of activeTenants) {
+      let txs = t.advanceTransactions;
+      if (txs.length === 0 && t.advanceDeposit > 0) {
+        txs = [{
+          type: "DEPOSIT_RECEIVED",
+          amount: t.advanceDeposit,
+        } as any];
+      }
+
+      // Compute advance balance
+      let advanceBal = 0;
+      for (const tx of txs) {
+        if (tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP") {
+          advanceBal += tx.amount;
+        } else if (tx.type === "ADJUSTED_TO_DUE" || tx.type === "DEDUCTION" || tx.type === "REFUND") {
+          advanceBal -= tx.amount;
+        }
+      }
+      advanceBal = Math.max(0, advanceBal);
+      totalAdvanceHeld += advanceBal;
+
+      // Evaluate risk
+      const unpaidBills = t.bills.map((b) => ({
+        month: b.month,
+        year: b.year,
+        dueAmount: b.dueAmount,
+      }));
+
+      const tenantDue = unpaidBills.reduce((acc, b) => acc + b.dueAmount, 0);
+
+      if (tenantDue > 0) {
+        const overdueMonthsCount = unpaidBills.length;
+        const ratio = advanceBal > 0 ? tenantDue / advanceBal : 9.99;
+
+        if (overdueMonthsCount >= 2 || ratio >= 0.8) {
+          const isCritical = overdueMonthsCount >= 3 || ratio >= 1.0;
+          atRiskTenants.push({
+            tenantId: t.id,
+            tenantName: t.name,
+            phone: t.phone,
+            shopId: t.shop.id,
+            shopNumber: t.shop.shopNumber,
+            floor: t.shop.floor,
+            marketId: t.shop.marketId,
+            marketName: t.shop.market.name,
+            rentAmount: t.rentAmount,
+            advanceBalance: advanceBal,
+            totalDue: tenantDue,
+            overdueMonthsCount,
+            dueToAdvanceRatio: Math.min(9.99, ratio),
+            riskLevel: isCritical ? "CRITICAL" : "WARNING",
+            eligibleForSettlement: isCritical,
+            unpaidBillsCount: unpaidBills.length,
+          });
+        }
+      }
+    }
+
+    // Sort atRiskTenants: CRITICAL first, then highest due
+    atRiskTenants.sort((a, b) => {
+      if (a.riskLevel !== b.riskLevel) {
+        return a.riskLevel === "CRITICAL" ? -1 : 1;
+      }
+      return b.totalDue - a.totalDue;
+    });
+
     return NextResponse.json({
       kpis: {
         expectedRent, // in paisa
@@ -216,7 +303,10 @@ export async function GET(req: Request) {
         partialShopsCount,
         dueShopsCount,
         totalBillsCount,
+        totalAdvanceHeld, // in paisa (Liability)
+        atRiskTenantsCount: atRiskTenants.length,
       },
+      atRiskTenants,
       dueShops,
       expensesByCategory,
       monthlyTrends,

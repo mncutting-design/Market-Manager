@@ -6,6 +6,8 @@ export interface MarketSummary {
   id: string;
   name: string;
   address: string | null;
+  notes?: string | null;
+  totalFloors?: number;
   totalShops: number;
   occupiedShops: number;
   vacantShops: number;

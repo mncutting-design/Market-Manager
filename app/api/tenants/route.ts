@@ -66,6 +66,19 @@ export async function POST(req: Request) {
         },
       });
 
+      // Create initial advance deposit transaction if advance > 0
+      if (advancePaisa > 0) {
+        await tx.advanceTransaction.create({
+          data: {
+            tenantId: newTenant.id,
+            type: "DEPOSIT_RECEIVED",
+            amount: advancePaisa,
+            reason: "Initial lease security deposit",
+            createdBy: "Admin",
+          },
+        });
+      }
+
       // Update shop status
       await tx.shop.update({
         where: { id: shopId },

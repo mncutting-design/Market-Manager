@@ -6,6 +6,7 @@ import { useApp } from "@/lib/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { toast } from "sonner";
@@ -107,30 +108,31 @@ export function AddExpenseModal() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Market Selection */}
-        <Select
+        <SearchableSelect
           label={t("expenses.market")}
           value={marketId}
-          onChange={(e) => setMarketId(e.target.value)}
-        >
-          {markets.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </Select>
+          onChange={(val) => setMarketId(val)}
+          options={markets.map((m) => ({
+            value: m.id,
+            label: m.name,
+            sublabel: m.address || undefined,
+          }))}
+          placeholder="Select market..."
+          searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search market..."}
+        />
 
         {/* Expense Category */}
-        <Select
+        <SearchableSelect
           label={t("expenses.category")}
           value={categoryId}
-          onChange={(e) => setCategoryId(e.target.value)}
-        >
-          {categories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {locale === "bn" ? c.name_bn || c.name_en : c.name_en || c.name_bn}
-            </option>
-          ))}
-        </Select>
+          onChange={(val) => setCategoryId(val)}
+          options={categories.map((c) => ({
+            value: c.id,
+            label: locale === "bn" ? c.name_bn || c.name_en : c.name_en || c.name_bn,
+          }))}
+          placeholder="Select category..."
+          searchPlaceholder={locale === "bn" ? "ক্যাটাগরি খুঁজুন..." : "Search category..."}
+        />
 
         {/* Amount */}
         <div>

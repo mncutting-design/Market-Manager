@@ -17,7 +17,9 @@ import {
   Download,
   Search,
   CheckCircle,
+  RotateCcw,
 } from "lucide-react";
+import { AdjustAdvanceModal } from "./modals/adjust-advance-modal";
 
 export function DuesView() {
   const { t, locale } = useTranslation();
@@ -26,26 +28,28 @@ export function DuesView() {
   const [duesData, setDuesData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [selectedAdjustTenant, setSelectedAdjustTenant] = useState<any | null>(null);
+
+  const fetchDues = async () => {
+    try {
+      setIsLoading(true);
+      const queryParams = new URLSearchParams();
+      if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
+      if (search) queryParams.set("search", search);
+
+      const res = await fetch(`/api/dues?${queryParams.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setDuesData(data);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchDues = async () => {
-      try {
-        setIsLoading(true);
-        const queryParams = new URLSearchParams();
-        if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
-        if (search) queryParams.set("search", search);
-
-        const res = await fetch(`/api/dues?${queryParams.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setDuesData(data);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchDues();
   }, [selectedMarketId, search, refreshKey]);
 
@@ -180,13 +184,21 @@ export function DuesView() {
             return (
               <Card
                 key={`${d.shopId}-${d.tenantId}`}
-                className="p-5 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-xs"
+                onClick={() =>
+                  openQuickCollect({
+                    marketId: d.marketId,
+                    shopId: d.shopId,
+                    billId: d.bills[0]?.id,
+                    dueAmount: d.totalDue,
+                  })
+                }
+                className="p-5 hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-md transition-all shadow-xs cursor-pointer group"
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   {/* Shop, Tenant and Aging Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-base font-bold text-slate-900 dark:text-slate-100">
+                      <span className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
                         {d.shopNumber}
                       </span>
                       <span className="text-xs text-slate-500">•</span>
@@ -240,6 +252,7 @@ export function DuesView() {
                       {/* Call */}
                       <a
                         href={`tel:${d.phone}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
                         title={t("tenants.call")}
                       >
@@ -249,6 +262,7 @@ export function DuesView() {
                       {/* WhatsApp */}
                       <a
                         href={`https://wa.me/${waNumber}?text=${reminderMessage}`}
+                        onClick={(e) => e.stopPropagation()}
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
@@ -260,25 +274,47 @@ export function DuesView() {
                       {/* SMS */}
                       <a
                         href={`sms:${d.phone}?body=${reminderMessage}`}
+                        onClick={(e) => e.stopPropagation()}
                         className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
                         title={t("tenants.sms")}
                       >
                         <Mail className="w-4 h-4 text-teal-600" />
                       </a>
 
+                      {/* Adjust from Advance */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-10 px-3 text-xs border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-700 dark:text-amber-300"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAdjustTenant({
+                            tenantId: d.tenantId,
+                            tenantName: d.tenantName,
+                            shopNumber: d.shopNumber,
+                            marketName: d.marketName,
+                            totalDue: d.totalDue,
+                          });
+                        }}
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                        {t("advance.adjustedToDue")}
+                      </Button>
+
                       {/* Collect Payment */}
                       <Button
                         size="sm"
                         variant="primary"
                         className="h-10 px-3 text-xs"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation();
                           openQuickCollect({
                             marketId: d.marketId,
                             shopId: d.shopId,
                             billId: d.bills[0]?.id,
                             dueAmount: d.totalDue,
-                          })
-                        }
+                          });
+                        }}
                       >
                         <Wallet className="w-3.5 h-3.5 mr-1" />
                         {t("dashboard.quickCollect")}
@@ -290,6 +326,22 @@ export function DuesView() {
             );
           })}
         </div>
+      )}
+
+      {/* Adjust from Advance Modal */}
+      {selectedAdjustTenant && (
+        <AdjustAdvanceModal
+          isOpen={!!selectedAdjustTenant}
+          onClose={() => setSelectedAdjustTenant(null)}
+          tenantId={selectedAdjustTenant.tenantId}
+          tenantName={selectedAdjustTenant.tenantName}
+          shopNumber={selectedAdjustTenant.shopNumber}
+          marketName={selectedAdjustTenant.marketName}
+          initialDueAmount={selectedAdjustTenant.totalDue}
+          onSuccess={() => {
+            fetchDues();
+          }}
+        />
       )}
     </div>
   );

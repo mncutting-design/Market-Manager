@@ -30,7 +30,13 @@ import {
   PlusCircle,
   CheckCircle,
   Layers,
+  RotateCcw,
+  DoorOpen,
+  ShieldAlert,
 } from "lucide-react";
+import { AdjustAdvanceModal } from "./modals/adjust-advance-modal";
+import { SettlementWizardModal } from "./modals/settlement-wizard-modal";
+import { TenantProfileModal } from "./modals/tenant-profile-modal";
 import {
   BarChart,
   Bar,
@@ -66,6 +72,9 @@ export function DashboardView() {
   const [data, setData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [selectedAdjustTenant, setSelectedAdjustTenant] = useState<any | null>(null);
+  const [activeSettlementTenantId, setActiveSettlementTenantId] = useState<string | null>(null);
+  const [activeProfileTenantId, setActiveProfileTenantId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -217,12 +226,15 @@ export function DashboardView() {
         </div>
       )}
 
-      {/* 6 Key Performance Indicators (KPI Cards) */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
+      {/* 7 Key Performance Indicators (KPI Cards) */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-3.5">
         {/* 1. Expected Rent */}
-        <Card className="hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+        <Card
+          onClick={() => setActiveTab("billing")}
+          className="hover:border-teal-500/60 dark:hover:border-teal-500/60 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white">
+            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
               {t("dashboard.expectedRent")}
             </CardDescription>
             <CardTitle className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white">
@@ -239,7 +251,10 @@ export function DashboardView() {
         </Card>
 
         {/* 2. Collected Rent */}
-        <Card className="border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400 transition-all">
+        <Card
+          onClick={() => setActiveTab("billing")}
+          className="border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
           <CardHeader className="p-4 pb-2">
             <CardDescription className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
               {t("dashboard.collectedRent")}
@@ -257,7 +272,10 @@ export function DashboardView() {
         </Card>
 
         {/* 3. Total Due */}
-        <Card className="border-red-200/80 dark:border-red-800/60 bg-red-50/30 dark:bg-red-950/20 hover:border-red-400 transition-all">
+        <Card
+          onClick={() => setActiveTab("dues")}
+          className="border-red-200/80 dark:border-red-800/60 bg-red-50/30 dark:bg-red-950/20 hover:border-red-400 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
           <CardHeader className="p-4 pb-2">
             <CardDescription className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
               {t("dashboard.totalDue")}
@@ -278,7 +296,10 @@ export function DashboardView() {
         </Card>
 
         {/* 4. Total Expense */}
-        <Card className="hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+        <Card
+          onClick={() => setActiveTab("expenses")}
+          className="hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
           <CardHeader className="p-4 pb-2">
             <CardDescription className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
               {t("dashboard.totalExpense")}
@@ -294,7 +315,10 @@ export function DashboardView() {
         </Card>
 
         {/* 5. Net Profit */}
-        <Card className="border-teal-200/80 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/30 hover:border-teal-400 transition-all">
+        <Card
+          onClick={() => setActiveTab("reports")}
+          className="border-teal-200/80 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/30 hover:border-teal-400 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
           <CardHeader className="p-4 pb-2">
             <CardDescription className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
               {t("dashboard.netProfit")}
@@ -310,9 +334,12 @@ export function DashboardView() {
         </Card>
 
         {/* 6. Collection Rate */}
-        <Card className="hover:border-slate-300 dark:hover:border-slate-600 transition-all">
+        <Card
+          onClick={() => setActiveTab("dues")}
+          className="hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
           <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white">
+            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
               {t("dashboard.collectionRate")}
             </CardDescription>
             <CardTitle className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white">
@@ -320,12 +347,36 @@ export function DashboardView() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 pt-0">
-            <div className="w-full bg-slate-200 dark:bg-slate-700 h-2.5 rounded-full overflow-hidden">
+            <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-teal-500 h-full rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(100, collectionPercent)}%` }}
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* 7. Total Advance Held (Liability) */}
+        <Card
+          onClick={() => setActiveTab("shops")}
+          className="hover:border-teal-400 border-teal-200/80 dark:border-teal-800/60 bg-teal-50/20 dark:bg-teal-950/20 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+        >
+          <CardHeader className="p-4 pb-2">
+            <div className="flex items-center justify-between">
+              <CardDescription className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+                {t("advance.advanceHeld")}
+              </CardDescription>
+              <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                Liability
+              </span>
+            </div>
+            <CardTitle className="text-lg md:text-xl font-extrabold text-teal-600 dark:text-teal-300">
+              {formatCurrency(kpis.totalAdvanceHeld || 0, locale)}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4 pt-0 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between font-medium">
+            <span className="truncate">{t("advance.title")}</span>
+            <Wallet className="w-4 h-4 text-teal-500" />
           </CardContent>
         </Card>
       </div>
@@ -391,7 +442,107 @@ export function DashboardView() {
       {/* Main Grid: Pending Dues & Expense Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pending Due Shops List (2 cols) */}
-        <div className="lg:col-span-2 space-y-3">
+        <div className="lg:col-span-2 space-y-4">
+          {/* At-Risk Tenants Alert Card */}
+          {data.atRiskTenants && data.atRiskTenants.length > 0 && (
+            <Card className="p-4 border-amber-300 dark:border-amber-800/70 bg-amber-50/50 dark:bg-amber-950/20 shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 rounded-lg bg-amber-100 dark:bg-amber-900/60 text-amber-700 dark:text-amber-400">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>{t("alerts.atRiskTitle")}</span>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-red-700 dark:bg-red-900/60 dark:text-red-300">
+                        {locale === "bn" ? toBanglaDigits(data.atRiskTenants.length) : data.atRiskTenants.length}
+                      </span>
+                    </h3>
+                    <p className="text-[11px] text-slate-600 dark:text-slate-300">
+                      {t("alerts.atRiskSubtitle")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {data.atRiskTenants.slice(0, 4).map((item: any) => (
+                  <div
+                    key={item.tenantId}
+                    onClick={() => setActiveProfileTenantId(item.tenantId)}
+                    className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-white dark:bg-slate-900/80 hover:border-amber-400 dark:hover:border-amber-500 cursor-pointer transition-all hover:shadow-xs group"
+                  >
+                    <div className="flex items-start justify-between gap-1 mb-1.5">
+                      <div>
+                        <p className="font-bold text-xs text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400">
+                          {item.tenantName}
+                        </p>
+                        <p className="text-[11px] text-slate-500">
+                          {item.shopNumber} ({item.marketName})
+                        </p>
+                      </div>
+                      <span
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                          item.riskLevel === "CRITICAL"
+                            ? "bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300"
+                            : "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300"
+                        }`}
+                      >
+                        {item.riskLevel === "CRITICAL" ? t("alerts.criticalBadge") : t("alerts.warningBadge")}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-1 text-[11px] py-1 border-t border-slate-100 dark:border-slate-800">
+                      <div>
+                        <span className="text-slate-500">{t("dashboard.totalDue")}: </span>
+                        <span className="font-bold text-red-600 dark:text-red-400">
+                          {formatCurrency(item.totalDue, locale)}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-slate-500">{t("advance.title")}: </span>
+                        <span className="font-bold text-teal-600 dark:text-teal-400">
+                          {formatCurrency(item.advanceBalance, locale)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="mt-2 pt-1.5 flex items-center justify-between gap-1.5">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px] px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedAdjustTenant({
+                            tenantId: item.tenantId,
+                            tenantName: item.tenantName,
+                            shopNumber: item.shopNumber,
+                            advanceBalance: item.advanceBalance,
+                            totalDue: item.totalDue,
+                          });
+                        }}
+                      >
+                        {t("alerts.adjustAction")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        className="h-7 text-[10px] px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveSettlementTenantId(item.tenantId);
+                        }}
+                      >
+                        {t("alerts.settleAction")}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <div className="flex items-center justify-between">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-red-500" />
@@ -406,12 +557,20 @@ export function DashboardView() {
             {dueShops.slice(0, 6).map((shop: any) => (
               <div
                 key={shop.billId}
-                className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-white dark:bg-[#182234] shadow-xs hover:border-slate-300 dark:hover:border-slate-600 transition-all flex flex-col justify-between"
+                onClick={() =>
+                  openQuickCollect({
+                    marketId: selectedMarketId !== "ALL" ? selectedMarketId : shop.marketId,
+                    shopId: shop.shopId,
+                    billId: shop.billId,
+                    dueAmount: shop.dueAmount,
+                  })
+                }
+                className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-white dark:bg-[#182234] shadow-xs hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-md transition-all flex flex-col justify-between cursor-pointer group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-extrabold text-base text-slate-900 dark:text-white">
+                      <p className="font-extrabold text-base text-slate-900 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
                         {shop.shopNumber}
                       </p>
                       <p className="text-xs text-slate-600 dark:text-white/90 truncate max-w-[170px] font-medium">{shop.marketName}</p>
@@ -437,6 +596,7 @@ export function DashboardView() {
                     {/* Call tenant */}
                     <a
                       href={`tel:${shop.phone}`}
+                      onClick={(e) => e.stopPropagation()}
                       className="p-1.5 rounded-lg text-slate-600 dark:text-white hover:text-teal-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                       title={t("tenants.call")}
                       aria-label="Call tenant"
@@ -448,14 +608,15 @@ export function DashboardView() {
                     <Button
                       size="sm"
                       variant="primary"
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         openQuickCollect({
                           marketId: selectedMarketId !== "ALL" ? selectedMarketId : undefined,
                           shopId: shop.shopId,
                           billId: shop.billId,
                           dueAmount: shop.dueAmount,
-                        })
-                      }
+                        });
+                      }}
                       className="h-8 px-2.5 text-xs font-bold"
                     >
                       {t("collections.quickCollect")}
@@ -621,6 +782,44 @@ export function DashboardView() {
             </div>
           </Card>
         </div>
+      )}
+
+      {/* Modals */}
+      {selectedAdjustTenant && (
+        <AdjustAdvanceModal
+          isOpen={!!selectedAdjustTenant}
+          onClose={() => setSelectedAdjustTenant(null)}
+          tenantId={selectedAdjustTenant.tenantId}
+          tenantName={selectedAdjustTenant.tenantName}
+          shopNumber={selectedAdjustTenant.shopNumber}
+          advanceBalance={selectedAdjustTenant.advanceBalance}
+          totalDue={selectedAdjustTenant.totalDue}
+          onSuccess={() => {
+            triggerRefresh();
+            setSelectedAdjustTenant(null);
+          }}
+        />
+      )}
+
+      {activeSettlementTenantId && (
+        <SettlementWizardModal
+          isOpen={!!activeSettlementTenantId}
+          onClose={() => setActiveSettlementTenantId(null)}
+          tenantId={activeSettlementTenantId}
+          onSettled={() => {
+            triggerRefresh();
+            setActiveSettlementTenantId(null);
+          }}
+        />
+      )}
+
+      {activeProfileTenantId && (
+        <TenantProfileModal
+          isOpen={!!activeProfileTenantId}
+          onClose={() => setActiveProfileTenantId(null)}
+          tenantId={activeProfileTenantId}
+          onUpdated={() => triggerRefresh()}
+        />
       )}
     </div>
   );

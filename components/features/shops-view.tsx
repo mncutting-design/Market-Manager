@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { StatusBadge } from "@/components/ui/badge";
 import { Dialog } from "@/components/ui/dialog";
 import { TableSkeleton } from "@/components/ui/skeleton";
@@ -23,12 +24,17 @@ import {
   CheckCircle2,
   Calendar,
   Layers,
+  Wallet,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { TenantProfileModal } from "./modals/tenant-profile-modal";
+import { SettlementWizardModal } from "./modals/settlement-wizard-modal";
+import { generateFloorOptions, formatFloorName } from "@/lib/floors";
 
 export function ShopsView() {
   const { t, locale } = useTranslation();
-  const { selectedMarketId, setSelectedMarketId, markets, refreshKey, triggerRefresh } = useApp();
+  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh } = useApp();
 
   const [shops, setShops] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,14 +47,45 @@ export function ShopsView() {
   const [isUpdateRentOpen, setIsUpdateRentOpen] = useState(false);
   const [isVacateConfirmOpen, setIsVacateConfirmOpen] = useState(false);
   const [selectedShop, setSelectedShop] = useState<any | null>(null);
+  const [activeProfileTenantId, setActiveProfileTenantId] = useState<string | null>(null);
+  const [activeSettlementTenantId, setActiveSettlementTenantId] = useState<string | null>(null);
 
   // Form States
   // 1. Add Shop Form
+  const [addShopMarketId, setAddShopMarketId] = useState<string>("");
   const [shopNumber, setShopNumber] = useState("");
   const [floor, setFloor] = useState("Ground");
+  const [customFloorName, setCustomFloorName] = useState("");
   const [size, setSize] = useState("180 sqft");
   const [defaultRentBDT, setDefaultRentBDT] = useState<number>(20000);
   const [isSubmittingShop, setIsSubmittingShop] = useState(false);
+
+  // Current market for Add Shop
+  const currentTargetMarket =
+    markets.find((m) => m.id === (addShopMarketId || selectedMarketId)) || markets[0];
+
+  const handleIncreaseMarketFloors = async () => {
+    if (!currentTargetMarket) return;
+    try {
+      const current = currentTargetMarket.totalFloors || 5;
+      const nextFloors = current + 1;
+      const res = await fetch("/api/markets", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: currentTargetMarket.id, totalFloors: nextFloors }),
+      });
+      if (res.ok) {
+        await refreshMarkets();
+        toast.success(
+          locale === "bn"
+            ? `${currentTargetMarket.name}-এর ফ্লোর সংখ্যা বাড়িয়ে ${toBanglaDigits(nextFloors)} তলা করা হয়েছে!`
+            : `${currentTargetMarket.name} floors increased to ${nextFloors}!`
+        );
+      }
+    } catch (e) {
+      toast.error("Failed to update market floors");
+    }
+  };
 
   // 2. Assign Tenant Form
   const [tenantName, setTenantName] = useState("");
@@ -95,11 +132,13 @@ export function ShopsView() {
       toast.error(t("validation.required"));
       return;
     }
-    const targetMarket = selectedMarketId !== "ALL" ? selectedMarketId : markets[0]?.id;
-    if (!targetMarket) {
+    const targetMarketId = addShopMarketId || (selectedMarketId !== "ALL" ? selectedMarketId : markets[0]?.id);
+    if (!targetMarketId) {
       toast.error("Please select a market first");
       return;
     }
+
+    const finalFloor = floor === "CUSTOM" ? (customFloorName.trim() || "Ground") : floor;
 
     try {
       setIsSubmittingShop(true);
@@ -107,9 +146,9 @@ export function ShopsView() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          marketId: targetMarket,
-          shopNumber,
-          floor,
+          marketId: targetMarketId,
+          shopNumber: shopNumber.trim(),
+          floor: finalFloor,
           size,
           defaultRent: Math.round(defaultRentBDT * 100),
         }),
@@ -125,6 +164,7 @@ export function ShopsView() {
       triggerRefresh();
       setIsAddShopOpen(false);
       setShopNumber("");
+      setCustomFloorName("");
     } catch (e) {
       toast.error("Failed to create shop");
     } finally {
@@ -302,14 +342,26 @@ export function ShopsView() {
           {shops.map((shop) => (
             <Card
               key={shop.id}
-              className="p-5 flex flex-col justify-between hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-xs"
+              onClick={() => {
+                if (shop.status === "OCCUPIED" && shop.tenant) {
+                  setActiveProfileTenantId(shop.tenant.id);
+                } else {
+                  setSelectedShop(shop);
+                  setAgreedRentBDT(Math.round(shop.defaultRent / 100));
+                  setAdvanceDepositBDT(Math.round((shop.defaultRent * 3) / 100));
+                  setIsAssignTenantOpen(true);
+                }
+              }}
+              className="p-5 flex flex-col justify-between hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-lg transition-all shadow-xs cursor-pointer group"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex items-center gap-2">
                       <span>{shop.shopNumber}</span>
-                      <span className="text-xs font-normal text-slate-500">({shop.floor})</span>
+                      <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+                        ({formatFloorName(shop.floor, locale)})
+                      </span>
                     </h3>
                     <p className="text-xs text-slate-500 truncate max-w-[200px]">{shop.marketName}</p>
                   </div>
@@ -330,6 +382,7 @@ export function ShopsView() {
                         <span className="text-slate-500">{t("tenants.phone")}:</span>
                         <a
                           href={`tel:${shop.tenant.phone}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="font-mono text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
                         >
                           <Phone className="w-3 h-3" />
@@ -359,7 +412,8 @@ export function ShopsView() {
                   size="sm"
                   variant="outline"
                   className="text-xs h-8 px-2"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedShop(shop);
                     setNewRentBDT(Math.round(shop.currentRent / 100));
                     setIsUpdateRentOpen(true);
@@ -375,7 +429,8 @@ export function ShopsView() {
                     size="sm"
                     variant="primary"
                     className="text-xs h-8 px-2.5"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setSelectedShop(shop);
                       setAgreedRentBDT(Math.round(shop.defaultRent / 100));
                       setAdvanceDepositBDT(Math.round((shop.defaultRent * 3) / 100));
@@ -386,18 +441,37 @@ export function ShopsView() {
                     {t("shops.assignTenant")}
                   </Button>
                 ) : (
-                  <Button
-                    size="sm"
-                    variant="destructive"
-                    className="text-xs h-8 px-2.5"
-                    onClick={() => {
-                      setSelectedShop(shop);
-                      setIsVacateConfirmOpen(true);
-                    }}
-                  >
-                    <UserX className="w-3.5 h-3.5 mr-1" />
-                    {t("shops.vacateTenant")}
-                  </Button>
+                  <div className="flex items-center gap-1.5">
+                    {/* Advance Ledger Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-8 px-2 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveProfileTenantId(shop.tenant.id);
+                      }}
+                      title={t("advance.title")}
+                    >
+                      <Wallet className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                      <span>{t("advance.title")}</span>
+                    </Button>
+
+                    {/* Settle & Vacate Button */}
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="text-xs h-8 px-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveSettlementTenantId(shop.tenant.id);
+                      }}
+                      title={t("settlement.settleAndVacate")}
+                    >
+                      <UserX className="w-3.5 h-3.5 mr-1" />
+                      <span>{t("settlement.settleAndVacate")}</span>
+                    </Button>
+                  </div>
                 )}
               </div>
             </Card>
@@ -413,9 +487,26 @@ export function ShopsView() {
         maxWidth="md"
       >
         <form onSubmit={handleAddShop} className="space-y-4">
+          {/* Market Selection */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              {t("markets.title")}
+            </label>
+            <SearchableSelect
+              options={markets.map((m) => ({
+                value: m.id,
+                label: m.name,
+                sublabel: `${locale === "bn" ? toBanglaDigits(m.totalFloors || 5) : (m.totalFloors || 5)} ${locale === "bn" ? "তলা ভবন" : "Floors"}`,
+              }))}
+              value={addShopMarketId || (selectedMarketId !== "ALL" ? selectedMarketId : markets[0]?.id || "")}
+              onChange={(val) => setAddShopMarketId(val)}
+              placeholder="Select market..."
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                 {t("shops.shopNumber")}
               </label>
               <Input
@@ -426,21 +517,54 @@ export function ShopsView() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                {t("shops.floor")}
-              </label>
-              <Select value={floor} onChange={(e) => setFloor(e.target.value)}>
-                <option value="Ground">{t("shops.groundFloor")}</option>
-                <option value="1st Floor">{t("shops.firstFloor")}</option>
-                <option value="2nd Floor">{t("shops.secondFloor")}</option>
-                <option value="3rd Floor">{t("shops.thirdFloor")}</option>
-              </Select>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  {t("shops.floor")}
+                </label>
+                <button
+                  type="button"
+                  onClick={handleIncreaseMarketFloors}
+                  className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  title="Increase floor limit in market"
+                >
+                  <Plus className="w-3 h-3" />
+                  <span>{locale === "bn" ? "+ তলা বাড়ান" : "+ Floor"}</span>
+                </button>
+              </div>
+              <SearchableSelect
+                options={generateFloorOptions(currentTargetMarket?.totalFloors || 5, locale, true)}
+                value={floor}
+                onChange={(val) => setFloor(val)}
+                placeholder="Select floor..."
+                searchPlaceholder={locale === "bn" ? "ফ্লোর খুঁজুন..." : "Search floor..."}
+                extraAction={{
+                  label: locale === "bn"
+                    ? `+ ${currentTargetMarket?.name || "মার্কেট"}-এর ফ্লোর সংখ্যা বাড়ান`
+                    : `+ Increase ${currentTargetMarket?.name || "Market"} Floors`,
+                  onClick: handleIncreaseMarketFloors,
+                }}
+              />
             </div>
           </div>
 
+          {floor === "CUSTOM" && (
+            <div className="p-3 rounded-lg bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
+              <label className="block text-xs font-bold text-teal-700 dark:text-teal-300 mb-1">
+                {t("shops.customFloor")}
+              </label>
+              <Input
+                value={customFloorName}
+                onChange={(e) => setCustomFloorName(e.target.value)}
+                placeholder={t("shops.customFloorPlaceholder")}
+                required
+                autoFocus
+              />
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                 {t("shops.size")}
               </label>
               <Input
@@ -450,7 +574,7 @@ export function ShopsView() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                 {t("shops.defaultRent")} (৳)
               </label>
               <NumberInput
@@ -627,33 +751,24 @@ export function ShopsView() {
         </Dialog>
       )}
 
-      {/* Vacate Tenant Confirmation Dialog */}
-      {selectedShop && (
-        <Dialog
-          isOpen={isVacateConfirmOpen}
-          onClose={() => setIsVacateConfirmOpen(false)}
-          title={t("shops.vacateConfirmTitle")}
-          maxWidth="sm"
-        >
-          <div className="space-y-4">
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              {t("shops.vacateConfirmDesc", {
-                shop: selectedShop.shopNumber,
-                tenant: selectedShop.tenant?.name || "",
-              })}
-            </p>
+      {/* Tenant Profile & Advance Ledger Modal */}
+      {activeProfileTenantId && (
+        <TenantProfileModal
+          isOpen={!!activeProfileTenantId}
+          onClose={() => setActiveProfileTenantId(null)}
+          tenantId={activeProfileTenantId}
+          onRefreshNeeded={() => triggerRefresh()}
+        />
+      )}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="outline" onClick={() => setIsVacateConfirmOpen(false)}>
-                {t("common.cancel")}
-              </Button>
-              <Button variant="destructive" onClick={handleVacate}>
-                <UserX className="w-4 h-4 mr-1.5" />
-                {t("shops.vacateTenant")}
-              </Button>
-            </div>
-          </div>
-        </Dialog>
+      {/* Settle & Vacate Wizard Modal */}
+      {activeSettlementTenantId && (
+        <SettlementWizardModal
+          isOpen={!!activeSettlementTenantId}
+          onClose={() => setActiveSettlementTenantId(null)}
+          tenantId={activeSettlementTenantId}
+          onSettlementComplete={() => triggerRefresh()}
+        />
       )}
     </div>
   );

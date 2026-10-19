@@ -8,7 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { formatCurrency, toBanglaDigits } from "@/lib/format";
+import { formatFloorName } from "@/lib/floors";
 import { toast } from "sonner";
 import { Wallet, CheckCircle2 } from "lucide-react";
 
@@ -160,34 +162,33 @@ export function QuickCollectModal() {
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Select Market */}
-        <Select
+        <SearchableSelect
           label={t("collections.selectMarket")}
           value={marketId}
-          onChange={(e) => setMarketId(e.target.value)}
-        >
-          {markets.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </Select>
+          onChange={(val) => setMarketId(val)}
+          options={markets.map((m) => ({
+            value: m.id,
+            label: m.name,
+            sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
+          }))}
+          placeholder={t("collections.selectMarket")}
+          searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search market..."}
+        />
 
         {/* Select Shop & Tenant */}
-        <Select
+        <SearchableSelect
           label={t("collections.selectShop")}
           value={selectedShopId}
-          onChange={(e) => setSelectedShopId(e.target.value)}
-        >
-          {shops.length === 0 ? (
-            <option value="">{t("common.noData")}</option>
-          ) : (
-            shops.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.shopNumber} - {s.tenant?.name || "No tenant"} ({s.floor})
-              </option>
-            ))
-          )}
-        </Select>
+          onChange={(val) => setSelectedShopId(val)}
+          options={shops.map((s) => ({
+            value: s.id,
+            label: `${s.shopNumber} - ${s.tenant?.name || (locale === "bn" ? "কোনো ভাড়াটিয়া নেই" : "No tenant")}`,
+            sublabel: `${formatFloorName(s.floor, locale)}${s.tenant?.phone ? ` • ${s.tenant.phone}` : ""}`,
+          }))}
+          placeholder={t("collections.selectShop")}
+          searchPlaceholder={locale === "bn" ? "দোকান বা ভাড়াটিয়া খুঁজুন..." : "Search shop or tenant..."}
+          disabled={shops.length === 0}
+        />
 
         {/* Invoice Summary Card */}
         {activeBill ? (

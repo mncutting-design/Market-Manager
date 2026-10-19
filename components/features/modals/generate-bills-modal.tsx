@@ -6,6 +6,7 @@ import { useApp } from "@/lib/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { Input } from "@/components/ui/input";
 import { formatMonth, getMonthList, toBanglaDigits } from "@/lib/format";
 import { toast } from "sonner";
@@ -92,18 +93,21 @@ export function GenerateBillsModal() {
     >
       <form onSubmit={handleGenerate} className="space-y-4">
         {/* Select Market */}
-        <Select
+        <SearchableSelect
           label={t("collections.selectMarket")}
           value={marketId}
-          onChange={(e) => setMarketId(e.target.value)}
-        >
-          <option value="ALL">{t("common.allMarkets")}</option>
-          {markets.map((m) => (
-            <option key={m.id} value={m.id}>
-              {m.name}
-            </option>
-          ))}
-        </Select>
+          onChange={(val) => setMarketId(val)}
+          options={[
+            { value: "ALL", label: t("common.allMarkets") },
+            ...markets.map((m) => ({
+              value: m.id,
+              label: m.name,
+              sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
+            })),
+          ]}
+          placeholder="Select market..."
+          searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search market..."}
+        />
 
         {/* Month & Year Selectors */}
         <div className="grid grid-cols-2 gap-3">

@@ -54,6 +54,7 @@ export async function GET(req: Request) {
         name: m.name,
         address: m.address,
         notes: m.notes,
+        totalFloors: m.totalFloors || 5,
         isActive: m.isActive,
         totalShops,
         occupiedShops,
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { name, address, notes } = body;
+    const { name, address, notes, totalFloors } = body;
 
     if (!name || name.trim() === "") {
       return NextResponse.json({ error: "Market name is required" }, { status: 400 });
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
         name: name.trim(),
         address: address?.trim() || null,
         notes: notes?.trim() || null,
+        totalFloors: Number(totalFloors) > 0 ? Number(totalFloors) : 5,
       },
     });
 
@@ -96,7 +98,7 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, name, address, notes, isActive } = body;
+    const { id, name, address, notes, totalFloors, isActive } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Market ID is required" }, { status: 400 });
@@ -108,6 +110,7 @@ export async function PUT(req: Request) {
         ...(name !== undefined && { name: name.trim() }),
         ...(address !== undefined && { address: address?.trim() || null }),
         ...(notes !== undefined && { notes: notes?.trim() || null }),
+        ...(totalFloors !== undefined && { totalFloors: Number(totalFloors) > 0 ? Number(totalFloors) : 5 }),
         ...(isActive !== undefined && { isActive }),
       },
     });

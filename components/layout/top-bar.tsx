@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   FolderArchive,
 } from "lucide-react";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const { t, locale, toggleLocale } = useTranslation();
@@ -111,22 +112,22 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         {/* 2. CENTER POSITION: Market, Month & Year Selectors */}
         <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-3 flex-1 px-1 sm:px-2 max-w-2xl mx-auto">
           {/* Market selector */}
-          <div className="relative flex-1 max-w-[130px] sm:max-w-[180px] md:max-w-[220px]">
-            <select
+          <div className="flex-1 max-w-[130px] sm:max-w-[190px] md:max-w-[230px]">
+            <SearchableSelect
               value={selectedMarketId}
-              onChange={(e) => setSelectedMarketId(e.target.value)}
-              aria-label={t("dashboard.selectMarket")}
-              className="w-full h-10 pl-7 md:pl-8 pr-6 md:pr-8 text-xs md:text-sm font-semibold bg-slate-100 dark:bg-[#182234] border border-slate-300 dark:border-[#2d3b52] rounded-xl text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer truncate shadow-xs"
-            >
-              <option value="ALL">{t("common.allMarkets")}</option>
-              {markets.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-            <Layers className="w-4 h-4 text-slate-500 dark:text-teal-400 absolute left-2 md:left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-white absolute right-2 md:right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              onChange={(val) => setSelectedMarketId(val || "ALL")}
+              options={[
+                { value: "ALL", label: t("common.allMarkets") },
+                ...markets.map((m) => ({
+                  value: m.id,
+                  label: m.name,
+                  sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
+                })),
+              ]}
+              placeholder={t("dashboard.selectMarket")}
+              searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search..."}
+              buttonClassName="h-10 text-xs md:text-sm font-semibold rounded-xl bg-slate-100 dark:bg-[#182234] border-slate-300 dark:border-[#2d3b52] shadow-xs"
+            />
           </div>
 
           {/* Month selector */}

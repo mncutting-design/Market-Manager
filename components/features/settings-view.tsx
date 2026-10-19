@@ -7,8 +7,10 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Settings, Shield, KeyRound, Download, Languages, CheckCircle2, FolderArchive } from "lucide-react";
+import { Settings, Shield, KeyRound, Download, Languages, CheckCircle2, FolderArchive, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import { TenantPolicyCard } from "./settings/tenant-policy-card";
+import { AuditLogsCard } from "./settings/audit-logs-card";
 
 export function SettingsView() {
   const { t, locale, setLocale } = useTranslation();
@@ -238,7 +240,13 @@ export function SettingsView() {
         </CardContent>
       </Card>
 
-      {/* 5. Download Full Project ZIP */}
+      {/* 5. Tenant Policy Configuration */}
+      <TenantPolicyCard />
+
+      {/* 6. Security Audit Trail */}
+      <AuditLogsCard />
+
+      {/* 7. Download Full Project ZIP */}
       <Card className="p-6 border-teal-300 dark:border-teal-600 bg-gradient-to-br from-teal-500/10 via-transparent to-transparent">
         <CardHeader className="p-0 pb-2">
           <CardTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">

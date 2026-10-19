@@ -58,6 +58,10 @@ export async function GET(req: Request) {
               bills: {
                 where: { year },
               },
+              tenants: {
+                where: { isActive: true },
+                include: { advanceTransactions: true },
+              },
             },
           },
           expenses: {
@@ -80,6 +84,19 @@ export async function GET(req: Request) {
         const netProfit = totalCollected - totalExpenses;
         const collectionRate = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
 
+        // Advance held is a LIABILITY, never recognized as revenue or profit
+        let advanceLiability = 0;
+        for (const shop of m.shops) {
+          for (const t of (shop as any).tenants || []) {
+            let bal = 0;
+            for (const tx of t.advanceTransactions || []) {
+              if (tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP") bal += tx.amount;
+              else if (tx.type === "ADJUSTED_TO_DUE" || tx.type === "DEDUCTION" || tx.type === "REFUND") bal -= tx.amount;
+            }
+            advanceLiability += Math.max(0, bal);
+          }
+        }
+
         return {
           marketId: m.id,
           marketName: m.name,
@@ -90,10 +107,99 @@ export async function GET(req: Request) {
           totalExpenses,
           netProfit,
           collectionRate,
+          advanceLiability, // Liability line item!
         };
       });
 
       return NextResponse.json({ reportType, rows });
+    }
+
+    // 2b. Settlements Report
+    if (reportType === "settlements") {
+      const settlementWhere: any = {};
+      if (marketId !== "ALL") {
+        settlementWhere.shop = { marketId };
+      }
+
+      const settlements = await prisma.settlement.findMany({
+        where: settlementWhere,
+        include: {
+          tenant: true,
+          shop: { include: { market: true } },
+        },
+        orderBy: { settledAt: "desc" },
+      });
+
+      const rows = settlements.map((s) => ({
+        id: s.id,
+        settledAt: s.settledAt,
+        marketName: s.shop.market.name,
+        shopNumber: s.shop.shopNumber,
+        floor: s.shop.floor,
+        tenantName: s.tenant.name,
+        phone: s.tenant.phone,
+        totalDue: s.totalDue,
+        advanceBalance: s.advanceBalance,
+        totalDeductions: s.totalDeductions,
+        refundAmount: s.refundAmount,
+        unrecoveredAmount: s.unrecoveredAmount,
+        status: s.status,
+        confirmedBy: s.confirmedBy,
+        notes: s.notes,
+      }));
+
+      const totalRefunded = rows.reduce((acc, r) => acc + r.refundAmount, 0);
+      const totalUnrecovered = rows.reduce((acc, r) => acc + r.unrecoveredAmount, 0);
+
+      return NextResponse.json({
+        reportType,
+        totalRefunded,
+        totalUnrecovered,
+        rows,
+      });
+    }
+
+    // 2c. Unrecovered Receivables Report
+    if (reportType === "unrecovered_receivables") {
+      const settlementWhere: any = {
+        unrecoveredAmount: { gt: 0 },
+      };
+      if (marketId !== "ALL") {
+        settlementWhere.shop = { marketId };
+      }
+
+      const settlements = await prisma.settlement.findMany({
+        where: settlementWhere,
+        include: {
+          tenant: true,
+          shop: { include: { market: true } },
+        },
+        orderBy: { unrecoveredAmount: "desc" },
+      });
+
+      const rows = settlements.map((s) => ({
+        id: s.id,
+        settledAt: s.settledAt,
+        marketName: s.shop.market.name,
+        shopNumber: s.shop.shopNumber,
+        floor: s.shop.floor,
+        tenantName: s.tenant.name,
+        phone: s.tenant.phone,
+        totalDue: s.totalDue,
+        advanceBalance: s.advanceBalance,
+        totalDeductions: s.totalDeductions,
+        unrecoveredAmount: s.unrecoveredAmount,
+        notes: s.notes,
+        confirmedBy: s.confirmedBy,
+      }));
+
+      const totalUnrecovered = rows.reduce((acc, r) => acc + r.unrecoveredAmount, 0);
+
+      return NextResponse.json({
+        reportType,
+        totalUnrecovered,
+        rows,
+      });
     }
 
     // 3. Category-wise Expense Report

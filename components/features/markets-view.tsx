@@ -7,8 +7,9 @@ import { formatCurrency, formatPercent, toBanglaDigits } from "@/lib/format";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Dialog } from "@/components/ui/dialog";
-import { Building2, Plus, Edit, Store, Users, CheckCircle2, MapPin } from "lucide-react";
+import { Building2, Plus, Edit, Store, Users, CheckCircle2, MapPin, Layers } from "lucide-react";
 import { toast } from "sonner";
 
 export function MarketsView() {
@@ -20,6 +21,7 @@ export function MarketsView() {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
+  const [totalFloors, setTotalFloors] = useState<number>(5);
   const [isSaving, setIsSaving] = useState(false);
 
   const openAdd = () => {
@@ -27,6 +29,7 @@ export function MarketsView() {
     setName("");
     setAddress("");
     setNotes("");
+    setTotalFloors(5);
     setIsModalOpen(true);
   };
 
@@ -35,6 +38,7 @@ export function MarketsView() {
     setName(m.name);
     setAddress(m.address || "");
     setNotes(m.notes || "");
+    setTotalFloors(m.totalFloors || 5);
     setIsModalOpen(true);
   };
 
@@ -54,6 +58,7 @@ export function MarketsView() {
         name,
         address,
         notes,
+        totalFloors: Number(totalFloors) > 0 ? Number(totalFloors) : 5,
       };
 
       const res = await fetch(url, {
@@ -101,28 +106,46 @@ export function MarketsView() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {markets.map((m) => {
           const occupancyRate = m.totalShops > 0 ? (m.occupiedShops / m.totalShops) * 100 : 0;
+          const floors = m.totalFloors || 5;
 
           return (
             <Card
               key={m.id}
-              className="flex flex-col justify-between hover:shadow-md hover:border-slate-300 dark:hover:border-slate-700 transition-all"
+              onClick={() => {
+                setSelectedMarketId(m.id);
+                setActiveTab("shops");
+              }}
+              className="flex flex-col justify-between hover:shadow-lg hover:border-teal-500/60 dark:hover:border-teal-500/60 transition-all cursor-pointer group"
             >
               <CardHeader className="p-5 pb-3">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1">
-                    <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
                       {m.name}
                     </CardTitle>
-                    {m.address && (
-                      <p className="text-xs text-slate-500 flex items-center gap-1 mt-1">
-                        <MapPin className="w-3.5 h-3.5 shrink-0" />
-                        <span className="truncate">{m.address}</span>
-                      </p>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                      {m.address && (
+                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                          <MapPin className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate max-w-[170px]">{m.address}</span>
+                        </p>
+                      )}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                        <Layers className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                        <span>
+                          {locale === "bn"
+                            ? `${toBanglaDigits(floors)} তলা ভবন`
+                            : `${floors} Floors`}
+                        </span>
+                      </span>
+                    </div>
                   </div>
                   <button
-                    onClick={() => openEdit(m)}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEdit(m);
+                    }}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                     title={t("common.edit")}
                   >
                     <Edit className="w-4 h-4" />
@@ -183,7 +206,8 @@ export function MarketsView() {
                   size="sm"
                   variant="outline"
                   className="w-full text-xs"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedMarketId(m.id);
                     setActiveTab("shops");
                   }}
@@ -195,7 +219,8 @@ export function MarketsView() {
                   size="sm"
                   variant="outline"
                   className="w-full text-xs"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setSelectedMarketId(m.id);
                     setActiveTab("billing");
                   }}
@@ -226,6 +251,29 @@ export function MarketsView() {
               placeholder="e.g. গুলশান প্লাজা শপিং কমপ্লেক্স"
               required
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              {t("markets.totalFloors")}
+            </label>
+            <div className="flex items-center gap-2">
+              <div className="flex-1">
+                <NumberInput
+                  value={totalFloors}
+                  onChange={(val) => setTotalFloors(Math.max(1, Math.min(100, Math.round(val || 1))))}
+                  placeholder="5"
+                />
+              </div>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200 px-3 py-2.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shrink-0">
+                {locale === "bn" ? `${toBanglaDigits(totalFloors)} তলা` : `${totalFloors} Floors`}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
+              {locale === "bn"
+                ? "এই মার্কেটে কয়টি তলা আছে নির্ধারণ করুন (যেমনঃ ৫, ১০ বা তদূর্ধ্ব)। দোকান যোগ করার সময় স্বয়ংক্রিয়ভাবে ফ্লোর তালিকা তৈরি হবে।"
+                : "Set the total number of floors. Floor dropdowns will automatically generate options up to this level."}
+            </p>
           </div>
 
           <div>

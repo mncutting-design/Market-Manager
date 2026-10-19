@@ -7,6 +7,7 @@ import { formatCurrency, formatDate, toBanglaDigits, formatMonth, formatPercent 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { StatusBadge } from "@/components/ui/badge";
 import { TableSkeleton } from "@/components/ui/skeleton";
 import {
@@ -18,8 +19,11 @@ import {
   Users,
   Building2,
   TrendingUp,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { formatFloorName } from "@/lib/floors";
 
 export function ReportsView() {
   const { t, locale } = useTranslation();
@@ -106,14 +110,32 @@ export function ReportsView() {
         [t("expenses.amount")]: Math.round(r.totalAmount / 100),
         "Percentage (%)": Math.round(r.percentage),
       }));
-    } else if (reportType === "tenant_ledger" && data.transactions) {
-      fileName = `tenant-ledger-${data.tenant?.name || "statement"}`;
-      sheetData = data.transactions.map((tr: any) => ({
-        [t("common.date")]: formatDate(tr.date, locale),
-        [t("common.details")]: tr.description,
-        Debit: Math.round(tr.debit / 100),
-        Credit: Math.round(tr.credit / 100),
-        Balance: Math.round(tr.balance / 100),
+    } else if (reportType === "settlements" && data.rows) {
+      fileName = `settlements-report-${reportYear}`;
+      sheetData = data.rows.map((s: any) => ({
+        [t("common.date")]: formatDate(s.settledAt, locale),
+        [t("markets.marketName")]: s.marketName,
+        [t("shops.shopNumber")]: s.shopNumber,
+        [t("tenants.tenantName")]: s.tenantName,
+        [t("tenants.phone")]: s.phone,
+        [t("advance.advanceHeld")]: Math.round(s.advanceBalance / 100),
+        [t("dashboard.totalDue")]: Math.round(s.totalDue / 100),
+        "Deductions": Math.round(s.totalDeductions / 100),
+        "Unrecovered Receivable": Math.round(s.unrecoveredAmount / 100),
+        "Refund Amount": Math.round(s.refundAmount / 100),
+        "Confirmed By": s.confirmedBy,
+      }));
+    } else if (reportType === "unrecovered_receivables" && data.rows) {
+      fileName = `unrecovered-receivables-${reportYear}`;
+      sheetData = data.rows.map((u: any) => ({
+        [t("markets.marketName")]: u.marketName,
+        [t("shops.shopNumber")]: u.shopNumber,
+        [t("tenants.tenantName")]: u.tenantName,
+        [t("tenants.phone")]: u.phone,
+        [t("dashboard.totalDue")]: Math.round(u.totalDue / 100),
+        [t("advance.advanceHeld")]: Math.round(u.advanceBalance / 100),
+        "Unrecovered Loss (BDT)": Math.round(u.unrecoveredAmount / 100),
+        [t("common.date")]: formatDate(u.settledAt, locale),
       }));
     }
 
@@ -161,6 +183,8 @@ export function ReportsView() {
           { id: "market_pnl", labelKey: "reports.marketProfitLoss" },
           { id: "expense_by_category", labelKey: "reports.expenseByCategory" },
           { id: "tenant_ledger", labelKey: "reports.tenantLedger" },
+          { id: "settlements", labelKey: "reports.settlements" },
+          { id: "unrecovered_receivables", labelKey: "reports.unrecoveredReceivables" },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -179,18 +203,21 @@ export function ReportsView() {
       {/* Filter Bar (Conditional on report type) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 no-print">
         {reportType !== "tenant_ledger" && (
-          <Select
+          <SearchableSelect
             label={t("collections.selectMarket")}
             value={marketFilter}
-            onChange={(e) => setMarketFilter(e.target.value)}
-          >
-            <option value="ALL">{t("common.allMarkets")}</option>
-            {markets.map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-          </Select>
+            onChange={(val) => setMarketFilter(val || "ALL")}
+            options={[
+              { value: "ALL", label: t("common.allMarkets") },
+              ...markets.map((m) => ({
+                value: m.id,
+                label: m.name,
+                sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
+              })),
+            ]}
+            placeholder="Select market..."
+            searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search market..."}
+          />
         )}
 
         {reportType === "monthly_collection" && (
@@ -211,17 +238,18 @@ export function ReportsView() {
         )}
 
         {reportType === "tenant_ledger" && (
-          <Select
+          <SearchableSelect
             label={t("tenants.tenantName")}
             value={tenantId}
-            onChange={(e) => setTenantId(e.target.value)}
-          >
-            {availableTenants.map((ten) => (
-              <option key={ten.id} value={ten.id}>
-                {ten.name} ({ten.shopNumber} - {ten.marketName})
-              </option>
-            ))}
-          </Select>
+            onChange={(val) => setTenantId(val)}
+            options={availableTenants.map((ten) => ({
+              value: ten.id,
+              label: `${ten.name} (${ten.shopNumber})`,
+              sublabel: `${ten.marketName} • ${ten.phone}`,
+            }))}
+            placeholder="Select tenant..."
+            searchPlaceholder={locale === "bn" ? "ভাড়াটিয়া বা দোকান খুঁজুন..." : "Search tenant..."}
+          />
         )}
 
         <Select
@@ -446,6 +474,145 @@ export function ReportsView() {
                           <td className="p-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
                             {formatCurrency(tr.balance, locale)}
                           </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* 5. Settlements Report */}
+          {reportType === "settlements" && data.rows && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Card className="p-4 bg-purple-50/50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800">
+                  <p className="text-xs text-purple-700 dark:text-purple-300 font-semibold uppercase">{t("settlement.totalRefunds")}</p>
+                  <p className="text-xl font-bold text-purple-700 dark:text-purple-300 mt-1">
+                    {formatCurrency(data.totalRefunded || 0, locale)}
+                  </p>
+                </Card>
+                <Card className="p-4 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
+                  <p className="text-xs text-red-700 dark:text-red-300 font-semibold uppercase">{t("settlement.unrecoveredReceivables")}</p>
+                  <p className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+                    {formatCurrency(data.totalUnrecovered || 0, locale)}
+                  </p>
+                </Card>
+              </div>
+
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs md:text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                        <th className="p-3.5">{t("common.date")}</th>
+                        <th className="p-3.5">{t("shops.shopNumber")}</th>
+                        <th className="p-3.5">{t("tenants.tenantName")}</th>
+                        <th className="p-3.5 text-right">{t("advance.advanceHeld")}</th>
+                        <th className="p-3.5 text-right">{t("dashboard.totalDue")}</th>
+                        <th className="p-3.5 text-right">{t("settlement.deductions")}</th>
+                        <th className="p-3.5 text-right">{t("settlement.finalOutcome")}</th>
+                        <th className="p-3.5 text-right">Confirmed By</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {data.rows.map((row: any) => (
+                        <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="p-3.5 font-mono text-slate-500">{formatDate(row.settledAt, locale)}</td>
+                          <td className="p-3.5 font-bold text-slate-900 dark:text-white">
+                            {row.shopNumber} ({row.marketName})
+                          </td>
+                          <td className="p-3.5 font-medium">
+                            <p>{row.tenantName}</p>
+                            <p className="text-[11px] text-slate-400 font-mono">{row.phone}</p>
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-teal-600 dark:text-teal-400">
+                            {formatCurrency(row.advanceBalance, locale)}
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-red-600 dark:text-red-400">
+                            {formatCurrency(row.totalDue, locale)}
+                          </td>
+                          <td className="p-3.5 text-right text-slate-500">
+                            {row.totalDeductions > 0 ? formatCurrency(row.totalDeductions, locale) : "—"}
+                          </td>
+                          <td className="p-3.5 text-right font-bold">
+                            {row.refundAmount > 0 ? (
+                              <span className="text-emerald-600 dark:text-emerald-400">
+                                Refund: {formatCurrency(row.refundAmount, locale)}
+                              </span>
+                            ) : row.unrecoveredAmount > 0 ? (
+                              <span className="text-red-600 dark:text-red-400">
+                                Unrecovered: {formatCurrency(row.unrecoveredAmount, locale)}
+                              </span>
+                            ) : (
+                              <span className="text-slate-500">Exact Match</span>
+                            )}
+                          </td>
+                          <td className="p-3.5 text-right text-slate-500 text-xs">{row.confirmedBy}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </div>
+          )}
+
+          {/* 6. Unrecovered Receivables Report */}
+          {reportType === "unrecovered_receivables" && data.rows && (
+            <div className="space-y-4">
+              <Card className="p-5 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800 flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5" />
+                    <span>{t("settlement.unrecoveredReceivables")}</span>
+                  </h3>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                    Total unpaid rent loss after advance adjustment and vacating
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-slate-500">Total Unrecovered</p>
+                  <p className="text-2xl font-extrabold text-red-600 dark:text-red-400">
+                    {formatCurrency(data.totalUnrecovered || 0, locale)}
+                  </p>
+                </div>
+              </Card>
+
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs md:text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                        <th className="p-3.5">{t("shops.shopNumber")}</th>
+                        <th className="p-3.5">{t("tenants.tenantName")}</th>
+                        <th className="p-3.5">{t("markets.marketName")}</th>
+                        <th className="p-3.5 text-right">{t("dashboard.totalDue")}</th>
+                        <th className="p-3.5 text-right">{t("advance.advanceHeld")}</th>
+                        <th className="p-3.5 text-right text-red-600 dark:text-red-400">Unrecovered Loss (BDT)</th>
+                        <th className="p-3.5 text-right">{t("common.date")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {data.rows.map((row: any) => (
+                        <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                          <td className="p-3.5 font-bold text-slate-900 dark:text-white">{row.shopNumber}</td>
+                          <td className="p-3.5 font-medium">
+                            <p>{row.tenantName}</p>
+                            <p className="text-[11px] text-slate-400 font-mono">{row.phone}</p>
+                          </td>
+                          <td className="p-3.5 text-slate-500">{row.marketName}</td>
+                          <td className="p-3.5 text-right font-semibold text-slate-700 dark:text-slate-300">
+                            {formatCurrency(row.totalDue, locale)}
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-teal-600 dark:text-teal-400">
+                            {formatCurrency(row.advanceBalance, locale)}
+                          </td>
+                          <td className="p-3.5 text-right font-extrabold text-red-600 dark:text-red-400">
+                            {formatCurrency(row.unrecoveredAmount, locale)}
+                          </td>
+                          <td className="p-3.5 text-right font-mono text-slate-500">{formatDate(row.settledAt, locale)}</td>
                         </tr>
                       ))}
                     </tbody>

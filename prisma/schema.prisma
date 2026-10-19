@@ -23,6 +23,7 @@ model Market {
   name      String
   address   String?
   notes     String?
+  totalFloors Int       @default(5)
   isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -49,6 +50,7 @@ model Shop {
   tenants     Tenant[]
   bills       Bill[]
   rentHistory RentHistory[]
+  settlements Settlement[]
 
   @@unique([marketId, shopNumber])
   @@index([marketId])
@@ -62,21 +64,141 @@ model Tenant {
   name           String
   phone          String
   nid            String?
-  advanceDeposit Int       @default(0) // in paisa
+  advanceDeposit Int       @default(0) // in paisa (legacy/migration reference)
   rentAmount     Int       // current agreed rent in paisa
+  status         String    @default("ACTIVE") // ACTIVE, NOTICE_GIVEN, SETTLED, ARCHIVED
   startDate      DateTime  @default(now())
   endDate        DateTime?
   isActive       Boolean   @default(true)
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 
-  shop        Shop          @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  bills       Bill[]
-  rentHistory RentHistory[]
+  shop                Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  bills               Bill[]
+  rentHistory         RentHistory[]
+  advanceTransactions AdvanceTransaction[]
+  settlements         Settlement[]
 
   @@index([shopId])
+  @@index([status])
   @@index([isActive])
   @@index([phone])
+}
+
+model AdvanceTransaction {
+  id                  String   @id @default(cuid())
+  tenantId            String
+  type                String   // DEPOSIT_RECEIVED, ADJUSTED_TO_DUE, DEDUCTION, REFUND, TOPUP
+  amount              Int      // in paisa (always positive)
+  relatedBillId       String?
+  relatedSettlementId String?
+  reason              String
+  createdBy           String   @default("Admin")
+  createdAt           DateTime @default(now())
+
+  tenant            Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  relatedBill       Bill?       @relation(fields: [relatedBillId], references: [id], onDelete: SetNull)
+  relatedSettlement Settlement? @relation(fields: [relatedSettlementId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Settlement {
+  id                String   @id @default(cuid())
+  tenantId          String
+  shopId            String
+  status            String   @default("CONFIRMED") // DRAFT, CONFIRMED
+  totalDue          Int      // in paisa
+  advanceBalance    Int      // in paisa (before settlement)
+  totalDeductions   Int      // in paisa
+  refundAmount      Int      @default(0) // in paisa
+  unrecoveredAmount Int      @default(0) // in paisa
+  deductionsJson    String   @default("[]") // JSON string of deduction items
+  policyVersionId   String?
+  notes             String?
+  settledAt         DateTime @default(now())
+  confirmedBy       String   @default("Admin")
+  createdAt         DateTime @default(now())
+
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shop                Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  policyVersion       PolicyVersion?       @relation(fields: [policyVersionId], references: [id], onDelete: SetNull)
+  advanceTransactions AdvanceTransaction[]
+
+  @@index([tenantId])
+  @@index([shopId])
+  @@index([status])
+  @@index([settledAt])
+}
+
+model TenantPolicy {
+  id        String   @id @default(cuid())
+  scope     String   @default("GLOBAL") // GLOBAL, MARKET, TENANT
+  marketId  String?  @unique
+  tenantId  String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  versions PolicyVersion[]
+
+  @@index([scope])
+}
+
+model PolicyVersion {
+  id                        String   @id @default(cuid())
+  policyId                  String
+  versionNumber             Int
+  effectiveFrom             DateTime @default(now())
+
+  // Policy Settings
+  requiredAdvanceMonths     Int      @default(3)
+  requiredAdvanceFixed      Int?
+  rentDueDay                Int      @default(10)
+  gracePeriodDays           Int      @default(5)
+  lateFeeType               String   @default("NONE") // NONE, FIXED, PERCENTAGE, DAILY
+  lateFeeAmount             Int      @default(0) // in paisa or percent basis points
+  lateFeeCap                Int?     // cap in paisa
+  noticePeriodDays          Int      @default(30)
+  noticePenaltyAmount       Int      @default(0) // in paisa
+  advanceRefundDeadlineDays Int      @default(15)
+  requireAdvanceTopup       Boolean  @default(true)
+  annualRentIncreasePercent Int      @default(10)
+  contractExpiryWarningDays Int      @default(60)
+
+  // JSON configurations
+  overdueEscalationJson     String   @default("[]")
+  allowedDeductionsJson     String   @default("[]")
+
+  // Human-readable Rules text
+  rulesTextEn               String   @default("")
+  rulesTextBn               String   @default("")
+
+  createdById               String?
+  createdAt                 DateTime @default(now())
+
+  policy      TenantPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  settlements Settlement[]
+
+  @@index([policyId])
+  @@index([effectiveFrom])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  userName    String   @default("Admin")
+  action      String   // ADVANCE_DEPOSIT, ADVANCE_ADJUSTMENT, ADVANCE_DEDUCTION, ADVANCE_REFUND, SETTLEMENT_CONFIRMED, POLICY_CHANGED, BILL_WAIVED, etc.
+  entityType  String   // Tenant, AdvanceTransaction, Settlement, Policy, Bill
+  entityId    String
+  detailsJson String   @default("{}")
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
 }
 
 model RentHistory {
@@ -120,15 +242,16 @@ model Bill {
   totalAmount Int      // in paisa (rent + bill items)
   paidAmount  Int      @default(0) // in paisa
   dueAmount   Int      // in paisa (totalAmount - paidAmount)
-  status      String   @default("DUE") // PAID, PARTIAL, DUE
+  status      String   @default("DUE") // PAID, PARTIAL, DUE, SETTLED_FROM_ADVANCE, WAIVED
   dueDate     DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  shop      Shop       @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  tenant    Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  billItems BillItem[]
-  payments  Payment[]
+  shop                Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  billItems           BillItem[]
+  payments            Payment[]
+  advanceTransactions AdvanceTransaction[]
 
   @@unique([shopId, month, year])
   @@index([shopId])
@@ -157,7 +280,7 @@ model Payment {
   billId     String
   amount     Int      // in paisa
   paidOn     DateTime @default(now())
-  method     String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE
+  method     String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE, ADVANCE_ADJUSTMENT
   reference  String?
   note       String?
   receivedBy String?
