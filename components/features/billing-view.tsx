@@ -25,6 +25,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ManageBillChargesModal } from "./modals/manage-bill-charges-modal";
 
 export function BillingView() {
   const { t, locale } = useTranslation();
@@ -270,7 +271,7 @@ export function BillingView() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Add Variable Charge button */}
+                    {/* Add/Manage Variable Extra Charges button */}
                     <Button
                       size="sm"
                       variant="outline"
@@ -279,10 +280,10 @@ export function BillingView() {
                         setActiveBill(bill);
                         setIsAddChargeOpen(true);
                       }}
-                      title={t("billing.addCharge")}
+                      title={locale === "bn" ? "অতিরিক্ত খরচ পরিচালনা করুন" : "Manage Additional Costs"}
                     >
-                      <Plus className="w-3.5 h-3.5 mr-1" />
-                      {t("billing.addCharge")}
+                      <Plus className="w-3.5 h-3.5 mr-1 text-teal-600 dark:text-teal-400" />
+                      {locale === "bn" ? "অতিরিক্ত খরচ" : "Extra Costs"}
                     </Button>
 
                     {/* Collect payment button */}
@@ -312,64 +313,17 @@ export function BillingView() {
         </div>
       )}
 
-      {/* Add Variable Charge Modal */}
+      {/* Manage Additional Charges Modal (Totally Manual, Add/Delete with instant calculation) */}
       {activeBill && (
-        <Dialog
+        <ManageBillChargesModal
           isOpen={isAddChargeOpen}
-          onClose={() => setIsAddChargeOpen(false)}
-          title={t("billing.addCharge")}
-          description={`${activeBill.shop.shopNumber} — ${activeBill.tenant.name}`}
-          maxWidth="md"
-        >
-          <form onSubmit={handleAddCharge} className="space-y-4">
-            <Select
-              label={t("billing.chargeType")}
-              value={chargeTypeId}
-              onChange={(e) => setChargeTypeId(e.target.value)}
-            >
-              <option value="">{t("common.optional")}</option>
-              {chargeTypes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {locale === "bn" ? c.name_bn || c.name_en : c.name_en || c.name_bn}
-                </option>
-              ))}
-            </Select>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                {t("billing.chargeDescription")}
-              </label>
-              <Input
-                value={chargeDescription}
-                onChange={(e) => setChargeDescription(e.target.value)}
-                placeholder="e.g. অক্টোবর মাসের অতিরিক্ত বিদ্যুৎ মিটার বিল"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                {t("billing.chargeAmount")} (৳ BDT)
-              </label>
-              <NumberInput
-                value={chargeAmountBDT}
-                onChange={(val) => setChargeAmountBDT(val)}
-                prefix="৳"
-                placeholder="0"
-                className="text-lg font-bold"
-              />
-            </div>
-
-            <div className="pt-2 flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setIsAddChargeOpen(false)}>
-                {t("common.cancel")}
-              </Button>
-              <Button type="submit" isLoading={isSavingCharge}>
-                <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                {t("common.save")}
-              </Button>
-            </div>
-          </form>
-        </Dialog>
+          onClose={() => {
+            setIsAddChargeOpen(false);
+            setActiveBill(null);
+          }}
+          bill={activeBill}
+          onUpdated={() => triggerRefresh()}
+        />
       )}
     </div>
   );

@@ -475,5 +475,19 @@
     "date": "Timestamp",
     "details": "Change Details",
     "allActions": "All Actions"
+  },
+  "approvals": {
+    "title": "Admin Approvals & Change Requests",
+    "subtitle": "Review modifications with side-by-side difference comparison",
+    "pending": "Pending Approvals",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "all": "All Requests",
+    "whatHave": "Current Data (What Have)",
+    "whatWillHave": "Proposed Data (What Will Have)",
+    "approve": "Approve & Apply",
+    "reject": "Reject",
+    "rejectionReason": "Reason for Rejection",
+    "noPending": "No pending change requests at this moment"
   }
 }

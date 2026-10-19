@@ -129,11 +129,6 @@ export async function POST(req: Request) {
       });
     }
 
-    // Get recurring charge types
-    const recurringCharges = await prisma.chargeType.findMany({
-      where: { isActive: true, isRecurring: true },
-    });
-
     const dueDate = new Date(targetYear, targetMonth - 1, Math.min(28, Math.max(1, dueDay)));
 
     let createdCount = 0;
@@ -159,42 +154,23 @@ export async function POST(req: Request) {
         continue;
       }
 
-      // Base rent
+      // Base rent - strictly manual; NO auto-calculated additional costs
       const rentAmount = tenant.rentAmount || shop.defaultRent;
+      const totalAmount = rentAmount;
 
-      // Calculate recurring charges
-      const recurringSum = recurringCharges.reduce((acc, c) => acc + c.defaultAmount, 0);
-      const totalAmount = rentAmount + recurringSum;
-
-      // Create bill with BillItems in transaction
-      await prisma.$transaction(async (tx) => {
-        const bill = await tx.bill.create({
-          data: {
-            shopId: shop.id,
-            tenantId: tenant.id,
-            month: targetMonth,
-            year: targetYear,
-            rentAmount,
-            totalAmount,
-            paidAmount: 0,
-            dueAmount: totalAmount,
-            status: "DUE",
-            dueDate,
-          },
-        });
-
-        for (const rc of recurringCharges) {
-          if (rc.defaultAmount > 0) {
-            await tx.billItem.create({
-              data: {
-                billId: bill.id,
-                chargeTypeId: rc.id,
-                description: rc.name_bn || rc.name_en,
-                amount: rc.defaultAmount,
-              },
-            });
-          }
-        }
+      await prisma.bill.create({
+        data: {
+          shopId: shop.id,
+          tenantId: tenant.id,
+          month: targetMonth,
+          year: targetYear,
+          rentAmount,
+          totalAmount,
+          paidAmount: 0,
+          dueAmount: totalAmount,
+          status: "DUE",
+          dueDate,
+        },
       });
 
       createdCount++;
@@ -212,18 +188,19 @@ export async function POST(req: Request) {
   }
 }
 
-// Add variable charge item to an existing bill
+// Add or edit manual charge item on an existing bill
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { billId, chargeTypeId, description, amount } = body;
+    const { billId, itemId, chargeTypeId, description, amount } = body;
 
-    if (!billId || !amount) {
+    if (!billId || amount === undefined) {
       return NextResponse.json({ error: "Bill ID and Amount are required" }, { status: 400 });
     }
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
+      include: { billItems: true },
     });
 
     if (!bill) {
@@ -233,18 +210,31 @@ export async function PUT(req: Request) {
     const chargePaisa = Math.round(Number(amount));
 
     await prisma.$transaction(async (tx) => {
-      // Create new bill item
-      await tx.billItem.create({
-        data: {
-          billId,
-          chargeTypeId: chargeTypeId || null,
-          description: description?.trim() || "অতিরিক্ত চার্জ / Variable Charge",
-          amount: chargePaisa,
-        },
-      });
+      if (itemId) {
+        // Edit existing item
+        await tx.billItem.update({
+          where: { id: itemId },
+          data: {
+            description: description?.trim() || "ম্যানুয়াল চার্জ / Additional Cost",
+            amount: chargePaisa,
+          },
+        });
+      } else {
+        // Create new manual bill item
+        await tx.billItem.create({
+          data: {
+            billId,
+            chargeTypeId: chargeTypeId || null,
+            description: description?.trim() || "অতিরিক্ত খরচ / Additional Cost",
+            amount: chargePaisa,
+          },
+        });
+      }
 
-      // Recalculate bill total and due
-      const newTotal = bill.totalAmount + chargePaisa;
+      // Recalculate bill total and due based on all items
+      const allItems = await tx.billItem.findMany({ where: { billId } });
+      const itemsTotal = allItems.reduce((acc, item) => acc + item.amount, 0);
+      const newTotal = bill.rentAmount + itemsTotal;
       const newDue = newTotal - bill.paidAmount;
       const newStatus = newDue <= 0 ? "PAID" : bill.paidAmount > 0 ? "PARTIAL" : "DUE";
 
@@ -271,5 +261,62 @@ export async function PUT(req: Request) {
   } catch (error) {
     console.error("Failed to add charge to bill:", error);
     return NextResponse.json({ error: "Failed to add charge to bill" }, { status: 500 });
+  }
+}
+
+// Delete a manual charge item from a bill
+export async function DELETE(req: Request) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const billId = searchParams.get("billId");
+    const itemId = searchParams.get("itemId");
+
+    if (!billId || !itemId) {
+      return NextResponse.json({ error: "billId and itemId are required" }, { status: 400 });
+    }
+
+    const bill = await prisma.bill.findUnique({
+      where: { id: billId },
+      include: { billItems: true },
+    });
+
+    if (!bill) {
+      return NextResponse.json({ error: "Bill not found" }, { status: 404 });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.billItem.delete({
+        where: { id: itemId },
+      });
+
+      const remainingItems = await tx.billItem.findMany({ where: { billId } });
+      const itemsTotal = remainingItems.reduce((acc, item) => acc + item.amount, 0);
+      const newTotal = bill.rentAmount + itemsTotal;
+      const newDue = newTotal - bill.paidAmount;
+      const newStatus = newDue <= 0 ? "PAID" : bill.paidAmount > 0 ? "PARTIAL" : "DUE";
+
+      await tx.bill.update({
+        where: { id: billId },
+        data: {
+          totalAmount: newTotal,
+          dueAmount: Math.max(0, newDue),
+          status: newStatus,
+        },
+      });
+    });
+
+    const updatedBill = await prisma.bill.findUnique({
+      where: { id: billId },
+      include: {
+        shop: { include: { market: true } },
+        tenant: true,
+        billItems: { include: { chargeType: true } },
+      },
+    });
+
+    return NextResponse.json({ success: true, bill: updatedBill });
+  } catch (error) {
+    console.error("Failed to delete bill item:", error);
+    return NextResponse.json({ error: "Failed to delete bill item" }, { status: 500 });
   }
 }

@@ -26,15 +26,21 @@ import {
   Layers,
   Wallet,
   Building2,
+  Edit,
+  Trash2,
+  Eye,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TenantProfileModal } from "./modals/tenant-profile-modal";
 import { SettlementWizardModal } from "./modals/settlement-wizard-modal";
 import { generateFloorOptions, formatFloorName } from "@/lib/floors";
+import { DiffViewer } from "@/components/ui/diff-viewer";
 
 export function ShopsView() {
   const { t, locale } = useTranslation();
-  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh } = useApp();
+  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh, isAdmin, refreshApprovals } = useApp();
 
   const [shops, setShops] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,12 +49,24 @@ export function ShopsView() {
 
   // Modals
   const [isAddShopOpen, setIsAddShopOpen] = useState(false);
+  const [isEditShopOpen, setIsEditShopOpen] = useState(false);
+  const [editingShop, setEditingShop] = useState<any | null>(null);
+  const [deletingShop, setDeletingShop] = useState<any | null>(null);
+  const [isDeletingShop, setIsDeletingShop] = useState(false);
   const [isAssignTenantOpen, setIsAssignTenantOpen] = useState(false);
   const [isUpdateRentOpen, setIsUpdateRentOpen] = useState(false);
   const [isVacateConfirmOpen, setIsVacateConfirmOpen] = useState(false);
   const [selectedShop, setSelectedShop] = useState<any | null>(null);
   const [activeProfileTenantId, setActiveProfileTenantId] = useState<string | null>(null);
   const [activeSettlementTenantId, setActiveSettlementTenantId] = useState<string | null>(null);
+
+  // Edit Shop Form State
+  const [editShopNumber, setEditShopNumber] = useState("");
+  const [editFloor, setEditFloor] = useState("");
+  const [editSize, setEditSize] = useState("");
+  const [editDefaultRentBDT, setEditDefaultRentBDT] = useState<number>(0);
+  const [showShopDiffPreview, setShowShopDiffPreview] = useState(false);
+  const [isSavingShopEdit, setIsSavingShopEdit] = useState(false);
 
   // Form States
   // 1. Add Shop Form
@@ -272,6 +290,92 @@ export function ShopsView() {
     }
   };
 
+  const openEditShop = (shop: any) => {
+    setEditingShop(shop);
+    setEditShopNumber(shop.shopNumber);
+    setEditFloor(shop.floor);
+    setEditSize(shop.size || "");
+    setEditDefaultRentBDT(Math.round(shop.defaultRent / 100));
+    setShowShopDiffPreview(false);
+    setIsEditShopOpen(true);
+  };
+
+  const handleSaveShopEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingShop) return;
+
+    try {
+      setIsSavingShopEdit(true);
+      const body = {
+        id: editingShop.id,
+        shopNumber: editShopNumber,
+        floor: editFloor,
+        size: editSize,
+        defaultRent: Math.round(editDefaultRentBDT * 100),
+        submitForApproval: !isAdmin,
+      };
+
+      const res = await fetch("/api/shops", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to update shop");
+        return;
+      }
+
+      if (data.requiresApproval) {
+        toast.info(
+          locale === "bn"
+            ? "দোকানের পরিবর্তনের আবেদনটি অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে।"
+            : "Shop changes submitted for Admin approval."
+        );
+        refreshApprovals();
+      } else {
+        toast.success(locale === "bn" ? "দোকানের তথ্য সফলভাবে আপডেট হয়েছে!" : "Shop updated successfully!");
+        triggerRefresh();
+      }
+      setIsEditShopOpen(false);
+    } catch (e) {
+      toast.error("Failed to update shop");
+    } finally {
+      setIsSavingShopEdit(false);
+    }
+  };
+
+  const handleDeleteShop = async () => {
+    if (!deletingShop) return;
+    try {
+      setIsDeletingShop(true);
+      const res = await fetch(`/api/shops?id=${deletingShop.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to delete shop");
+        return;
+      }
+
+      if (data.requiresApproval) {
+        toast.info(
+          locale === "bn"
+            ? "দোকান মোছার আবেদনটি অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে।"
+            : "Shop deletion request submitted for Admin approval."
+        );
+        refreshApprovals();
+      } else {
+        toast.success(locale === "bn" ? "দোকানটি সফলভাবে মুছে ফেলা হয়েছে।" : "Shop deleted successfully.");
+        triggerRefresh();
+      }
+      setDeletingShop(null);
+    } catch (e) {
+      toast.error("Failed to delete shop");
+    } finally {
+      setIsDeletingShop(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Header */}
@@ -348,7 +452,7 @@ export function ShopsView() {
                 } else {
                   setSelectedShop(shop);
                   setAgreedRentBDT(Math.round(shop.defaultRent / 100));
-                  setAdvanceDepositBDT(Math.round((shop.defaultRent * 3) / 100));
+                  setAdvanceDepositBDT(0); // Renter-wise custom agreed advance, not fixed
                   setIsAssignTenantOpen(true);
                 }
               }}
@@ -365,7 +469,35 @@ export function ShopsView() {
                     </h3>
                     <p className="text-xs text-slate-500 truncate max-w-[200px]">{shop.marketName}</p>
                   </div>
-                  <StatusBadge status={shop.status} />
+                  <div className="flex items-center gap-1">
+                    <StatusBadge status={shop.status} />
+                    {isAdmin && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditShop(shop);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title={locale === "bn" ? "দোকান সম্পাদনা" : "Edit Shop"}
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingShop(shop);
+                          }}
+                          className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                          title={locale === "bn" ? "দোকান মুছুন" : "Delete Shop"}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 {/* Tenant Info or Vacant notice */}
@@ -433,7 +565,8 @@ export function ShopsView() {
                       e.stopPropagation();
                       setSelectedShop(shop);
                       setAgreedRentBDT(Math.round(shop.defaultRent / 100));
-                      setAdvanceDepositBDT(Math.round((shop.defaultRent * 3) / 100));
+                      // Advance deposit is negotiated individually renter-wise, not fixed 3x multiplier
+                      setAdvanceDepositBDT(0);
                       setIsAssignTenantOpen(true);
                     }}
                   >
@@ -654,13 +787,17 @@ export function ShopsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                  {t("tenants.advanceDeposit")} (৳)
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center justify-between">
+                  <span>{t("tenants.advanceDeposit")} (৳)</span>
+                  <span className="text-[10px] font-normal text-teal-600 dark:text-teal-400">
+                    {locale === "bn" ? "ভাড়াটিয়া ভিত্তিক চুক্তি" : "Renter-specific"}
+                  </span>
                 </label>
                 <NumberInput
                   value={advanceDepositBDT}
                   onChange={(val) => setAdvanceDepositBDT(val)}
                   prefix="৳"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -769,6 +906,184 @@ export function ShopsView() {
           tenantId={activeSettlementTenantId}
           onSettlementComplete={() => triggerRefresh()}
         />
+      )}
+
+      {/* Edit Shop Modal (With Live What Have vs What Will Have DiffViewer) */}
+      {editingShop && (
+        <Dialog
+          isOpen={isEditShopOpen}
+          onClose={() => setIsEditShopOpen(false)}
+          title={
+            <div className="flex items-center gap-2">
+              <Edit className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+              <span>{locale === "bn" ? "দোকানের তথ্য সম্পাদনা" : "Edit Shop Information"}</span>
+            </div>
+          }
+          description={`${editingShop.shopNumber} — ${editingShop.marketName}`}
+          maxWidth="lg"
+        >
+          <form onSubmit={handleSaveShopEdit} className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {t("shops.shopNumber")}
+                </label>
+                <Input
+                  value={editShopNumber}
+                  onChange={(e) => setEditShopNumber(e.target.value)}
+                  placeholder="e.g. A-101"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {t("shops.floor")}
+                </label>
+                <select
+                  value={editFloor}
+                  onChange={(e) => setEditFloor(e.target.value)}
+                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                >
+                  {generateFloorOptions(
+                    markets.find((m) => m.id === editingShop.marketId)?.totalFloors || 5,
+                    locale,
+                    false
+                  ).map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {t("shops.size")}
+                </label>
+                <Input
+                  value={editSize}
+                  onChange={(e) => setEditSize(e.target.value)}
+                  placeholder="e.g. 180 sqft"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                  {t("shops.defaultRent")} (৳ BDT)
+                </label>
+                <NumberInput
+                  value={editDefaultRentBDT}
+                  onChange={(val) => setEditDefaultRentBDT(val)}
+                  prefix="৳"
+                />
+              </div>
+            </div>
+
+            {/* Difference Viewer Toggle */}
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowShopDiffPreview(!showShopDiffPreview)}
+                className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <span>
+                    {locale === "bn"
+                      ? "পার্থক্য প্রিভিউ দেখুন (What have ➔ What will have)"
+                      : "Preview Differences (What Have vs What Will Have)"}
+                  </span>
+                </span>
+                <span className="text-[11px] text-teal-600 dark:text-teal-400 underline">
+                  {showShopDiffPreview
+                    ? locale === "bn" ? "লুকান" : "Hide"
+                    : locale === "bn" ? "দেখুন" : "Show"}
+                </span>
+              </button>
+
+              {showShopDiffPreview && (
+                <div className="mt-2.5 p-3 rounded-xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                  <DiffViewer
+                    currentData={{
+                      shopNumber: editingShop.shopNumber,
+                      floor: editingShop.floor,
+                      size: editingShop.size || "",
+                      defaultRent: editingShop.defaultRent,
+                    }}
+                    proposedData={{
+                      shopNumber: editShopNumber,
+                      floor: editFloor,
+                      size: editSize,
+                      defaultRent: Math.round(editDefaultRentBDT * 100),
+                    }}
+                    title={locale === "bn" ? "দোকানের পরিবর্তনের পার্থক্য" : "Shop Changes"}
+                    hideUnchanged={false}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setIsEditShopOpen(false)}>
+                {t("common.cancel")}
+              </Button>
+              <Button type="submit" isLoading={isSavingShopEdit}>
+                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                {!isAdmin
+                  ? locale === "bn" ? "অনুমোদনের জন্য পাঠান" : "Submit for Approval"
+                  : t("common.save")}
+              </Button>
+            </div>
+          </form>
+        </Dialog>
+      )}
+
+      {/* Delete Shop Confirmation Modal */}
+      {deletingShop && (
+        <Dialog
+          isOpen={!!deletingShop}
+          onClose={() => setDeletingShop(null)}
+          title={
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <AlertTriangle className="w-5 h-5" />
+              <span>{locale === "bn" ? "দোকান মুছে ফেলার নিশ্চিতকরণ" : "Confirm Delete Shop"}</span>
+            </div>
+          }
+          description={
+            locale === "bn"
+              ? `আপনি কি নিশ্চিত যে '${deletingShop.shopNumber}' দোকানটি মুছে ফেলতে চান? এটি শুধুমাত্র অ্যাডমিন কর্তৃক সম্পন্ন হবে।`
+              : `Are you sure you want to delete shop '${deletingShop.shopNumber}'?`
+          }
+          maxWidth="sm"
+        >
+          <div className="space-y-4">
+            <p className="text-xs text-slate-500">
+              {locale === "bn"
+                ? "দোকান মুছে ফেললে সম্পর্কিত ইতিহাস সংরক্ষণ রাখা হতে পারে কিন্তু এটি সক্রিয় তালিকা থেকে বাদ পড়বে।"
+                : "Deleting this shop removes it from the active roster."}
+            </p>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeletingShop(null)}
+                disabled={isDeletingShop}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                isLoading={isDeletingShop}
+                onClick={handleDeleteShop}
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                {locale === "bn" ? "মুছে ফেলুন" : "Delete"}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
       )}
     </div>
   );

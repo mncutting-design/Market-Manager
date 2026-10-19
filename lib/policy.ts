@@ -249,16 +249,25 @@ function parsePolicyVersion(policyId: string, version: any) {
 }
 
 /**
- * Calculates the required advance amount (in paisa) based on rent and policy.
+ * Calculates the required advance amount (in paisa) based on rent, policy, or custom renter agreement.
+ * If the shopkeeper has a specific agreed advance, that individual amount takes priority.
  */
 export function calculateRequiredAdvance(
   monthlyRent: number,
-  policy: PolicyData
+  policy: PolicyData,
+  agreedAdvanceCustom?: number | null
 ): number {
+  if (agreedAdvanceCustom !== undefined && agreedAdvanceCustom !== null && agreedAdvanceCustom > 0) {
+    return agreedAdvanceCustom;
+  }
   if (policy.requiredAdvanceFixed && policy.requiredAdvanceFixed > 0) {
     return policy.requiredAdvanceFixed;
   }
-  return Math.round(monthlyRent * (policy.requiredAdvanceMonths || 3));
+  // If policy requires advance months and no custom agreement is specified
+  if (policy.requiredAdvanceMonths && policy.requiredAdvanceMonths > 0) {
+    return Math.round(monthlyRent * policy.requiredAdvanceMonths);
+  }
+  return 0;
 }
 
 /**

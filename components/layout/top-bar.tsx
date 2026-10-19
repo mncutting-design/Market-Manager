@@ -30,6 +30,8 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
     setSelectedYear,
     markets,
     setActiveTab,
+    openApprovals,
+    pendingApprovalsCount,
   } = useApp();
 
   const [isDark, setIsDark] = useState(false);
@@ -189,6 +191,22 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             aria-label="Toggle dark/light theme"
           >
             {isDark ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-300" />}
+          </button>
+
+          {/* Admin Approvals Button */}
+          <button
+            onClick={openApprovals}
+            type="button"
+            className="relative w-10 h-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-[#2d3b52] bg-white dark:bg-[#182234] text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs active:scale-95"
+            title={locale === "bn" ? "অ্যাডমিন অনুমোদন কেন্দ্র (Approvals)" : "Admin Approvals"}
+            aria-label="Admin Approvals"
+          >
+            <ShieldCheck className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            {pendingApprovalsCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-extrabold text-white animate-pulse shadow-sm">
+                {locale === "bn" ? toBanglaDigits(pendingApprovalsCount) : pendingApprovalsCount}
+              </span>
+            )}
           </button>
 
           {/* User Profile dropdown */}

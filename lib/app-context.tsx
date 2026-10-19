@@ -43,6 +43,14 @@ interface AppContextType {
   activeReceipt: any | null;
   setActiveReceipt: (receipt: any | null) => void;
   showReceipt: (receipt: any) => void;
+  // User Session & Approvals
+  currentUser: { id: string; name: string; email: string; role: string; locale: string } | null;
+  isAdmin: boolean;
+  pendingApprovalsCount: number;
+  refreshApprovals: () => Promise<void>;
+  isApprovalsOpen: boolean;
+  setIsApprovalsOpen: (open: boolean) => void;
+  openApprovals: () => void;
 }
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -56,6 +64,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isLoadingMarkets, setIsLoadingMarkets] = useState<boolean>(true);
   const [refreshKey, setRefreshKey] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<string>("dashboard");
+
+  // User & Approvals State
+  const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; role: string; locale: string } | null>({
+    id: "admin-default-cuid-2026",
+    name: "প্রশাসক (Admin)",
+    email: "admin@marketmanager.com",
+    role: "ADMIN",
+    locale: "bn",
+  });
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState<number>(0);
+  const [isApprovalsOpen, setIsApprovalsOpen] = useState(false);
 
   // Modals
   const [isQuickCollectOpen, setIsQuickCollectOpen] = useState(false);
@@ -79,8 +98,36 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const fetchCurrentUser = async () => {
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setCurrentUser(data.user);
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch current user:", e);
+    }
+  };
+
+  const fetchApprovals = async () => {
+    try {
+      const res = await fetch("/api/approvals?status=PENDING");
+      if (res.ok) {
+        const data = await res.json();
+        setPendingApprovalsCount(data.pendingCount || 0);
+      }
+    } catch (e) {
+      console.warn("Could not fetch approvals count:", e);
+    }
+  };
+
   useEffect(() => {
     fetchMarkets();
+    fetchCurrentUser();
+    fetchApprovals();
   }, [refreshKey]);
 
   const triggerRefresh = () => {
@@ -100,9 +147,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setIsGenerateBillsOpen(true);
   };
 
+  const openApprovals = () => {
+    setIsApprovalsOpen(true);
+  };
+
   const showReceipt = (receipt: any) => {
     setActiveReceipt(receipt);
   };
+
+  const isAdmin = currentUser?.role === "ADMIN";
 
   return (
     <AppContext.Provider
@@ -133,6 +186,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         activeReceipt,
         setActiveReceipt,
         showReceipt,
+        currentUser,
+        isAdmin,
+        pendingApprovalsCount,
+        refreshApprovals: fetchApprovals,
+        isApprovalsOpen,
+        setIsApprovalsOpen,
+        openApprovals,
       }}
     >
       {children}

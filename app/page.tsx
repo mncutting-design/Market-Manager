@@ -10,6 +10,7 @@ import { QuickCollectModal } from "@/components/features/modals/quick-collect-mo
 import { MoneyReceiptModal } from "@/components/features/modals/money-receipt-modal";
 import { GenerateBillsModal } from "@/components/features/modals/generate-bills-modal";
 import { AddExpenseModal } from "@/components/features/modals/add-expense-modal";
+import { ApprovalsModal } from "@/components/features/modals/approvals-modal";
 import { LoginView } from "@/components/features/login-view";
 
 // Feature Views
@@ -56,6 +57,7 @@ function MainApp() {
       <MoneyReceiptModal />
       <GenerateBillsModal />
       <AddExpenseModal />
+      <ApprovalsModal />
     </div>
   );
 }

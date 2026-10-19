@@ -59,8 +59,19 @@ export async function GET(req: Request) {
   }
 }
 
+import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
+
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
+    if (!session || session.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Only administrators can create new markets" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { name, address, notes, totalFloors } = body;
 
@@ -77,6 +88,15 @@ export async function POST(req: Request) {
       },
     });
 
+    await logAudit({
+      userId: session.id,
+      userName: session.name || "Admin",
+      action: "MARKET_CREATED",
+      entityType: "Market",
+      entityId: market.id,
+      details: { name: market.name, totalFloors: market.totalFloors },
+    });
+
     return NextResponse.json({ market }, { status: 201 });
   } catch (error) {
     console.error("Failed to create market:", error);
@@ -86,22 +106,76 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    const session = await getSession();
     const body = await req.json();
-    const { id, name, address, notes, totalFloors, isActive } = body;
+    const { id, name, address, notes, totalFloors, isActive, submitForApproval } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Market ID is required" }, { status: 400 });
     }
 
+    const currentMarket = await prisma.market.findUnique({
+      where: { id },
+    });
+
+    if (!currentMarket) {
+      return NextResponse.json({ error: "Market not found" }, { status: 404 });
+    }
+
+    const currentData = {
+      name: currentMarket.name,
+      address: currentMarket.address,
+      notes: currentMarket.notes,
+      totalFloors: currentMarket.totalFloors,
+      isActive: currentMarket.isActive,
+    };
+
+    const proposedData = {
+      ...(name !== undefined && { name: name.trim() }),
+      ...(address !== undefined && { address: address?.trim() || null }),
+      ...(notes !== undefined && { notes: notes?.trim() || null }),
+      ...(totalFloors !== undefined && { totalFloors: Number(totalFloors) > 0 ? Number(totalFloors) : 5 }),
+      ...(isActive !== undefined && { isActive }),
+    };
+
+    // If not Admin OR explicitly submitted for approval:
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin || submitForApproval) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "MARKET",
+          entityId: id,
+          entityTitle: currentMarket.name,
+          actionType: "EDIT",
+          status: "PENDING",
+          currentData: JSON.stringify(currentData),
+          proposedData: JSON.stringify(proposedData),
+          requestedBy: session?.name || "Staff / Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "Change request submitted for Admin approval",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin update
     const updated = await prisma.market.update({
       where: { id },
-      data: {
-        ...(name !== undefined && { name: name.trim() }),
-        ...(address !== undefined && { address: address?.trim() || null }),
-        ...(notes !== undefined && { notes: notes?.trim() || null }),
-        ...(totalFloors !== undefined && { totalFloors: Number(totalFloors) > 0 ? Number(totalFloors) : 5 }),
-        ...(isActive !== undefined && { isActive }),
-      },
+      data: proposedData,
+    });
+
+    await logAudit({
+      userId: session?.id,
+      userName: session?.name || "Admin",
+      action: "MARKET_UPDATED",
+      entityType: "Market",
+      entityId: id,
+      details: { before: currentData, after: proposedData },
     });
 
     return NextResponse.json({ market: updated });
@@ -110,3 +184,83 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Failed to update market" }, { status: 500 });
   }
 }
+
+export async function DELETE(req: Request) {
+  try {
+    const session = await getSession();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Market ID is required" }, { status: 400 });
+    }
+
+    const market = await prisma.market.findUnique({
+      where: { id },
+      include: {
+        shops: {
+          where: { isActive: true },
+          select: { id: true, shopNumber: true, status: true },
+        },
+      },
+    });
+
+    if (!market) {
+      return NextResponse.json({ error: "Market not found" }, { status: 404 });
+    }
+
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin) {
+      // Create change request for delete
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "MARKET",
+          entityId: id,
+          entityTitle: market.name,
+          actionType: "DELETE",
+          status: "PENDING",
+          currentData: JSON.stringify({ name: market.name, activeShops: market.shops.length }),
+          proposedData: JSON.stringify({ isActive: false }),
+          requestedBy: session?.name || "Staff / Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "Deletion request submitted for Admin approval",
+        changeRequest: cr,
+      });
+    }
+
+    // Admin direct soft-delete (or hard delete if completely empty)
+    await prisma.$transaction(async (tx) => {
+      // Soft-delete market and its shops
+      await tx.shop.updateMany({
+        where: { marketId: id },
+        data: { isActive: false },
+      });
+
+      await tx.market.update({
+        where: { id },
+        data: { isActive: false },
+      });
+    });
+
+    await logAudit({
+      userId: session?.id,
+      userName: session?.name || "Admin",
+      action: "MARKET_DELETED",
+      entityType: "Market",
+      entityId: id,
+      details: { name: market.name, shopCount: market.shops.length },
+    });
+
+    return NextResponse.json({ success: true, message: "Market deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete market:", error);
+    return NextResponse.json({ error: "Failed to delete market" }, { status: 500 });
+  }
+}
+

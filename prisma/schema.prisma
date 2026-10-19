@@ -326,3 +326,25 @@ model Expense {
   @@index([categoryId])
   @@index([date])
 }
+
+model ChangeRequest {
+  id            String    @id @default(cuid())
+  entityType    String    // MARKET, SHOP, TENANT, BILL, EXPENSE
+  entityId      String
+  entityTitle   String?   // e.g. "ফাতেমা কাটিং" or "দোকান ১০১"
+  actionType    String    // EDIT, DELETE, RENT_REVISION, ADDITIONAL_CHARGE
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  currentData   String    // JSON string of current state ("what have")
+  proposedData  String    // JSON string of proposed changes ("what will have")
+  requestedBy   String    @default("Manager")
+  requesterRole String    @default("MANAGER")
+  reviewedBy    String?
+  reviewNote    String?
+  createdAt     DateTime  @default(now())
+  reviewedAt    DateTime?
+
+  @@index([status])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+

@@ -64,7 +64,8 @@ export async function GET(
 
     const requiredAdvance = calculateRequiredAdvance(
       tenant.rentAmount,
-      policyResult.data
+      policyResult.data,
+      tenant.advanceDeposit // Renter-specific agreed advance amount
     );
     const shortfall = calculateAdvanceShortfall(currentBalance, requiredAdvance);
 

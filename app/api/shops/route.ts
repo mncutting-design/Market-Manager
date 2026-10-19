@@ -69,8 +69,19 @@ export async function GET(req: Request) {
   }
 }
 
+import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
+
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
+    if (!session || session.role !== "ADMIN") {
+      return NextResponse.json(
+        { error: "Only administrators can create new shops" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
     const { marketId, shopNumber, floor, size, defaultRent } = body;
 
@@ -109,6 +120,15 @@ export async function POST(req: Request) {
       include: { market: true },
     });
 
+    await logAudit({
+      userId: session.id,
+      userName: session.name || "Admin",
+      action: "SHOP_CREATED",
+      entityType: "Shop",
+      entityId: shop.id,
+      details: { shopNumber: shop.shopNumber, marketId, rentPaisa },
+    });
+
     return NextResponse.json({ shop }, { status: 201 });
   } catch (error) {
     console.error("Failed to create shop:", error);
@@ -118,8 +138,9 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
+    const session = await getSession();
     const body = await req.json();
-    const { id, shopNumber, floor, size, defaultRent, newRent, effectiveFrom, note } = body;
+    const { id, shopNumber, floor, size, defaultRent, newRent, effectiveFrom, note, submitForApproval } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Shop ID is required" }, { status: 400 });
@@ -127,15 +148,66 @@ export async function PUT(req: Request) {
 
     const currentShop = await prisma.shop.findUnique({
       where: { id },
-      include: { tenants: { where: { isActive: true } } },
+      include: {
+        market: true,
+        tenants: { where: { isActive: true } },
+      },
     });
 
     if (!currentShop) {
       return NextResponse.json({ error: "Shop not found" }, { status: 404 });
     }
 
-    // Handle Rent Revision with Effective Month
-    if (newRent !== undefined && newRent !== null) {
+    const isRentRevision = newRent !== undefined && newRent !== null;
+    const currentData = {
+      shopNumber: currentShop.shopNumber,
+      floor: currentShop.floor,
+      size: currentShop.size,
+      defaultRent: currentShop.defaultRent,
+      marketName: currentShop.market.name,
+      ...(currentShop.tenants[0] && { currentTenantRent: currentShop.tenants[0].rentAmount }),
+    };
+
+    const proposedData = {
+      ...(shopNumber && { shopNumber: shopNumber.trim() }),
+      ...(floor && { floor: floor.trim() }),
+      ...(size !== undefined && { size: size?.trim() || null }),
+      ...(defaultRent !== undefined && !isRentRevision && {
+        defaultRent: Math.round(Number(defaultRent)),
+      }),
+      ...(isRentRevision && {
+        newRent: Math.round(Number(newRent)),
+        effectiveFrom: effectiveFrom || new Date().toISOString(),
+        note: note?.trim() || "Rent revision",
+      }),
+    };
+
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin || submitForApproval) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "SHOP",
+          entityId: id,
+          entityTitle: `${currentShop.shopNumber} (${currentShop.market.name})`,
+          actionType: isRentRevision ? "RENT_REVISION" : "EDIT",
+          status: "PENDING",
+          currentData: JSON.stringify(currentData),
+          proposedData: JSON.stringify(proposedData),
+          requestedBy: session?.name || "Staff / Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "Shop changes submitted for Admin approval",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin update
+    if (isRentRevision) {
       const newRentPaisa = Math.round(Number(newRent));
       const activeTenant = currentShop.tenants[0];
 
@@ -172,11 +244,20 @@ export async function PUT(req: Request) {
         ...(shopNumber && { shopNumber: shopNumber.trim() }),
         ...(floor && { floor: floor.trim() }),
         ...(size !== undefined && { size: size?.trim() || null }),
-        ...(defaultRent !== undefined && newRent === undefined && {
+        ...(defaultRent !== undefined && !isRentRevision && {
           defaultRent: Math.round(Number(defaultRent)),
         }),
       },
       include: { market: true, tenants: { where: { isActive: true } } },
+    });
+
+    await logAudit({
+      userId: session?.id,
+      userName: session?.name || "Admin",
+      action: isRentRevision ? "SHOP_RENT_REVISED" : "SHOP_UPDATED",
+      entityType: "Shop",
+      entityId: id,
+      details: { before: currentData, after: proposedData },
     });
 
     return NextResponse.json({ shop: updated });
@@ -188,16 +269,64 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const session = await getSession();
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Shop ID required" }, { status: 400 });
 
+    const shop = await prisma.shop.findUnique({
+      where: { id },
+      include: { market: true, tenants: { where: { isActive: true } } },
+    });
+
+    if (!shop) {
+      return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+    }
+
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "SHOP",
+          entityId: id,
+          entityTitle: `${shop.shopNumber} (${shop.market.name})`,
+          actionType: "DELETE",
+          status: "PENDING",
+          currentData: JSON.stringify({
+            shopNumber: shop.shopNumber,
+            marketName: shop.market.name,
+            occupied: shop.status === "OCCUPIED",
+          }),
+          proposedData: JSON.stringify({ isActive: false }),
+          requestedBy: session?.name || "Staff / Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "Shop deletion request submitted for Admin approval",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin soft-delete
     await prisma.shop.update({
       where: { id },
       data: { isActive: false },
     });
 
-    return NextResponse.json({ success: true });
+    await logAudit({
+      userId: session?.id,
+      userName: session?.name || "Admin",
+      action: "SHOP_DELETED",
+      entityType: "Shop",
+      entityId: id,
+      details: { shopNumber: shop.shopNumber, marketId: shop.marketId },
+    });
+
+    return NextResponse.json({ success: true, message: "Shop deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete shop" }, { status: 500 });
   }

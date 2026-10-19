@@ -9,27 +9,36 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Dialog } from "@/components/ui/dialog";
-import { Building2, Plus, Edit, Store, Users, CheckCircle2, MapPin, Layers } from "lucide-react";
+import { DiffViewer } from "@/components/ui/diff-viewer";
+import { Building2, Plus, Edit, Trash2, Store, Users, CheckCircle2, MapPin, Layers, AlertTriangle, Eye, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 export function MarketsView() {
   const { t, locale } = useTranslation();
-  const { markets, refreshMarkets, setSelectedMarketId, setActiveTab } = useApp();
+  const { markets, refreshMarkets, setSelectedMarketId, setActiveTab, isAdmin, refreshApprovals } = useApp();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMarket, setEditingMarket] = useState<any | null>(null);
+  const [deletingMarket, setDeletingMarket] = useState<any | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [notes, setNotes] = useState("");
   const [totalFloors, setTotalFloors] = useState<number>(5);
   const [isSaving, setIsSaving] = useState(false);
+  const [showDiffPreview, setShowDiffPreview] = useState(false);
 
   const openAdd = () => {
+    if (!isAdmin) {
+      toast.error(locale === "bn" ? "শুধুমাত্র অ্যাডমিন নতুন মার্কেট তৈরি করতে পারবেন।" : "Only administrators can create new markets.");
+      return;
+    }
     setEditingMarket(null);
     setName("");
     setAddress("");
     setNotes("");
     setTotalFloors(5);
+    setShowDiffPreview(false);
     setIsModalOpen(true);
   };
 
@@ -39,7 +48,43 @@ export function MarketsView() {
     setAddress(m.address || "");
     setNotes(m.notes || "");
     setTotalFloors(m.totalFloors || 5);
+    setShowDiffPreview(false);
     setIsModalOpen(true);
+  };
+
+  const handleDeleteMarket = async () => {
+    if (!deletingMarket) return;
+    try {
+      setIsDeleting(true);
+      const res = await fetch(`/api/markets?id=${deletingMarket.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to delete market");
+        return;
+      }
+
+      if (data.requiresApproval) {
+        toast.info(
+          locale === "bn"
+            ? "মার্কেট মোছার আবেদনটি অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে।"
+            : "Market deletion request submitted for Admin approval."
+        );
+        refreshApprovals();
+      } else {
+        toast.success(
+          locale === "bn" ? "মার্কেট সফলভাবে মোছা হয়েছে!" : "Market deleted successfully!"
+        );
+        await refreshMarkets();
+      }
+      setDeletingMarket(null);
+    } catch (e) {
+      toast.error("Failed to delete market");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -59,6 +104,7 @@ export function MarketsView() {
         address,
         notes,
         totalFloors: Number(totalFloors) > 0 ? Number(totalFloors) : 5,
+        submitForApproval: !isAdmin,
       };
 
       const res = await fetch(url, {
@@ -67,13 +113,23 @@ export function MarketsView() {
         body: JSON.stringify(body),
       });
 
+      const data = await res.json();
       if (!res.ok) {
-        toast.error("Failed to save market");
+        toast.error(data.error || "Failed to save market");
         return;
       }
 
-      toast.success(editingMarket ? t("markets.marketUpdated") : t("markets.marketCreated"));
-      await refreshMarkets();
+      if (data.requiresApproval) {
+        toast.info(
+          locale === "bn"
+            ? "পরিবর্তনটি অ্যাডমিন অনুমোদনের জন্য অপেক্ষমান রয়েছে।"
+            : "Changes submitted for Admin approval."
+        );
+        refreshApprovals();
+      } else {
+        toast.success(editingMarket ? t("markets.marketUpdated") : t("markets.marketCreated"));
+        await refreshMarkets();
+      }
       setIsModalOpen(false);
     } catch (e) {
       toast.error("Failed to save market");
@@ -140,16 +196,32 @@ export function MarketsView() {
                       </span>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openEdit(m);
-                    }}
-                    className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-                    title={t("common.edit")}
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    {isAdmin && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(m);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          title={t("common.edit")}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeletingMarket(m);
+                          }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                          title={locale === "bn" ? "মার্কেট মুছুন" : "Delete Market"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </CardHeader>
 
@@ -298,17 +370,113 @@ export function MarketsView() {
             />
           </div>
 
+          {/* Difference Viewer Toggle for Edits */}
+          {editingMarket && (
+            <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowDiffPreview(!showDiffPreview)}
+                className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <span>
+                    {locale === "bn"
+                      ? "পার্থক্য প্রিভিউ দেখুন (What have ➔ What will have)"
+                      : "Preview Differences (What Have vs What Will Have)"}
+                  </span>
+                </span>
+                <span className="text-[11px] text-teal-600 dark:text-teal-400 underline">
+                  {showDiffPreview
+                    ? locale === "bn" ? "লুকান" : "Hide"
+                    : locale === "bn" ? "দেখুন" : "Show"}
+                </span>
+              </button>
+
+              {showDiffPreview && (
+                <div className="mt-2.5 p-3 rounded-xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                  <DiffViewer
+                    currentData={{
+                      name: editingMarket.name,
+                      address: editingMarket.address,
+                      notes: editingMarket.notes,
+                      totalFloors: editingMarket.totalFloors || 5,
+                    }}
+                    proposedData={{
+                      name,
+                      address,
+                      notes,
+                      totalFloors,
+                    }}
+                    title={locale === "bn" ? "পরিবর্তনের পার্থক্য" : "Differences"}
+                    hideUnchanged={false}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="pt-2 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" isLoading={isSaving}>
               <CheckCircle2 className="w-4 h-4 mr-1.5" />
-              {t("common.save")}
+              {!isAdmin && editingMarket
+                ? locale === "bn" ? "অনুমোদনের জন্য পাঠান" : "Submit for Approval"
+                : t("common.save")}
             </Button>
           </div>
         </form>
       </Dialog>
+
+      {/* Delete Market Confirmation Modal */}
+      {deletingMarket && (
+        <Dialog
+          isOpen={!!deletingMarket}
+          onClose={() => setDeletingMarket(null)}
+          title={
+            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
+              <AlertTriangle className="w-5 h-5" />
+              <span>{locale === "bn" ? "মার্কেট মুছে ফেলার নিশ্চিতকরণ" : "Confirm Delete Market"}</span>
+            </div>
+          }
+          description={
+            locale === "bn"
+              ? `আপনি কি নিশ্চিত যে '${deletingMarket.name}' মার্কেটটি মুছে ফেলতে চান?`
+              : `Are you sure you want to delete '${deletingMarket.name}'?`
+          }
+          maxWidth="sm"
+        >
+          <div className="space-y-4">
+            <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300">
+              {locale === "bn"
+                ? `সতর্কতা: এই মার্কেটের অন্তর্গত ${toBanglaDigits(deletingMarket.totalShops || 0)}টি দোকান ও সংশ্লিষ্ট তথ্য নিষ্ক্রিয় করা হবে।`
+                : `Warning: ${deletingMarket.totalShops || 0} shops in this market will also be deactivated.`}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setDeletingMarket(null)}
+                disabled={isDeleting}
+              >
+                {t("common.cancel")}
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                isLoading={isDeleting}
+                onClick={handleDeleteMarket}
+              >
+                <Trash2 className="w-4 h-4 mr-1.5" />
+                {locale === "bn" ? "হ্যাঁ, মুছে ফেলুন" : "Yes, Delete"}
+              </Button>
+            </div>
+          </div>
+        </Dialog>
+      )}
     </div>
   );
 }
