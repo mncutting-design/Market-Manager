@@ -132,6 +132,7 @@ export async function POST(req: Request) {
       date: result.payment.paidOn,
       marketName: bill.shop.market.name,
       shopNumber: bill.shop.shopNumber,
+      floor: bill.shop.floor,
       tenantName: bill.tenant.name,
       tenantPhone: bill.tenant.phone,
       billPeriodMonth: bill.month,

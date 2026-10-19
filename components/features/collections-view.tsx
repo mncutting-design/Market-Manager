@@ -79,16 +79,19 @@ export function CollectionsView() {
               date: p.paidOn,
               marketName: p.bill.shop.market.name,
               shopNumber: p.bill.shop.shopNumber,
+              floor: p.bill.shop.floor,
               tenantName: p.bill.tenant.name,
               tenantPhone: p.bill.tenant.phone,
               billPeriodMonth: p.bill.month,
               billPeriodYear: p.bill.year,
               totalBillAmount: p.bill.totalAmount,
+              carryForwardDue: p.bill.carryForwardDue || 0,
               paidNow: p.amount,
               remainingDue: p.bill.dueAmount,
               paymentMethod: p.method,
               reference: p.reference,
               receivedBy: p.receivedBy,
+              note: p.note,
             };
 
             return (

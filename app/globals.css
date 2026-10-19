@@ -189,21 +189,71 @@ html.lang-bn textarea {
   box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
 }
 
-/* Print styles for receipts */
+/* Print styles for receipts - Prints ONLY the real money receipt, hides everything else! */
 @media print {
+  @page {
+    size: auto;
+    margin: 8mm 10mm;
+  }
+
   body {
     background: #ffffff !important;
     color: #000000 !important;
+    overflow: visible !important;
   }
-  .no-print {
+
+  /* Hide everything outside the active receipt when printing */
+  header,
+  aside,
+  nav,
+  main,
+  footer,
+  .no-print,
+  button,
+  [role="dialog"] > div:first-child /* backdrop */ {
     display: none !important;
+    visibility: hidden !important;
   }
-  .print-only {
-    display: block !important;
-  }
-  .print-container {
+
+  /* Make sure dialog container is unconstrained */
+  [role="dialog"] {
+    position: static !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
-    max-width: 100% !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Target the exact money receipt voucher */
+  .real-money-receipt-voucher {
+    display: block !important;
+    visibility: visible !important;
+    position: relative !important;
+    width: 100% !important;
+    max-width: 190mm !important;
+    margin: 0 auto !important;
+    padding: 20px !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    border: 3px double #000000 !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure text colors are rich and crisp in black/white or color */
+  .real-money-receipt-voucher * {
+    color: #000000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .real-money-receipt-voucher .rubber-stamp-paid {
+    border: 2px solid #059669 !important;
+    color: #059669 !important;
   }
 }
