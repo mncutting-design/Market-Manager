@@ -303,7 +303,7 @@ export function calculateLateFee(
   }
 
   if (policy.lateFeeCap && policy.lateFeeCap > 0) {
-    fee = Math.min(fee, policy.lateCap || policy.lateFeeCap);
+    fee = Math.min(fee, policy.lateFeeCap);
   }
 
   return fee;

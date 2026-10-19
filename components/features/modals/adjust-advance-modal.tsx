@@ -17,8 +17,10 @@ interface AdjustAdvanceModalProps {
   tenantId: string;
   tenantName: string;
   shopNumber: string;
-  marketName: string;
-  initialDueAmount: number; // in paisa
+  marketName?: string;
+  initialDueAmount?: number; // in paisa
+  advanceBalance?: number;
+  totalDue?: number;
   onSuccess?: () => void;
 }
 
@@ -28,17 +30,19 @@ export function AdjustAdvanceModal({
   tenantId,
   tenantName,
   shopNumber,
-  marketName,
-  initialDueAmount,
+  marketName = "",
+  initialDueAmount = 0,
+  advanceBalance: advanceBalanceProp,
+  totalDue: totalDueProp,
   onSuccess,
 }: AdjustAdvanceModalProps) {
   const { t, locale } = useTranslation();
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [advanceBalance, setAdvanceBalance] = useState<number>(0);
+  const [advanceBalance, setAdvanceBalance] = useState<number>(advanceBalanceProp || 0);
   const [requiredAdvance, setRequiredAdvance] = useState<number>(0);
-  const [totalDue, setTotalDue] = useState<number>(initialDueAmount);
+  const [totalDue, setTotalDue] = useState<number>(totalDueProp ?? initialDueAmount ?? 0);
   const [adjustAmountBDT, setAdjustAmountBDT] = useState<number>(0);
   const [note, setNote] = useState("");
   const [isConfirmed, setIsConfirmed] = useState(false);

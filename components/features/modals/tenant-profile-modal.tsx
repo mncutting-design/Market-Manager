@@ -36,6 +36,7 @@ interface TenantProfileModalProps {
   onClose: () => void;
   tenantId: string;
   onRefreshNeeded?: () => void;
+  onUpdated?: () => void;
 }
 
 export function TenantProfileModal({
@@ -43,6 +44,7 @@ export function TenantProfileModal({
   onClose,
   tenantId,
   onRefreshNeeded,
+  onUpdated,
 }: TenantProfileModalProps) {
   const { t, locale } = useTranslation();
 
@@ -117,6 +119,7 @@ export function TenantProfileModal({
       setTopupReason("");
       fetchTenantData();
       if (onRefreshNeeded) onRefreshNeeded();
+      if (onUpdated) onUpdated();
     } catch (e) {
       toast.error("Failed to record deposit");
     } finally {
@@ -411,6 +414,7 @@ export function TenantProfileModal({
           onSuccess={() => {
             fetchTenantData();
             if (onRefreshNeeded) onRefreshNeeded();
+            if (onUpdated) onUpdated();
           }}
         />
       )}
@@ -424,6 +428,7 @@ export function TenantProfileModal({
           onSettlementComplete={(settlement) => {
             fetchTenantData();
             if (onRefreshNeeded) onRefreshNeeded();
+            if (onUpdated) onUpdated();
             setStatementData(settlement);
           }}
         />

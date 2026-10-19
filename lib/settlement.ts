@@ -12,7 +12,7 @@
 
 export interface SettlementDeductionItem {
   id?: string;
-  type?: "DAMAGE" | "CLEANING" | "UTILITY" | "PENALTY" | "OTHER";
+  type?: "DAMAGE" | "CLEANING" | "UTILITY" | "PENALTY" | "OTHER" | string;
   label_en: string;
   label_bn: string;
   amount: number; // in paisa, always positive

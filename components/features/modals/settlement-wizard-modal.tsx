@@ -28,6 +28,7 @@ interface SettlementWizardModalProps {
   onClose: () => void;
   tenantId: string;
   onSettlementComplete?: (settlementData: any) => void;
+  onSettled?: () => void;
 }
 
 export function SettlementWizardModal({
@@ -35,6 +36,7 @@ export function SettlementWizardModal({
   onClose,
   tenantId,
   onSettlementComplete,
+  onSettled,
 }: SettlementWizardModalProps) {
   const { t, locale } = useTranslation();
 
@@ -165,6 +167,10 @@ export function SettlementWizardModal({
       }
 
       toast.success(t("settlement.settledSuccessfully"));
+
+      if (onSettled) {
+        onSettled();
+      }
 
       if (onSettlementComplete) {
         onSettlementComplete({
