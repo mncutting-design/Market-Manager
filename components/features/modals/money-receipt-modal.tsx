@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
 import { Dialog } from "@/components/ui/dialog";
@@ -12,56 +12,98 @@ import {
   toBanglaDigits,
   numberToWordsBDT,
 } from "@/lib/format";
-import { Printer, Download, Building2, CheckCircle2, ShieldCheck, X } from "lucide-react";
+import { formatFloorName } from "@/lib/floors";
+import { Printer, Download, FileDown, Scissors, FileText, Check, Globe } from "lucide-react";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import { toast } from "sonner";
 
 export function MoneyReceiptModal() {
   const { t, locale } = useTranslation();
   const { activeReceipt, setActiveReceipt } = useApp();
-  const receiptCardRef = useRef<HTMLDivElement>(null);
+  const receiptContainerRef = useRef<HTMLDivElement>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+  
+  // Independent receipt language toggle: defaults to app locale, but manager can toggle on the fly
+  const [receiptLang, setReceiptLang] = useState<"bn" | "en">(locale === "en" ? "en" : "bn");
+
+  useEffect(() => {
+    if (activeReceipt) {
+      setReceiptLang(locale === "en" ? "en" : "bn");
+    }
+  }, [activeReceipt, locale]);
 
   if (!activeReceipt) return null;
 
   const paidBDT = Math.round((activeReceipt.paidNow || 0) / 100);
-  const totalBillBDT = Math.round((activeReceipt.totalBillAmount || 0) / 100);
-  const remainingDueBDT = Math.round((activeReceipt.remainingDue || 0) / 100);
-  const carryForwardDueBDT = Math.round((activeReceipt.carryForwardDue || 0) / 100);
-  const totalPayableBDT = totalBillBDT + carryForwardDueBDT;
+  const inWords = numberToWordsBDT(paidBDT, receiptLang);
 
-  const inWords = numberToWordsBDT(paidBDT, locale);
+  // Parse receipt date components
+  const receiptDateObj = activeReceipt.date ? new Date(activeReceipt.date) : new Date();
+  const dayStr = String(receiptDateObj.getDate()).padStart(2, "0");
+  const monthStr = String(receiptDateObj.getMonth() + 1).padStart(2, "0");
+  const yearStr = String(receiptDateObj.getFullYear());
+
+  const dayDisplay = receiptLang === "bn" ? toBanglaDigits(dayStr) : dayStr;
+  const monthDisplay = receiptLang === "bn" ? toBanglaDigits(monthStr) : monthStr;
+  const yearDisplay = receiptLang === "bn" ? toBanglaDigits(yearStr) : yearStr;
+
+  // Breakdown items if available
+  const items = activeReceipt.billItems || [];
+  const electricityItem = items.find((i: any) =>
+    i.description?.toLowerCase().includes("electric") || i.description?.includes("বিদ্যুৎ")
+  );
+  const gasItem = items.find((i: any) =>
+    i.description?.toLowerCase().includes("gas") || i.description?.includes("গ্যাস")
+  );
+  const waterItem = items.find((i: any) =>
+    i.description?.toLowerCase().includes("water") || i.description?.includes("পানি")
+  );
+  const otherItems = items.filter(
+    (i: any) => i !== electricityItem && i !== gasItem && i !== waterItem
+  );
+  const otherTotal = otherItems.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+
+  const rentPaisa = activeReceipt.rentAmount || activeReceipt.totalBillAmount || 0;
+  const electricityPaisa = electricityItem ? electricityItem.amount : 0;
+  const gasPaisa = gasItem ? gasItem.amount : 0;
+  const waterPaisa = waterItem ? waterItem.amount : 0;
+  const otherPaisa = otherTotal;
+  const advancePaisa = 0; // Stored separately when advance payment adjusted
+  const arrearsPaisa = activeReceipt.remainingDue || 0;
+  const totalPaidPaisa = activeReceipt.paidNow || 0;
 
   /**
    * 1. Ultra-clean isolated print handler:
-   * Prints ONLY the real money receipt voucher, completely eliminating
-   * modal backdrops, blank margins, or surrounding UI.
+   * Opens dedicated print popup with strictly the 2-part counterfoil receipt
+   * formatted for A4 Landscape with zero margins and zero outside cells.
    */
   const handlePrintReceipt = () => {
-    if (!receiptCardRef.current) {
+    if (!receiptContainerRef.current) {
       window.print();
       return;
     }
 
-    const printContent = receiptCardRef.current.innerHTML;
-    const printWindow = window.open("", "_blank", "width=850,height=750");
+    const printContent = receiptContainerRef.current.innerHTML;
+    const printWindow = window.open("", "_blank", "width=1200,height=800");
 
     if (!printWindow) {
-      // Fallback to window.print if popup is blocked
       window.print();
       return;
     }
 
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html lang="${locale}">
+      <html lang="${receiptLang}">
       <head>
         <meta charset="utf-8" />
-        <title>Money Receipt - ${activeReceipt.receiptNo}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;600;700;800&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+        <title>Money_Receipt_${activeReceipt.receiptNo}</title>
+        <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
         <style>
           @page {
-            size: auto;
-            margin: 10mm 15mm;
+            size: A4 landscape;
+            margin: 6mm 8mm;
           }
           * {
             box-sizing: border-box;
@@ -69,76 +111,73 @@ export function MoneyReceiptModal() {
             padding: 0;
           }
           body {
-            font-family: 'Anek Bangla', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-family: 'Anek Bangla', 'Inter', -apple-system, sans-serif;
             background: #ffffff !important;
             color: #000000 !important;
-            padding: 10px;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            padding: 2px;
+          }
+          .counterfoil-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border: 2px solid #000000;
+            background: #ffffff;
+            width: 100%;
+          }
+          .receipt-half {
+            padding: 14px 18px;
+            position: relative;
+          }
+          .receipt-half:first-child {
+            border-right: 2px dashed #000000;
+          }
+          .badge-black {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 800;
+            text-align: center;
+            display: inline-block;
+            border-radius: 2px;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
-          .receipt-paper {
-            width: 100%;
-            max-width: 800px;
-            margin: 0 auto;
-            border: 4px double #000000;
-            padding: 24px 28px;
+          .boxed-val {
+            border: 1px solid #000000;
+            padding: 2px 6px;
             background: #ffffff;
-            position: relative;
+            font-size: 11px;
+            font-weight: 700;
           }
-          .text-center { text-align: center; }
-          .text-right { text-align: right; }
-          .font-bold { font-weight: 700; }
-          .font-mono { font-family: monospace; }
-          .flex { display: flex; }
-          .justify-between { justify-content: space-between; }
-          .items-center { align-items: center; }
-          .items-end { align-items: flex-end; }
-          .grid { display: grid; }
-          .grid-2 { grid-template-columns: 1fr 1fr; gap: 12px; }
-          .grid-3 { grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-          .border-b { border-bottom: 1px solid #000000; }
-          .border-b-dotted { border-bottom: 1px dotted #444444; }
-          .table { width: 100%; border-collapse: collapse; margin-top: 14px; margin-bottom: 14px; }
-          .table th, .table td { border: 1px solid #000000; padding: 6px 10px; font-size: 13px; text-align: left; }
-          .table th { background-color: #f1f5f9; font-weight: 700; }
-          .amount-box {
-            display: inline-block;
-            border: 2px solid #000000;
-            padding: 6px 16px;
-            font-size: 18px;
-            font-weight: 800;
-            background: #fafafa;
-            border-radius: 4px;
-          }
-          .rubber-stamp {
-            position: absolute;
-            right: 40px;
-            top: 210px;
-            border: 3px solid #059669;
-            color: #059669;
-            padding: 8px 18px;
-            font-weight: 900;
-            font-size: 18px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 8px;
-            transform: rotate(-12deg);
-            opacity: 0.85;
+          .pill-tag {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2.5px 6px;
             text-align: center;
-            pointer-events: none;
+            border-radius: 2px;
+            width: 78px;
+            flex-shrink: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
-          .signature-box {
-            text-align: center;
-            width: 180px;
-          }
-          .signature-line {
-            border-top: 1px solid #000000;
-            margin-bottom: 4px;
+          .pill-val {
+            border: 1px solid #000000;
+            padding: 2px 6px;
+            font-size: 11px;
+            font-weight: 700;
+            flex-grow: 1;
+            text-align: right;
+            font-family: monospace;
+            background: #ffffff;
           }
         </style>
       </head>
       <body>
-        <div class="receipt-paper">
+        <div class="counterfoil-container">
           ${printContent}
         </div>
         <script>
@@ -146,7 +185,7 @@ export function MoneyReceiptModal() {
             setTimeout(function() {
               window.print();
               window.close();
-            }, 250);
+            }, 350);
           };
         </script>
       </body>
@@ -156,138 +195,333 @@ export function MoneyReceiptModal() {
   };
 
   /**
-   * 2. Download crisp PDF of the real money receipt:
+   * 2. Download 100% Error-Free PDF:
+   * Uses html2canvas to render the styled DOM directly into 300 DPI high-definition canvas,
+   * then embeds into standard landscape A4 PDF.
+   * Completely avoids jsPDF Unicode/Bengali font corruption and ?????? bugs.
    */
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
+    if (!receiptContainerRef.current) return;
+    setIsDownloadingPdf(true);
     try {
-      const doc = new jsPDF({
-        orientation: "portrait",
+      const canvas = await html2canvas(receiptContainerRef.current, {
+        scale: 3, // Ultra-sharp 300 DPI vector-like fidelity
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
         unit: "mm",
         format: "a4",
       });
 
-      // Outer security double border
-      doc.setLineWidth(0.8);
-      doc.setDrawColor(30, 41, 59);
-      doc.rect(12, 12, 186, 128);
-      doc.setLineWidth(0.3);
-      doc.rect(13.5, 13.5, 183, 125);
+      const pdfWidth = 297;
+      const pdfHeight = 210;
+      const margin = 8;
+      const availableWidth = pdfWidth - margin * 2;
+      const availableHeight = pdfHeight - margin * 2;
 
-      // Header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
-      doc.text((activeReceipt.marketName || "MARKET MANAGER").toUpperCase(), 105, 22, { align: "center" });
+      const imgWidth = availableWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const finalHeight = Math.min(imgHeight, availableHeight);
+      const offsetY = Math.max(margin, (pdfHeight - finalHeight) / 2);
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      doc.text("COMMERCIAL SPACE RENTAL & PROPERTY MANAGEMENT", 105, 27, { align: "center" });
-
-      // Title Ribbon Box
-      doc.setFillColor(241, 245, 249);
-      doc.rect(70, 31, 70, 8, "FD");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text("MONEY RECEIPT", 105, 36.5, { align: "center" });
-
-      // Receipt No & Date
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "bold");
-      doc.text(`Receipt No: ${activeReceipt.receiptNo}`, 16, 45);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Date: ${formatDate(activeReceipt.date, "en")}`, 148, 45);
-
-      // Horizontal separator line
-      doc.setDrawColor(180, 180, 180);
-      doc.line(16, 48, 192, 48);
-
-      // Details Flow
-      let y = 55;
-      doc.setFont("helvetica", "bold");
-      doc.text("Received with thanks from:", 16, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${activeReceipt.tenantName} ${activeReceipt.tenantPhone ? `(${activeReceipt.tenantPhone})` : ""}`, 65, y);
-
-      y += 7;
-      doc.setFont("helvetica", "bold");
-      doc.text("Shop & Location:", 16, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Shop No: ${activeReceipt.shopNumber} | Market: ${activeReceipt.marketName}`, 65, y);
-
-      y += 7;
-      doc.setFont("helvetica", "bold");
-      doc.text("The Sum of (In Words):", 16, y);
-      doc.setFont("helvetica", "italic");
-      doc.text(numberToWordsBDT(paidBDT, "en"), 65, y);
-
-      y += 7;
-      doc.setFont("helvetica", "bold");
-      doc.text("On Account of:", 16, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`Shop Rent for ${formatMonth(activeReceipt.billPeriodMonth, "en", activeReceipt.billPeriodYear)}`, 65, y);
-
-      y += 7;
-      doc.setFont("helvetica", "bold");
-      doc.text("Payment Mode:", 16, y);
-      doc.setFont("helvetica", "normal");
-      doc.text(`${activeReceipt.paymentMethod} ${activeReceipt.reference ? `(Ref: ${activeReceipt.reference})` : ""}`, 65, y);
-
-      // Table Breakdown
-      y += 9;
-      doc.setFillColor(248, 250, 252);
-      doc.rect(16, y, 176, 7, "FD");
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      doc.text("Total Rent Due", 20, y + 5);
-      doc.text("Previous Arrears", 60, y + 5);
-      doc.text("Total Payable", 100, y + 5);
-      doc.text("Amount Paid", 138, y + 5);
-      doc.text("Remaining Due", 168, y + 5);
-
-      y += 7;
-      doc.rect(16, y, 176, 8);
-      doc.setFont("helvetica", "normal");
-      doc.text(`BDT ${totalBillBDT.toLocaleString()}`, 20, y + 5.5);
-      doc.text(`BDT ${carryForwardDueBDT.toLocaleString()}`, 60, y + 5.5);
-      doc.text(`BDT ${totalPayableBDT.toLocaleString()}`, 100, y + 5.5);
-      doc.setFont("helvetica", "bold");
-      doc.text(`BDT ${paidBDT.toLocaleString()}`, 138, y + 5.5);
-      doc.text(`BDT ${remainingDueBDT.toLocaleString()}`, 168, y + 5.5);
-
-      // Amount Stamp Box
-      y += 14;
-      doc.rect(16, y, 75, 11);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.text(`AMOUNT: BDT ${paidBDT.toLocaleString()} /-`, 19, y + 7.5);
-
-      // Rubber stamp paid badge
-      doc.setDrawColor(5, 150, 105);
-      doc.setLineWidth(0.6);
-      doc.rect(105, y - 2, 40, 12);
-      doc.setTextColor(5, 150, 105);
-      doc.setFontSize(11);
-      doc.text("PAID", 125, y + 6, { align: "center" });
-      doc.setTextColor(0, 0, 0);
-      doc.setDrawColor(0, 0, 0);
-
-      // Signatures
-      y += 24;
-      doc.setDrawColor(100, 100, 100);
-      doc.setLineWidth(0.3);
-      doc.line(20, y, 65, y);
-      doc.line(145, y, 190, y);
-
-      doc.setFontSize(8);
-      doc.setFont("helvetica", "normal");
-      doc.text("Tenant's Signature", 42.5, y + 4, { align: "center" });
-      doc.text("Authorized Collector", 167.5, y + 4, { align: "center" });
-
-      doc.save(`Money_Receipt_${activeReceipt.receiptNo}.pdf`);
-      toast.success(locale === "bn" ? "মানি রিসিট পিডিএফ ডাউনলোড সম্পন্ন!" : "Receipt PDF downloaded successfully!");
-    } catch (e) {
-      console.error(e);
-      toast.error("Failed to generate PDF");
+      pdf.addImage(imgData, "PNG", margin, offsetY, imgWidth, finalHeight, undefined, "FAST");
+      pdf.save(`Money_Receipt_${activeReceipt.receiptNo}.pdf`);
+      toast.success(
+        receiptLang === "bn"
+          ? "কাউন্টারফয়েল মানি রিসিট পিডিএফ সফলভাবে ডাউনলোড হয়েছে!"
+          : "Counterfoil Money Receipt downloaded as PDF successfully!"
+      );
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      toast.error(
+        receiptLang === "bn" ? "পিডিএফ জেনারেট করতে ত্রুটি হয়েছে" : "Failed to generate PDF"
+      );
+    } finally {
+      setIsDownloadingPdf(false);
     }
+  };
+
+  /**
+   * 3. Download Clean PNG Image:
+   * Perfect for sending directly to tenants on WhatsApp / IMO / Messenger
+   */
+  const handleDownloadImage = async () => {
+    if (!receiptContainerRef.current) return;
+    setIsDownloadingImage(true);
+    try {
+      const canvas = await html2canvas(receiptContainerRef.current, {
+        scale: 3,
+        useCORS: true,
+        backgroundColor: "#ffffff",
+        logging: false,
+      });
+
+      const link = document.createElement("a");
+      link.download = `Money_Receipt_${activeReceipt.receiptNo}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+      toast.success(
+        receiptLang === "bn"
+          ? "মানি রিসিট ছবি (PNG) সফলভাবে ডাউনলোড হয়েছে!"
+          : "Money Receipt PNG image downloaded successfully!"
+      );
+    } catch (err) {
+      console.error("Image generation error:", err);
+      toast.error(
+        receiptLang === "bn" ? "ছবি ডাউনলোড করতে ত্রুটি হয়েছে" : "Failed to download image"
+      );
+    } finally {
+      setIsDownloadingImage(false);
+    }
+  };
+
+  /**
+   * Single Counterfoil Half Renderer:
+   * Matches the user's reference image with exact Bengali & English layout.
+   */
+  const renderReceiptHalf = (copyType: "OWNER" | "TENANT") => {
+    const isOwner = copyType === "OWNER";
+    const isBn = receiptLang === "bn";
+
+    const badgeText = isOwner
+      ? isBn ? "মালিকের অংশ" : "Owner's Copy"
+      : isBn ? "ভাড়াটিয়ার অংশ" : "Tenant's Copy";
+
+    const titleText = isBn ? "অস্থায়ী দোকান / বাসা ভাড়ার রশিদ" : "Commercial Rent Money Receipt";
+    const signatureText = isOwner
+      ? isBn ? "ভাড়াটিয়ার স্বাক্ষর" : "Tenant's Signature"
+      : isBn ? "মালিক বা তাহার প্রতিনিধির স্বাক্ষর" : "Owner / Authorized Signature";
+
+    return (
+      <div
+        className={`p-4 sm:p-5 relative bg-white text-black flex flex-col justify-between ${
+          isOwner ? "sm:border-r-2 sm:border-dashed sm:border-black" : ""
+        }`}
+      >
+        {/* TOP HEADER */}
+        <div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0 pr-2">
+              <h3 className="text-base sm:text-lg font-black tracking-tight text-black leading-tight">
+                {titleText}
+              </h3>
+              <p className="text-sm font-extrabold text-black mt-0.5 truncate">
+                {activeReceipt.marketName || (isBn ? "মার্কেট ম্যানেজার" : "Market Manager")}
+              </p>
+              <p className="text-[10px] sm:text-[11px] text-black/80 leading-tight mt-0.5">
+                {activeReceipt.marketAddress ||
+                  (isBn
+                    ? "হোল্ডিং নং- ৩১০৬/১২, সাবাইপাড়া, লোহাগড়পুল, পাহাড়তলী, চট্টগ্রাম। ০১৭৪৩-৫৩৩৩৩৯"
+                    : "Holding No- 3106/12, Sabaipara, Agrabad, Chattogram. Cell: 01743-533339")}
+              </p>
+            </div>
+
+            {/* Top-Right Badge & Date Box */}
+            <div className="shrink-0 flex flex-col items-end">
+              <span className="bg-black text-white font-black text-xs px-3 py-1 rounded-xs uppercase tracking-wider block text-center shadow-xs">
+                {badgeText}
+              </span>
+
+              {/* Date Box: [ দিন ] [ মাস ] [ বছর ] */}
+              <div className="flex items-center gap-1 mt-2 text-xs">
+                <span className="font-bold text-black text-[11px]">
+                  {isBn ? "তারিখ:" : "Date:"}
+                </span>
+                <div className="flex items-center">
+                  <span className="border border-black w-6 h-5 flex items-center justify-center font-bold font-mono text-[11px] bg-white text-black">
+                    {dayDisplay}
+                  </span>
+                  <span className="border border-black border-l-0 w-6 h-5 flex items-center justify-center font-bold font-mono text-[11px] bg-white text-black">
+                    {monthDisplay}
+                  </span>
+                  <span className="border border-black border-l-0 px-1.5 h-5 flex items-center justify-center font-bold font-mono text-[11px] bg-white text-black">
+                    {yearDisplay}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Under Header Line */}
+          <div className="h-[1.5px] bg-black w-full my-2" />
+
+          {/* Month Name Row */}
+          <div className="flex items-center gap-1.5 my-1.5 text-xs">
+            <span className="font-bold text-black whitespace-nowrap text-[11px] sm:text-xs">
+              {isBn ? "মাসের নাম:" : "Month:"}
+            </span>
+            <div className="border border-black px-2 py-0.5 font-bold text-black bg-white flex-1 min-w-[120px] truncate text-[11px] sm:text-xs">
+              {formatMonth(activeReceipt.billPeriodMonth, receiptLang, activeReceipt.billPeriodYear)}
+            </div>
+          </div>
+
+          {/* Tenant Name Row */}
+          <div className="flex items-center gap-1.5 my-1.5 text-xs">
+            <span className="font-bold text-black whitespace-nowrap text-[11px] sm:text-xs">
+              {isBn ? "ভাড়াটিয়ার নাম:" : "Tenant Name:"}
+            </span>
+            <div className="border border-black px-2 py-0.5 font-extrabold text-black bg-white flex-1 truncate text-xs sm:text-sm">
+              {activeReceipt.tenantName}{" "}
+              {activeReceipt.tenantPhone ? `(${activeReceipt.tenantPhone})` : ""}
+            </div>
+          </div>
+
+          {/* MIDSECTION: Left Specifics & Right Financial Ledger */}
+          <div className="grid grid-cols-12 gap-2.5 my-2 items-start text-xs">
+            {/* Left Column: Property & Tenant Details */}
+            <div className="col-span-5 space-y-1.5">
+              <div>
+                <span className="block font-bold text-black text-[10px] mb-0.5">
+                  {isBn ? "মালিক পক্ষ / মার্কেট:" : "Landlord / Market:"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold text-black bg-white text-[11px] truncate">
+                  {activeReceipt.marketName || (isBn ? "নূর আহাম্মদ ম্যানশন" : "Property Owner")}
+                </div>
+              </div>
+
+              <div>
+                <span className="block font-bold text-black text-[10px] mb-0.5">
+                  {isBn ? "ভবন / তলা:" : "Building / Floor:"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold text-black bg-white text-[11px] truncate">
+                  {formatFloorName(activeReceipt.floor, receiptLang)}
+                </div>
+              </div>
+
+              <div>
+                <span className="block font-bold text-black text-[10px] mb-0.5">
+                  {isBn ? "ইউনিট / দোকান নং:" : "Unit / Shop No:"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-black text-black bg-white font-mono text-xs truncate">
+                  {activeReceipt.shopNumber} {activeReceipt.size ? `(${activeReceipt.size})` : ""}
+                </div>
+              </div>
+
+              <div>
+                <span className="block font-bold text-black text-[10px] mb-0.5">
+                  {isBn ? "রশিদ নম্বর:" : "Receipt Serial:"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-black text-black bg-white font-mono text-[10px] truncate">
+                  {activeReceipt.receiptNo}
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column: 7 Solid Black Badges with Right-Aligned Values */}
+            <div className="col-span-7 space-y-1">
+              {/* 1. Monthly Rent */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "মাসিক ভাড়া" : "Rent"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(rentPaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* 2. Gas Bill */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "গ্যাস বিল" : "Gas Bill"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(gasPaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* 3. Electricity Bill */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "বিদ্যুৎ বিল" : "Electricity"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(electricityPaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* 4. Water Bill */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "পানি" : "Water"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(waterPaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* 5. Others */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "অন্যান্য" : "Others"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(otherPaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* 6. Advance */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "অগ্রিম" : "Advance"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(advancePaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* 7. Arrears / Due */}
+              <div className="flex items-center gap-1">
+                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                  {isBn ? "বকেয়া" : "Arrears"}
+                </span>
+                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                  {formatCurrency(arrearsPaisa, receiptLang)}
+                </div>
+              </div>
+
+              {/* TOTAL ROW */}
+              <div className="flex items-center gap-1 pt-1 border-t border-black">
+                <span className="font-black text-black text-xs w-[76px] text-right pr-1">
+                  {isBn ? "মোট =" : "Total ="}
+                </span>
+                <div className="border-2 border-black px-2 py-0.5 font-black font-mono text-right flex-1 bg-white text-black text-xs sm:text-sm">
+                  {formatCurrency(totalPaidPaisa, receiptLang)}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* IN WORDS ROW */}
+          <div className="my-2 border border-black p-1.5 bg-white text-xs">
+            <span className="font-bold text-black">{isBn ? "কথায়:" : "In Words:"} </span>
+            <span className="font-bold text-black italic capitalize">{inWords}</span>
+          </div>
+        </div>
+
+        {/* BOTTOM SIGNATURES & NOTICE */}
+        <div className="pt-6 pb-0 mt-auto">
+          <div className="border-t border-black pt-1 flex items-center justify-between text-[11px]">
+            <span className="font-extrabold text-black">{signatureText}</span>
+            <span className="text-[10px] text-black font-mono">
+              {activeReceipt.paymentMethod} • {formatDate(activeReceipt.date, receiptLang)}
+            </span>
+          </div>
+
+          {!isOwner && (
+            <p className="text-[9px] text-black/80 mt-1 italic text-right">
+              {isBn
+                ? "* পানি, বিদ্যুৎ ও গ্যাস অপচয় রোধে সহায়তা করুন।"
+                : "* Please conserve water, electricity and gas."}
+            </p>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -296,242 +530,119 @@ export function MoneyReceiptModal() {
       onClose={() => setActiveReceipt(null)}
       title={
         <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-          <Building2 className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-          <span>{locale === "bn" ? "টাকা প্রাপ্তির মূল রশিদ (Money Receipt)" : "Official Money Receipt"}</span>
+          <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          <span>
+            {receiptLang === "bn"
+              ? "প্রফেশনাল ডাবল কাউন্টারফয়েল মানি রিসিট (Dual Counterfoil)"
+              : "Professional 2-Part Counterfoil Money Receipt"}
+          </span>
         </div>
       }
       description={
-        locale === "bn"
-          ? "আসল বাণিজ্যিক রশিদ। প্রিন্ট অথবা ডাউনলোডে শুধুমাত্র মূল রশিদ অংশটি সংরক্ষিত হবে।"
-          : "Commercial physical money receipt. Print or Download exports exclusively the voucher area."
+        receiptLang === "bn"
+          ? "আসল বাণিজ্যিক কাউন্টারফয়েল রশিদ (মালিকের কপি ও ভাড়াটিয়ার কপি)। বাংলা ও ইংরেজি উভয় ভাষায় নির্ভুল প্রিন্ট ও পিডিএফ ডাউনলোড হবে।"
+          : "Dual-counterfoil (Owner & Tenant copy) commercial money receipt with zero font corruption in PDF, PNG and Print."
       }
       maxWidth="2xl"
     >
-      <div className="space-y-6">
-        {/* Printable/Exportable Real Money Receipt Voucher */}
-        <div
-          ref={receiptCardRef}
-          id="real-money-receipt"
-          className="real-money-receipt-voucher relative p-6 sm:p-8 bg-white text-slate-950 rounded-xl shadow-lg border-4 border-double border-slate-900 overflow-hidden"
-          style={{ fontFamily: "'Anek Bangla', 'Inter', sans-serif" }}
-        >
-          {/* Watermark Angled Rubber Stamp: PAID */}
-          <div className="rubber-stamp-paid absolute right-8 top-44 sm:top-36 border-4 border-emerald-600 text-emerald-700 px-5 py-2 font-black text-xl sm:text-2xl tracking-widest uppercase rounded-xl -rotate-12 opacity-85 select-none pointer-events-none shadow-xs">
-            <div className="flex items-center gap-1.5 justify-center">
-              <CheckCircle2 className="w-6 h-6 stroke-[3]" />
-              <span>PAID</span>
-            </div>
-            <p className="text-[10px] font-bold tracking-normal text-center mt-0.5">
-              পরিশোধিত • {formatDate(activeReceipt.date, "bn")}
-            </p>
-          </div>
-
-          {/* Top Header of the Voucher */}
-          <div className="text-center pb-3 border-b-2 border-slate-900">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center text-xs font-black">
-                MM
-              </div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950 uppercase">
-                {activeReceipt.marketName || t("common.appName")}
-              </h2>
-            </div>
-            <p className="text-xs text-slate-700 font-medium tracking-wide">
-              দোকান ও বাণিজ্যিক স্পেস ভাড়া আদায় শাখা • বাণিজ্যিক মানি রিসিট ভাউচার
-            </p>
-            <p className="text-[11px] text-slate-600 font-mono mt-0.5">
-              {locale === "bn" ? "হেল্পলাইন: ০১৭০০-০০০০০০ • ঢাকা, বাংলাদেশ" : "Helpline: 01700-000000 • Dhaka, Bangladesh"}
-            </p>
-          </div>
-
-          {/* Money Receipt Banner Ribbon */}
-          <div className="my-3 flex items-center justify-between gap-3 text-xs">
-            <div className="border border-slate-900 px-3 py-1 bg-slate-50 font-bold rounded">
-              <span className="text-slate-600 mr-1.5">{locale === "bn" ? "রশিদ নং:" : "Receipt No:"}</span>
-              <span className="font-mono text-rose-700 font-extrabold text-sm">{activeReceipt.receiptNo}</span>
-            </div>
-
-            <div className="px-5 py-1 bg-slate-900 text-white font-black text-xs sm:text-sm uppercase tracking-wider rounded shadow-xs">
-              {locale === "bn" ? "টাকা প্রাপ্তির রশিদ (MONEY RECEIPT)" : "MONEY RECEIPT"}
-            </div>
-
-            <div className="border border-slate-900 px-3 py-1 bg-slate-50 font-bold rounded">
-              <span className="text-slate-600 mr-1.5">{locale === "bn" ? "তারিখ:" : "Date:"}</span>
-              <span className="font-mono text-slate-900 font-bold">{formatDate(activeReceipt.date, locale)}</span>
-            </div>
-          </div>
-
-          {/* Physical Voucher Narrative Rows (Classic Fill-in Style) */}
-          <div className="space-y-3.5 my-4 text-xs sm:text-sm leading-relaxed text-slate-900">
-            {/* Row 1: Tenant */}
-            <div className="flex items-baseline gap-2 border-b border-dotted border-slate-400 pb-1">
-              <span className="font-bold text-slate-700 whitespace-nowrap">
-                {locale === "bn" ? "ভাড়াটিয়ার নাম (Received with thanks from):" : "Received with thanks from:"}
-              </span>
-              <span className="font-extrabold text-slate-950 text-sm sm:text-base flex-1">
-                {activeReceipt.tenantName}
-              </span>
-              {activeReceipt.tenantPhone && (
-                <span className="font-mono text-slate-700 font-semibold whitespace-nowrap">
-                  (ফোন: {activeReceipt.tenantPhone})
-                </span>
-              )}
-            </div>
-
-            {/* Row 2: Shop & Market */}
-            <div className="flex items-baseline gap-2 border-b border-dotted border-slate-400 pb-1">
-              <span className="font-bold text-slate-700 whitespace-nowrap">
-                {locale === "bn" ? "দোকান ও ফ্লোর (Shop & Floor):" : "Shop & Floor:"}
-              </span>
-              <span className="font-bold text-slate-950 flex-1">
-                দোকান নং- {activeReceipt.shopNumber} {activeReceipt.floor ? `(${activeReceipt.floor})` : ""}, মার্কেট: {activeReceipt.marketName}
-              </span>
-            </div>
-
-            {/* Row 3: Amount in words */}
-            <div className="flex items-baseline gap-2 border-b border-dotted border-slate-400 pb-1 bg-amber-50/60 p-1.5 rounded">
-              <span className="font-bold text-slate-800 whitespace-nowrap">
-                {locale === "bn" ? "কথায় (The Sum of):" : "The Sum of (In Words):"}
-              </span>
-              <span className="font-bold text-slate-950 italic flex-1 capitalize">
-                {inWords}
-              </span>
-            </div>
-
-            {/* Row 4: On account of */}
-            <div className="flex items-baseline gap-2 border-b border-dotted border-slate-400 pb-1">
-              <span className="font-bold text-slate-700 whitespace-nowrap">
-                {locale === "bn" ? "যে বাবদ (On Account of):" : "On Account of:"}
-              </span>
-              <span className="font-bold text-slate-950 flex-1">
-                {formatMonth(activeReceipt.billPeriodMonth, locale, activeReceipt.billPeriodYear)}-এর মাসিক দোকান ভাড়া ও আনুষঙ্গিক পরিশোধ
-              </span>
-            </div>
-
-            {/* Row 5: Payment Method */}
-            <div className="flex items-baseline gap-2 border-b border-dotted border-slate-400 pb-1">
-              <span className="font-bold text-slate-700 whitespace-nowrap">
-                {locale === "bn" ? "পরিশোধের মাধ্যম (Payment Mode):" : "Payment Mode:"}
-              </span>
-              <span className="font-bold text-slate-950">
-                {activeReceipt.paymentMethod}
-              </span>
-              {activeReceipt.reference && (
-                <span className="font-mono text-slate-700 ml-2">
-                  (ট্রানজেকশন / চেক নং: {activeReceipt.reference})
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Structured Accounting Table (No Blank Cells) */}
-          <div className="my-4 overflow-hidden border-2 border-slate-900 rounded-lg">
-            <table className="w-full text-xs text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-100 border-b-2 border-slate-900 font-extrabold text-slate-900">
-                  <th className="p-2 border-r border-slate-400">{locale === "bn" ? "মোট বিল" : "Current Rent"}</th>
-                  <th className="p-2 border-r border-slate-400">{locale === "bn" ? "পূর্বের বকেয়া" : "Previous Arrears"}</th>
-                  <th className="p-2 border-r border-slate-400">{locale === "bn" ? "মোট প্রদেয়" : "Total Payable"}</th>
-                  <th className="p-2 border-r border-slate-400 bg-emerald-50 text-emerald-950 font-black">
-                    {locale === "bn" ? "আদায়ের পরিমাণ" : "Amount Paid"}
-                  </th>
-                  <th className="p-2 text-rose-950 bg-rose-50 font-black">{locale === "bn" ? "অবশিষ্ট বকেয়া" : "Remaining Due"}</th>
-                </tr>
-              </thead>
-              <tbody className="font-bold text-slate-950">
-                <tr>
-                  <td className="p-2.5 border-r border-slate-300 font-mono">{formatCurrency(activeReceipt.totalBillAmount, locale)}</td>
-                  <td className="p-2.5 border-r border-slate-300 font-mono">
-                    {formatCurrency(activeReceipt.carryForwardDue || 0, locale)}
-                  </td>
-                  <td className="p-2.5 border-r border-slate-300 font-mono">
-                    {formatCurrency(
-                      (activeReceipt.totalBillAmount || 0) + (activeReceipt.carryForwardDue || 0),
-                      locale
-                    )}
-                  </td>
-                  <td className="p-2.5 border-r border-slate-300 bg-emerald-50/80 font-mono text-emerald-800 text-sm font-black">
-                    {formatCurrency(activeReceipt.paidNow, locale)}
-                  </td>
-                  <td className="p-2.5 font-mono text-rose-700 bg-rose-50/80 text-sm font-black">
-                    {formatCurrency(activeReceipt.remainingDue, locale)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          {/* Bottom Bar: Amount Stamp Box & Collector Notes */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
-            <div className="inline-flex items-center gap-2 border-2 border-slate-900 bg-slate-50 px-4 py-2 rounded-lg font-black text-slate-950 text-base sm:text-lg shadow-2xs">
-              <span className="text-xs font-bold text-slate-600">{locale === "bn" ? "অংকে টাকা:" : "AMOUNT:"}</span>
-              <span className="font-mono text-emerald-700 tracking-tight">
-                {formatCurrency(activeReceipt.paidNow, locale)} /-
-              </span>
-            </div>
-
-            <div className="text-right text-[11px] text-slate-600">
-              <p>
-                <span className="font-semibold text-slate-800">{locale === "bn" ? "আদায়কারী:" : "Received By:"} </span>
-                <span className="font-bold text-slate-950">{activeReceipt.receivedBy || "Admin / Manager"}</span>
-              </p>
-              {activeReceipt.note && (
-                <p className="italic text-slate-500 max-w-xs truncate">{activeReceipt.note}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Official Signatures Footer */}
-          <div className="pt-14 pb-2 flex items-end justify-between text-xs">
-            <div className="text-center w-40">
-              <div className="border-t-2 border-slate-800 pt-1 font-bold text-slate-900">
-                {locale === "bn" ? "ভাড়াটিয়ার স্বাক্ষর" : "Tenant's Signature"}
-              </div>
-            </div>
-
-            <div className="text-center w-48">
-              <div className="border-t-2 border-slate-800 pt-1 font-extrabold text-slate-950">
-                {locale === "bn" ? "আদায়কারী / অনুমোদিত স্বাক্ষর" : "Authorized Signature"}
-              </div>
-            </div>
-          </div>
-
-          {/* Security Sub-Notice */}
-          <div className="mt-4 pt-2 border-t border-slate-300 flex items-center justify-between text-[10px] text-slate-500 font-medium">
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>
-                {locale === "bn"
-                  ? "* এটি একটি স্বয়ংক্রিয় কম্পিউটার জেনারেটেড মানি রিসিট ভাউচার। কোনো কাটাকাটি ছাড়া গ্রহণযোগ্য।"
-                  : "* Computer generated official commercial money receipt voucher. Valid without alteration."}
-              </span>
+      <div className="space-y-4">
+        {/* Top Control Bar: Receipt Language Switcher */}
+        <div className="flex items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 no-print">
+          <div className="flex items-center gap-2">
+            <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              {receiptLang === "bn" ? "রশিদের ভাষা নির্বাচন করুন:" : "Receipt Language:"}
             </span>
-            <span className="font-mono">{activeReceipt.receiptNo}</span>
+          </div>
+
+          <div className="flex items-center bg-white dark:bg-slate-800 rounded-md p-0.5 border border-slate-300 dark:border-slate-700 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setReceiptLang("bn")}
+              className={`px-3 py-1 rounded text-xs font-bold transition-all ${
+                receiptLang === "bn"
+                  ? "bg-teal-600 text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              বাংলা (BN)
+            </button>
+            <button
+              type="button"
+              onClick={() => setReceiptLang("en")}
+              className={`px-3 py-1 rounded text-xs font-bold transition-all ${
+                receiptLang === "en"
+                  ? "bg-teal-600 text-white shadow-xs"
+                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+              }`}
+            >
+              English (EN)
+            </button>
           </div>
         </div>
 
-        {/* Modal Controls (Hidden in Print) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 no-print border-t border-slate-200 dark:border-slate-800">
-          <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-            <Printer className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-            <span>
-              {locale === "bn"
-                ? "প্রিন্ট ও ডাউনলোডে শুধুমাত্র মূল মানি রিসিট অংশটি অন্তর্ভুক্ত হবে।"
-                : "Print & Download exports strictly the money receipt voucher area."}
-            </span>
-          </p>
+        {/* Printable & Exportable 2-Part Counterfoil Receipt Voucher */}
+        <div className="overflow-x-auto pb-2">
+          <div
+            ref={receiptContainerRef}
+            id="real-money-receipt"
+            className="real-money-receipt-voucher bg-white text-black border-2 border-black shadow-md min-w-[760px] max-w-4xl mx-auto rounded-xs grid grid-cols-2 relative"
+            style={{ fontFamily: "'Anek Bangla', 'Inter', sans-serif" }}
+          >
+            {/* Center Scissor Icon Indicator */}
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white px-1 z-10 hidden sm:flex items-center gap-0.5 text-[10px] text-black">
+              <Scissors className="w-3 h-3 text-black" />
+            </div>
 
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            {/* Left Part: মালিকের অংশ (Owner Copy) */}
+            {renderReceiptHalf("OWNER")}
+
+            {/* Right Part: ভাড়াটিয়ার অংশ (Tenant Copy) */}
+            {renderReceiptHalf("TENANT")}
+          </div>
+        </div>
+
+        {/* Bottom Actions Bar (Hidden during Print) */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 no-print">
+          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>
+              {receiptLang === "bn"
+                ? "ডাবল কাউন্টারফয়েল • বাংলা ও ইংরেজিতে ১০০% নির্ভুল"
+                : "Dual Counterfoil • 100% Error-Free Rendering"}
+            </span>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
             <Button variant="outline" size="sm" onClick={() => setActiveReceipt(null)}>
               {t("common.close")}
             </Button>
-            <Button variant="outline" size="sm" onClick={handleDownloadPdf}>
-              <Download className="w-4 h-4 mr-1.5 text-teal-600 dark:text-teal-400" />
-              {locale === "bn" ? "পিডিএফ ডাউনলোড" : "Download PDF"}
+
+            <Button
+              variant="outline"
+              size="sm"
+              isLoading={isDownloadingImage}
+              onClick={handleDownloadImage}
+              title={receiptLang === "bn" ? "ছবি (PNG) ডাউনলোড করুন" : "Download PNG Image"}
+            >
+              <FileDown className="w-4 h-4 mr-1.5 text-blue-600 dark:text-blue-400" />
+              {receiptLang === "bn" ? "ছবি (PNG)" : "Image (PNG)"}
             </Button>
+
+            <Button
+              variant="outline"
+              size="sm"
+              isLoading={isDownloadingPdf}
+              onClick={handleDownloadPdf}
+              title={receiptLang === "bn" ? "পিডিএফ ডাউনলোড করুন" : "Download PDF"}
+            >
+              <Download className="w-4 h-4 mr-1.5 text-teal-600 dark:text-teal-400" />
+              {receiptLang === "bn" ? "পিডিএফ (PDF)" : "PDF"}
+            </Button>
+
             <Button variant="primary" size="sm" onClick={handlePrintReceipt}>
               <Printer className="w-4 h-4 mr-1.5" />
-              {locale === "bn" ? "রশিদ প্রিন্ট করুন" : "Print Receipt"}
+              {receiptLang === "bn" ? "রশিদ প্রিন্ট" : "Print"}
             </Button>
           </div>
         </div>

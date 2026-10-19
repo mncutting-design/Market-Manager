@@ -78,12 +78,15 @@ export function CollectionsView() {
               receiptNo: `REC-${p.bill.year}${String(p.bill.month).padStart(2, "0")}-${p.id.slice(-6).toUpperCase()}`,
               date: p.paidOn,
               marketName: p.bill.shop.market.name,
+              marketAddress: p.bill.shop.market.address,
               shopNumber: p.bill.shop.shopNumber,
               floor: p.bill.shop.floor,
+              size: p.bill.shop.size || "180 sqft",
               tenantName: p.bill.tenant.name,
               tenantPhone: p.bill.tenant.phone,
               billPeriodMonth: p.bill.month,
               billPeriodYear: p.bill.year,
+              rentAmount: p.bill.rentAmount,
               totalBillAmount: p.bill.totalAmount,
               carryForwardDue: p.bill.carryForwardDue || 0,
               paidNow: p.amount,
@@ -92,6 +95,7 @@ export function CollectionsView() {
               reference: p.reference,
               receivedBy: p.receivedBy,
               note: p.note,
+              billItems: p.bill.billItems || [],
             };
 
             return (

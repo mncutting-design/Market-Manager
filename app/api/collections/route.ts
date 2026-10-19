@@ -24,10 +24,11 @@ export async function GET(req: Request) {
           include: {
             shop: {
               include: {
-                market: { select: { id: true, name: true } },
+                market: { select: { id: true, name: true, address: true } },
               },
             },
             tenant: true,
+            billItems: true,
           },
         },
       },
@@ -80,6 +81,7 @@ export async function POST(req: Request) {
       include: {
         shop: { include: { market: true } },
         tenant: true,
+        billItems: true,
       },
     });
 
@@ -131,8 +133,10 @@ export async function POST(req: Request) {
       receiptNo: `REC-${bill.year}${String(bill.month).padStart(2, "0")}-${result.payment.id.slice(-6).toUpperCase()}`,
       date: result.payment.paidOn,
       marketName: bill.shop.market.name,
+      marketAddress: bill.shop.market.address,
       shopNumber: bill.shop.shopNumber,
       floor: bill.shop.floor,
+      size: bill.shop.size || "180 sqft",
       tenantName: bill.tenant.name,
       tenantPhone: bill.tenant.phone,
       billPeriodMonth: bill.month,
@@ -146,6 +150,7 @@ export async function POST(req: Request) {
       reference: result.payment.reference,
       receivedBy: result.payment.receivedBy,
       note: result.payment.note,
+      billItems: bill.billItems,
     };
 
     return NextResponse.json({
