@@ -260,9 +260,10 @@ html.lang-bn textarea {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+    height: auto !important;
   }
 
-  /* Hide everything outside the active receipt when printing */
+  /* Hide everything outside dialog */
   header,
   aside,
   nav,
@@ -270,23 +271,40 @@ html.lang-bn textarea {
   footer,
   .no-print,
   button,
-  [data-slot="dialog-overlay"],
-  [role="dialog"] > div:first-child /* backdrop */ {
+  [data-slot="dialog-overlay"] {
     display: none !important;
     visibility: hidden !important;
   }
 
-  /* Make sure dialog container is unconstrained */
+  /* Unconstrain dialog wrapper in print */
+  .fixed.inset-0 {
+    position: static !important;
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+  }
+
   [role="dialog"] {
     position: static !important;
-    background: transparent !important;
+    display: block !important;
+    background: #ffffff !important;
     border: none !important;
     box-shadow: none !important;
     padding: 0 !important;
     margin: 0 !important;
     max-height: none !important;
-    overflow: visible !important;
+    max-width: 100% !important;
     width: 100% !important;
+    overflow: visible !important;
+  }
+
+  .overflow-y-auto,
+  .overflow-x-auto {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   /* Target the exact 2-part counterfoil money receipt voucher */
@@ -297,6 +315,7 @@ html.lang-bn textarea {
     position: relative !important;
     width: 100% !important;
     max-width: 100% !important;
+    min-width: 0 !important;
     margin: 0 auto !important;
     padding: 0 !important;
     background: #ffffff !important;

@@ -10,7 +10,7 @@ export interface DialogProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   children: React.ReactNode;
-  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl";
+  maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl" | "5xl" | "full";
 }
 
 export function Dialog({
@@ -39,55 +39,65 @@ export function Dialog({
 
   if (!isOpen) return null;
 
-  const maxWidths = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
+  const maxWidths: Record<string, string> = {
+    sm: "w-full max-w-sm",
+    md: "w-full max-w-md",
+    lg: "w-full max-w-lg",
+    xl: "w-full max-w-xl",
+    "2xl": "w-full max-w-2xl",
+    "3xl": "w-full max-w-3xl",
+    "4xl": "w-full max-w-4xl",
+    "5xl": "w-full max-w-5xl",
+    full: "w-full max-w-[96vw]",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in no-print"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Dialog box */}
+      {/* Dialog box - Ultra responsive on mobile and desktop */}
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-2xl border border-slate-200 dark:border-slate-800 transition-all animate-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col",
-          maxWidths[maxWidth]
+          "relative z-50 w-full bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 transition-all animate-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[90vh] flex flex-col my-auto",
+          maxWidths[maxWidth] || maxWidths.lg
         )}
       >
-        <div className="flex items-start justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
-          <div>
-            {title && (
-              <h2 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-slate-100">
-                {title}
-              </h2>
-            )}
-            {description && (
-              <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                {description}
-              </p>
-            )}
+        {/* Header */}
+        {(title || description) && (
+          <div className="flex items-start justify-between pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-slate-800 gap-2 shrink-0 no-print">
+            <div className="flex-1 min-w-0 pr-1">
+              {title && (
+                <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                  {title}
+                </div>
+              )}
+              {description && (
+                <div className="text-[11px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                  {description}
+                </div>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+              aria-label="Close"
+            >
+              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        )}
 
-        <div className="overflow-y-auto py-4 flex-1">{children}</div>
+        {/* Scrollable Content Body */}
+        <div className="overflow-y-auto py-2.5 sm:py-4 flex-1 overscroll-contain pr-0.5 sm:pr-1">
+          {children}
+        </div>
       </div>
     </div>
   );

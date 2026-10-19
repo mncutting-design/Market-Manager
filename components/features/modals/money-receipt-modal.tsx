@@ -13,9 +13,9 @@ import {
   numberToWordsBDT,
 } from "@/lib/format";
 import { formatFloorName } from "@/lib/floors";
-import { Printer, Download, FileDown, Scissors, FileText, Check, Globe } from "lucide-react";
+import { Printer, Download, FileDown, Scissors, FileText, Globe, Eye } from "lucide-react";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import { toast } from "sonner";
 
 export function MoneyReceiptModal() {
@@ -24,9 +24,12 @@ export function MoneyReceiptModal() {
   const receiptContainerRef = useRef<HTMLDivElement>(null);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isDownloadingImage, setIsDownloadingImage] = useState(false);
-  
+
   // Independent receipt language toggle: defaults to app locale, but manager can toggle on the fly
   const [receiptLang, setReceiptLang] = useState<"bn" | "en">(locale === "en" ? "en" : "bn");
+
+  // Mobile preview mode: allow viewing single copy on narrow phones while exporting both
+  const [mobileView, setMobileView] = useState<"DUAL" | "OWNER" | "TENANT">("DUAL");
 
   useEffect(() => {
     if (activeReceipt) {
@@ -75,143 +78,34 @@ export function MoneyReceiptModal() {
   const totalPaidPaisa = activeReceipt.paidNow || 0;
 
   /**
-   * 1. Ultra-clean isolated print handler:
-   * Opens dedicated print popup with strictly the 2-part counterfoil receipt
-   * formatted for A4 Landscape with zero margins and zero outside cells.
+   * 1. 100% IDENTICAL PRINT PREVIEW:
+   * Uses native window.print() directly on the rendered DOM.
+   * With @media print isolation, the print preview matches the screen preview exactly!
    */
   const handlePrintReceipt = () => {
-    if (!receiptContainerRef.current) {
+    // Reset mobile preview view so full 2-part counterfoil prints
+    setMobileView("DUAL");
+    setTimeout(() => {
       window.print();
-      return;
-    }
-
-    const printContent = receiptContainerRef.current.innerHTML;
-    const printWindow = window.open("", "_blank", "width=1200,height=800");
-
-    if (!printWindow) {
-      window.print();
-      return;
-    }
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html lang="${receiptLang}">
-      <head>
-        <meta charset="utf-8" />
-        <title>Money_Receipt_${activeReceipt.receiptNo}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-        <style>
-          @page {
-            size: A4 landscape;
-            margin: 6mm 8mm;
-          }
-          * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-          }
-          body {
-            font-family: 'Anek Bangla', 'Inter', -apple-system, sans-serif;
-            background: #ffffff !important;
-            color: #000000 !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-            padding: 2px;
-          }
-          .counterfoil-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            border: 2px solid #000000;
-            background: #ffffff;
-            width: 100%;
-          }
-          .receipt-half {
-            padding: 14px 18px;
-            position: relative;
-          }
-          .receipt-half:first-child {
-            border-right: 2px dashed #000000;
-          }
-          .badge-black {
-            background-color: #000000 !important;
-            color: #ffffff !important;
-            padding: 3px 8px;
-            font-size: 11px;
-            font-weight: 800;
-            text-align: center;
-            display: inline-block;
-            border-radius: 2px;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          .boxed-val {
-            border: 1px solid #000000;
-            padding: 2px 6px;
-            background: #ffffff;
-            font-size: 11px;
-            font-weight: 700;
-          }
-          .pill-tag {
-            background-color: #000000 !important;
-            color: #ffffff !important;
-            font-size: 10px;
-            font-weight: 700;
-            padding: 2.5px 6px;
-            text-align: center;
-            border-radius: 2px;
-            width: 78px;
-            flex-shrink: 0;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          .pill-val {
-            border: 1px solid #000000;
-            padding: 2px 6px;
-            font-size: 11px;
-            font-weight: 700;
-            flex-grow: 1;
-            text-align: right;
-            font-family: monospace;
-            background: #ffffff;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="counterfoil-container">
-          ${printContent}
-        </div>
-        <script>
-          window.onload = function() {
-            setTimeout(function() {
-              window.print();
-              window.close();
-            }, 350);
-          };
-        </script>
-      </body>
-      </html>
-    `);
-    printWindow.document.close();
+    }, 100);
   };
 
   /**
-   * 2. Download 100% Error-Free PDF:
-   * Uses html2canvas to render the styled DOM directly into 300 DPI high-definition canvas,
-   * then embeds into standard landscape A4 PDF.
-   * Completely avoids jsPDF Unicode/Bengali font corruption and ?????? bugs.
+   * 2. DOWNLOAD 100% ERROR-FREE PDF:
+   * Uses html-to-image (SVG foreignObject) which natively handles Tailwind v4 oklch colors,
+   * Bengali fonts, and complex typography without parser crashes.
    */
   const handleDownloadPdf = async () => {
     if (!receiptContainerRef.current) return;
     setIsDownloadingPdf(true);
     try {
-      const canvas = await html2canvas(receiptContainerRef.current, {
-        scale: 3, // Ultra-sharp 300 DPI vector-like fidelity
-        useCORS: true,
+      const dataUrl = await toPng(receiptContainerRef.current, {
+        quality: 0.98,
+        pixelRatio: 2.5,
         backgroundColor: "#ffffff",
-        logging: false,
+        cacheBust: true,
       });
 
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "landscape",
         unit: "mm",
@@ -224,12 +118,19 @@ export function MoneyReceiptModal() {
       const availableWidth = pdfWidth - margin * 2;
       const availableHeight = pdfHeight - margin * 2;
 
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
       const imgWidth = availableWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const imgHeight = (img.height * imgWidth) / img.width;
       const finalHeight = Math.min(imgHeight, availableHeight);
       const offsetY = Math.max(margin, (pdfHeight - finalHeight) / 2);
 
-      pdf.addImage(imgData, "PNG", margin, offsetY, imgWidth, finalHeight, undefined, "FAST");
+      pdf.addImage(dataUrl, "PNG", margin, offsetY, imgWidth, finalHeight, undefined, "FAST");
       pdf.save(`Money_Receipt_${activeReceipt.receiptNo}.pdf`);
       toast.success(
         receiptLang === "bn"
@@ -239,7 +140,9 @@ export function MoneyReceiptModal() {
     } catch (err) {
       console.error("PDF generation error:", err);
       toast.error(
-        receiptLang === "bn" ? "পিডিএফ জেনারেট করতে ত্রুটি হয়েছে" : "Failed to generate PDF"
+        receiptLang === "bn"
+          ? "পিডিএফ তৈরিতে সমস্যা হয়েছে। 'রশিদ প্রিন্ট' অপশন থেকে 'Save as PDF' করতে পারেন।"
+          : "Failed to generate PDF. You can also print and select 'Save as PDF'."
       );
     } finally {
       setIsDownloadingPdf(false);
@@ -247,23 +150,23 @@ export function MoneyReceiptModal() {
   };
 
   /**
-   * 3. Download Clean PNG Image:
-   * Perfect for sending directly to tenants on WhatsApp / IMO / Messenger
+   * 3. DOWNLOAD HIGH-RES PNG IMAGE:
+   * Ideal for sending directly on WhatsApp / IMO / Messenger
    */
   const handleDownloadImage = async () => {
     if (!receiptContainerRef.current) return;
     setIsDownloadingImage(true);
     try {
-      const canvas = await html2canvas(receiptContainerRef.current, {
-        scale: 3,
-        useCORS: true,
+      const dataUrl = await toPng(receiptContainerRef.current, {
+        quality: 0.98,
+        pixelRatio: 2.5,
         backgroundColor: "#ffffff",
-        logging: false,
+        cacheBust: true,
       });
 
       const link = document.createElement("a");
       link.download = `Money_Receipt_${activeReceipt.receiptNo}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = dataUrl;
       link.click();
       toast.success(
         receiptLang === "bn"
@@ -282,7 +185,7 @@ export function MoneyReceiptModal() {
 
   /**
    * Single Counterfoil Half Renderer:
-   * Matches the user's reference image with exact Bengali & English layout.
+   * Replicates user's reference image with solid black badges and clean boxed values.
    */
   const renderReceiptHalf = (copyType: "OWNER" | "TENANT") => {
     const isOwner = copyType === "OWNER";
@@ -299,9 +202,10 @@ export function MoneyReceiptModal() {
 
     return (
       <div
-        className={`p-4 sm:p-5 relative bg-white text-black flex flex-col justify-between ${
+        className={`p-3.5 sm:p-5 relative bg-white text-black flex flex-col justify-between ${
           isOwner ? "sm:border-r-2 sm:border-dashed sm:border-black" : ""
         }`}
+        style={{ backgroundColor: "#ffffff", color: "#000000" }}
       >
         {/* TOP HEADER */}
         <div>
@@ -310,10 +214,10 @@ export function MoneyReceiptModal() {
               <h3 className="text-base sm:text-lg font-black tracking-tight text-black leading-tight">
                 {titleText}
               </h3>
-              <p className="text-sm font-extrabold text-black mt-0.5 truncate">
+              <p className="text-xs sm:text-sm font-extrabold text-black mt-0.5 truncate">
                 {activeReceipt.marketName || (isBn ? "মার্কেট ম্যানেজার" : "Market Manager")}
               </p>
-              <p className="text-[10px] sm:text-[11px] text-black/80 leading-tight mt-0.5">
+              <p className="text-[10px] sm:text-[11px] text-black/85 leading-tight mt-0.5">
                 {activeReceipt.marketAddress ||
                   (isBn
                     ? "হোল্ডিং নং- ৩১০৬/১২, সাবাইপাড়া, লোহাগড়পুল, পাহাড়তলী, চট্টগ্রাম। ০১৭৪৩-৫৩৩৩৩৯"
@@ -323,23 +227,26 @@ export function MoneyReceiptModal() {
 
             {/* Top-Right Badge & Date Box */}
             <div className="shrink-0 flex flex-col items-end">
-              <span className="bg-black text-white font-black text-xs px-3 py-1 rounded-xs uppercase tracking-wider block text-center shadow-xs">
+              <span
+                className="bg-black text-white font-black text-[11px] sm:text-xs px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-xs uppercase tracking-wider block text-center"
+                style={{ backgroundColor: "#000000", color: "#ffffff" }}
+              >
                 {badgeText}
               </span>
 
               {/* Date Box: [ দিন ] [ মাস ] [ বছর ] */}
-              <div className="flex items-center gap-1 mt-2 text-xs">
-                <span className="font-bold text-black text-[11px]">
+              <div className="flex items-center gap-1 mt-1.5 sm:mt-2 text-xs">
+                <span className="font-bold text-black text-[10px] sm:text-[11px]">
                   {isBn ? "তারিখ:" : "Date:"}
                 </span>
                 <div className="flex items-center">
-                  <span className="border border-black w-6 h-5 flex items-center justify-center font-bold font-mono text-[11px] bg-white text-black">
+                  <span className="border border-black w-5 sm:w-6 h-5 flex items-center justify-center font-bold font-mono text-[10px] sm:text-[11px] bg-white text-black">
                     {dayDisplay}
                   </span>
-                  <span className="border border-black border-l-0 w-6 h-5 flex items-center justify-center font-bold font-mono text-[11px] bg-white text-black">
+                  <span className="border border-black border-l-0 w-5 sm:w-6 h-5 flex items-center justify-center font-bold font-mono text-[10px] sm:text-[11px] bg-white text-black">
                     {monthDisplay}
                   </span>
-                  <span className="border border-black border-l-0 px-1.5 h-5 flex items-center justify-center font-bold font-mono text-[11px] bg-white text-black">
+                  <span className="border border-black border-l-0 px-1 sm:px-1.5 h-5 flex items-center justify-center font-bold font-mono text-[10px] sm:text-[11px] bg-white text-black">
                     {yearDisplay}
                   </span>
                 </div>
@@ -348,14 +255,14 @@ export function MoneyReceiptModal() {
           </div>
 
           {/* Under Header Line */}
-          <div className="h-[1.5px] bg-black w-full my-2" />
+          <div className="h-[1.5px] bg-black w-full my-1.5 sm:my-2" style={{ backgroundColor: "#000000" }} />
 
           {/* Month Name Row */}
           <div className="flex items-center gap-1.5 my-1.5 text-xs">
             <span className="font-bold text-black whitespace-nowrap text-[11px] sm:text-xs">
               {isBn ? "মাসের নাম:" : "Month:"}
             </span>
-            <div className="border border-black px-2 py-0.5 font-bold text-black bg-white flex-1 min-w-[120px] truncate text-[11px] sm:text-xs">
+            <div className="border border-black px-2 py-0.5 font-bold text-black bg-white flex-1 min-w-[100px] truncate text-[11px] sm:text-xs">
               {formatMonth(activeReceipt.billPeriodMonth, receiptLang, activeReceipt.billPeriodYear)}
             </div>
           </div>
@@ -372,14 +279,14 @@ export function MoneyReceiptModal() {
           </div>
 
           {/* MIDSECTION: Left Specifics & Right Financial Ledger */}
-          <div className="grid grid-cols-12 gap-2.5 my-2 items-start text-xs">
+          <div className="grid grid-cols-12 gap-2 sm:gap-2.5 my-2 items-start text-xs">
             {/* Left Column: Property & Tenant Details */}
             <div className="col-span-5 space-y-1.5">
               <div>
                 <span className="block font-bold text-black text-[10px] mb-0.5">
                   {isBn ? "মালিক পক্ষ / মার্কেট:" : "Landlord / Market:"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold text-black bg-white text-[11px] truncate">
+                <div className="border border-black px-1.5 py-0.5 font-bold text-black bg-white text-[10px] sm:text-[11px] truncate">
                   {activeReceipt.marketName || (isBn ? "নূর আহাম্মদ ম্যানশন" : "Property Owner")}
                 </div>
               </div>
@@ -388,7 +295,7 @@ export function MoneyReceiptModal() {
                 <span className="block font-bold text-black text-[10px] mb-0.5">
                   {isBn ? "ভবন / তলা:" : "Building / Floor:"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold text-black bg-white text-[11px] truncate">
+                <div className="border border-black px-1.5 py-0.5 font-bold text-black bg-white text-[10px] sm:text-[11px] truncate">
                   {formatFloorName(activeReceipt.floor, receiptLang)}
                 </div>
               </div>
@@ -397,7 +304,7 @@ export function MoneyReceiptModal() {
                 <span className="block font-bold text-black text-[10px] mb-0.5">
                   {isBn ? "ইউনিট / দোকান নং:" : "Unit / Shop No:"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-black text-black bg-white font-mono text-xs truncate">
+                <div className="border border-black px-1.5 py-0.5 font-black text-black bg-white font-mono text-[11px] sm:text-xs truncate">
                   {activeReceipt.shopNumber} {activeReceipt.size ? `(${activeReceipt.size})` : ""}
                 </div>
               </div>
@@ -406,7 +313,7 @@ export function MoneyReceiptModal() {
                 <span className="block font-bold text-black text-[10px] mb-0.5">
                   {isBn ? "রশিদ নম্বর:" : "Receipt Serial:"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-black text-black bg-white font-mono text-[10px] truncate">
+                <div className="border border-black px-1.5 py-0.5 font-black text-black bg-white font-mono text-[9px] sm:text-[10px] truncate">
                   {activeReceipt.receiptNo}
                 </div>
               </div>
@@ -416,80 +323,101 @@ export function MoneyReceiptModal() {
             <div className="col-span-7 space-y-1">
               {/* 1. Monthly Rent */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "মাসিক ভাড়া" : "Rent"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(rentPaisa, receiptLang)}
                 </div>
               </div>
 
               {/* 2. Gas Bill */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "গ্যাস বিল" : "Gas Bill"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(gasPaisa, receiptLang)}
                 </div>
               </div>
 
               {/* 3. Electricity Bill */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "বিদ্যুৎ বিল" : "Electricity"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(electricityPaisa, receiptLang)}
                 </div>
               </div>
 
               {/* 4. Water Bill */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "পানি" : "Water"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(waterPaisa, receiptLang)}
                 </div>
               </div>
 
               {/* 5. Others */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "অন্যান্য" : "Others"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(otherPaisa, receiptLang)}
                 </div>
               </div>
 
               {/* 6. Advance */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "অগ্রিম" : "Advance"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(advancePaisa, receiptLang)}
                 </div>
               </div>
 
               {/* 7. Arrears / Due */}
               <div className="flex items-center gap-1">
-                <span className="bg-black text-white font-bold text-[10px] py-0.5 px-1.5 w-[76px] text-center rounded-xs shrink-0">
+                <span
+                  className="bg-black text-white font-bold text-[9px] sm:text-[10px] py-0.5 px-1 w-[70px] sm:w-[76px] text-center rounded-xs shrink-0"
+                  style={{ backgroundColor: "#000000", color: "#ffffff" }}
+                >
                   {isBn ? "বকেয়া" : "Arrears"}
                 </span>
-                <div className="border border-black px-2 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-xs">
+                <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
                   {formatCurrency(arrearsPaisa, receiptLang)}
                 </div>
               </div>
 
               {/* TOTAL ROW */}
               <div className="flex items-center gap-1 pt-1 border-t border-black">
-                <span className="font-black text-black text-xs w-[76px] text-right pr-1">
+                <span className="font-black text-black text-[11px] sm:text-xs w-[70px] sm:w-[76px] text-right pr-1">
                   {isBn ? "মোট =" : "Total ="}
                 </span>
-                <div className="border-2 border-black px-2 py-0.5 font-black font-mono text-right flex-1 bg-white text-black text-xs sm:text-sm">
+                <div className="border-2 border-black px-1.5 py-0.5 font-black font-mono text-right flex-1 bg-white text-black text-xs sm:text-sm">
                   {formatCurrency(totalPaidPaisa, receiptLang)}
                 </div>
               </div>
@@ -497,23 +425,23 @@ export function MoneyReceiptModal() {
           </div>
 
           {/* IN WORDS ROW */}
-          <div className="my-2 border border-black p-1.5 bg-white text-xs">
+          <div className="my-1.5 sm:my-2 border border-black p-1.5 bg-white text-xs">
             <span className="font-bold text-black">{isBn ? "কথায়:" : "In Words:"} </span>
-            <span className="font-bold text-black italic capitalize">{inWords}</span>
+            <span className="font-bold text-black italic capitalize text-[11px] sm:text-xs">{inWords}</span>
           </div>
         </div>
 
         {/* BOTTOM SIGNATURES & NOTICE */}
-        <div className="pt-6 pb-0 mt-auto">
-          <div className="border-t border-black pt-1 flex items-center justify-between text-[11px]">
+        <div className="pt-4 sm:pt-6 pb-0 mt-auto">
+          <div className="border-t border-black pt-1 flex items-center justify-between text-[10px] sm:text-[11px]">
             <span className="font-extrabold text-black">{signatureText}</span>
-            <span className="text-[10px] text-black font-mono">
+            <span className="text-[9px] sm:text-[10px] text-black font-mono">
               {activeReceipt.paymentMethod} • {formatDate(activeReceipt.date, receiptLang)}
             </span>
           </div>
 
           {!isOwner && (
-            <p className="text-[9px] text-black/80 mt-1 italic text-right">
+            <p className="text-[8px] sm:text-[9px] text-black/80 mt-1 italic text-right">
               {isBn
                 ? "* পানি, বিদ্যুৎ ও গ্যাস অপচয় রোধে সহায়তা করুন।"
                 : "* Please conserve water, electricity and gas."}
@@ -530,67 +458,113 @@ export function MoneyReceiptModal() {
       onClose={() => setActiveReceipt(null)}
       title={
         <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-          <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-          <span>
+          <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+          <span className="truncate">
             {receiptLang === "bn"
-              ? "প্রফেশনাল ডাবল কাউন্টারফয়েল মানি রিসিট (Dual Counterfoil)"
+              ? "প্রফেশনাল ডাবল কাউন্টারফয়েল মানি রিসিট"
               : "Professional 2-Part Counterfoil Money Receipt"}
           </span>
         </div>
       }
       description={
         receiptLang === "bn"
-          ? "আসল বাণিজ্যিক কাউন্টারফয়েল রশিদ (মালিকের কপি ও ভাড়াটিয়ার কপি)। বাংলা ও ইংরেজি উভয় ভাষায় নির্ভুল প্রিন্ট ও পিডিএফ ডাউনলোড হবে।"
-          : "Dual-counterfoil (Owner & Tenant copy) commercial money receipt with zero font corruption in PDF, PNG and Print."
+          ? "আসল বাণিজ্যিক কাউন্টারফয়েল রশিদ। প্রিভিউ, প্রিন্ট এবং পিডিএফ ডাউনলোড হুবহু একই আসবে।"
+          : "Commercial dual counterfoil money receipt. Preview, print and PDF downloads are 100% identical."
       }
-      maxWidth="2xl"
+      maxWidth="4xl"
     >
-      <div className="space-y-4">
-        {/* Top Control Bar: Receipt Language Switcher */}
-        <div className="flex items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 no-print">
-          <div className="flex items-center gap-2">
-            <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
-              {receiptLang === "bn" ? "রশিদের ভাষা নির্বাচন করুন:" : "Receipt Language:"}
-            </span>
+      <div className="space-y-3 sm:space-y-4">
+        {/* Top Control Bar: Language Switcher & Mobile View Toggle */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 no-print">
+          {/* Language Toggle */}
+          <div className="flex items-center justify-between sm:justify-start gap-2">
+            <div className="flex items-center gap-1.5">
+              <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                {receiptLang === "bn" ? "ভাষা:" : "Language:"}
+              </span>
+            </div>
+
+            <div className="flex items-center bg-white dark:bg-slate-800 rounded-md p-0.5 border border-slate-300 dark:border-slate-700 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setReceiptLang("bn")}
+                className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  receiptLang === "bn"
+                    ? "bg-teal-600 text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                বাংলা
+              </button>
+              <button
+                type="button"
+                onClick={() => setReceiptLang("en")}
+                className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  receiptLang === "en"
+                    ? "bg-teal-600 text-white shadow-xs"
+                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                English
+              </button>
+            </div>
           </div>
 
-          <div className="flex items-center bg-white dark:bg-slate-800 rounded-md p-0.5 border border-slate-300 dark:border-slate-700 shadow-2xs">
-            <button
-              type="button"
-              onClick={() => setReceiptLang("bn")}
-              className={`px-3 py-1 rounded text-xs font-bold transition-all ${
-                receiptLang === "bn"
-                  ? "bg-teal-600 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              বাংলা (BN)
-            </button>
-            <button
-              type="button"
-              onClick={() => setReceiptLang("en")}
-              className={`px-3 py-1 rounded text-xs font-bold transition-all ${
-                receiptLang === "en"
-                  ? "bg-teal-600 text-white shadow-xs"
-                  : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-              }`}
-            >
-              English (EN)
-            </button>
+          {/* Mobile Screen Preview Switcher (Only visible on small phones) */}
+          <div className="flex sm:hidden items-center justify-between pt-1.5 border-t sm:border-t-0 border-slate-200 dark:border-slate-800">
+            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+              <Eye className="w-3.5 h-3.5" />
+              {receiptLang === "bn" ? "মোবাইল ভিউ:" : "Mobile View:"}
+            </span>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setMobileView("DUAL")}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                  mobileView === "DUAL"
+                    ? "bg-teal-600 text-white"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                }`}
+              >
+                {receiptLang === "bn" ? "উভয় অংশ" : "2-Part"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileView("OWNER")}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                  mobileView === "OWNER"
+                    ? "bg-teal-600 text-white"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                }`}
+              >
+                {receiptLang === "bn" ? "মালিক" : "Owner"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileView("TENANT")}
+                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                  mobileView === "TENANT"
+                    ? "bg-teal-600 text-white"
+                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                }`}
+              >
+                {receiptLang === "bn" ? "ভাড়াটিয়া" : "Tenant"}
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Printable & Exportable 2-Part Counterfoil Receipt Voucher */}
-        <div className="overflow-x-auto pb-2">
+        <div className="overflow-x-auto pb-1 overscroll-x-contain">
           <div
             ref={receiptContainerRef}
             id="real-money-receipt"
-            className="real-money-receipt-voucher bg-white text-black border-2 border-black shadow-md min-w-[760px] max-w-4xl mx-auto rounded-xs grid grid-cols-2 relative"
-            style={{ fontFamily: "'Anek Bangla', 'Inter', sans-serif" }}
+            className="real-money-receipt-voucher bg-white text-black border-2 border-black shadow-md min-w-[680px] sm:min-w-[760px] max-w-4xl mx-auto rounded-xs grid grid-cols-2 relative"
+            style={{ fontFamily: "'Anek Bangla', 'Inter', sans-serif", backgroundColor: "#ffffff" }}
           >
             {/* Center Scissor Icon Indicator */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white px-1 z-10 hidden sm:flex items-center gap-0.5 text-[10px] text-black">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white px-1 z-10 hidden sm:flex items-center gap-0.5 text-[10px] text-black border border-black/20 rounded">
               <Scissors className="w-3 h-3 text-black" />
             </div>
 
@@ -600,21 +574,38 @@ export function MoneyReceiptModal() {
             {/* Right Part: ভাড়াটিয়ার অংশ (Tenant Copy) */}
             {renderReceiptHalf("TENANT")}
           </div>
+
+          {/* Single-Copy Preview for Mobile (if selected by user on small phone) */}
+          {mobileView !== "DUAL" && (
+            <div className="sm:hidden mt-2 bg-white text-black border-2 border-black rounded-xs shadow-md">
+              <div className="p-1 bg-slate-900 text-white text-[10px] font-bold text-center">
+                {mobileView === "OWNER"
+                  ? (receiptLang === "bn" ? "মোবাইল স্ক্রিন প্রিভিউ: মালিকের অংশ" : "Mobile Screen Preview: Owner's Copy")
+                  : (receiptLang === "bn" ? "মোবাইল স্ক্রিন প্রিভিউ: ভাড়াটিয়ার অংশ" : "Mobile Screen Preview: Tenant's Copy")}
+              </div>
+              {renderReceiptHalf(mobileView)}
+            </div>
+          )}
         </div>
 
         {/* Bottom Actions Bar (Hidden during Print) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-800 no-print">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2.5 sm:pt-3 border-t border-slate-200 dark:border-slate-800 no-print">
           <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
             <span>
               {receiptLang === "bn"
-                ? "ডাবল কাউন্টারফয়েল • বাংলা ও ইংরেজিতে ১০০% নির্ভুল"
-                : "Dual Counterfoil • 100% Error-Free Rendering"}
+                ? "ডাবল কাউন্টারফয়েল • প্রিভিউ, প্রিন্ট ও ডাউনলোড ১০০% নিখুঁত"
+                : "Dual Counterfoil • Preview, Print & Download 100% Identical"}
             </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-            <Button variant="outline" size="sm" onClick={() => setActiveReceipt(null)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveReceipt(null)}
+              className="flex-1 sm:flex-none"
+            >
               {t("common.close")}
             </Button>
 
@@ -623,10 +614,11 @@ export function MoneyReceiptModal() {
               size="sm"
               isLoading={isDownloadingImage}
               onClick={handleDownloadImage}
+              className="flex-1 sm:flex-none cursor-pointer"
               title={receiptLang === "bn" ? "ছবি (PNG) ডাউনলোড করুন" : "Download PNG Image"}
             >
-              <FileDown className="w-4 h-4 mr-1.5 text-blue-600 dark:text-blue-400" />
-              {receiptLang === "bn" ? "ছবি (PNG)" : "Image (PNG)"}
+              <FileDown className="w-4 h-4 mr-1.5 text-blue-600 dark:text-blue-400 shrink-0" />
+              {receiptLang === "bn" ? "ছবি (PNG)" : "Image"}
             </Button>
 
             <Button
@@ -634,15 +626,21 @@ export function MoneyReceiptModal() {
               size="sm"
               isLoading={isDownloadingPdf}
               onClick={handleDownloadPdf}
+              className="flex-1 sm:flex-none cursor-pointer"
               title={receiptLang === "bn" ? "পিডিএফ ডাউনলোড করুন" : "Download PDF"}
             >
-              <Download className="w-4 h-4 mr-1.5 text-teal-600 dark:text-teal-400" />
+              <Download className="w-4 h-4 mr-1.5 text-teal-600 dark:text-teal-400 shrink-0" />
               {receiptLang === "bn" ? "পিডিএফ (PDF)" : "PDF"}
             </Button>
 
-            <Button variant="primary" size="sm" onClick={handlePrintReceipt}>
-              <Printer className="w-4 h-4 mr-1.5" />
-              {receiptLang === "bn" ? "রশিদ প্রিন্ট" : "Print"}
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handlePrintReceipt}
+              className="w-full sm:w-auto cursor-pointer"
+            >
+              <Printer className="w-4 h-4 mr-1.5 shrink-0" />
+              {receiptLang === "bn" ? "রশিদ প্রিন্ট" : "Print Receipt"}
             </Button>
           </div>
         </div>
