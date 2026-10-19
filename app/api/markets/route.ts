@@ -52,7 +52,14 @@ export async function GET(req: Request) {
       };
     });
 
-    return NextResponse.json({ markets: formatted });
+    return NextResponse.json(
+      { markets: formatted },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, stale-while-revalidate=5",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch markets:", error);
     return NextResponse.json({ error: "Failed to fetch markets" }, { status: 500 });

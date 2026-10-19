@@ -141,12 +141,19 @@ export async function GET(req: Request) {
         .reduce((sum, d) => sum + d.totalDue, 0),
     };
 
-    return NextResponse.json({
-      dues: duesList,
-      totalOutstanding,
-      overdueShopsCount: duesList.length,
-      agingBreakdown,
-    });
+    return NextResponse.json(
+      {
+        dues: duesList,
+        totalOutstanding,
+        overdueShopsCount: duesList.length,
+        agingBreakdown,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, stale-while-revalidate=5",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch dues:", error);
     return NextResponse.json({ error: "Failed to fetch dues" }, { status: 500 });

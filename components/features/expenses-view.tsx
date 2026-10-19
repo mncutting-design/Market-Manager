@@ -24,17 +24,30 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function ExpensesView() {
   const { t, locale } = useTranslation();
   const { selectedMarketId, selectedMonth, selectedYear, refreshKey, triggerRefresh, openAddExpense } =
     useApp();
 
-  const [expenses, setExpenses] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
-  const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const queryParams = new URLSearchParams();
+  if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
+  if (selectedCategory && selectedCategory !== "ALL") queryParams.set("categoryId", selectedCategory);
+  queryParams.set("month", String(selectedMonth));
+  queryParams.set("year", String(selectedYear));
+  const expensesUrl = `/api/expenses?${queryParams.toString()}`;
+
+  const { data: expensesData, isLoading, isSyncing, refetch: refetchExpenses } = useRealtimeData<{
+    expenses: any[];
+    totalAmount: number;
+  }>(expensesUrl, { tag: "expenses", refreshInterval: 12000 });
+
+  const expenses = expensesData?.expenses || [];
+  const totalAmount = expensesData?.totalAmount || 0;
 
   // Add Category Modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -60,31 +73,7 @@ export function ExpensesView() {
     fetchCategories();
   }, [refreshKey]);
 
-  // Fetch expenses
-  useEffect(() => {
-    const fetchExpenses = async () => {
-      try {
-        setIsLoading(true);
-        const queryParams = new URLSearchParams();
-        if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
-        if (selectedCategory && selectedCategory !== "ALL") queryParams.set("categoryId", selectedCategory);
-        queryParams.set("month", String(selectedMonth));
-        queryParams.set("year", String(selectedYear));
 
-        const res = await fetch(`/api/expenses?${queryParams.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setExpenses(data.expenses || []);
-          setTotalAmount(data.totalAmount || 0);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchExpenses();
-  }, [selectedMarketId, selectedCategory, selectedMonth, selectedYear, refreshKey]);
 
   const handleDeleteExpense = async (id: string) => {
     if (!confirm(t("common.confirm") + "?")) return;

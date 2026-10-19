@@ -27,15 +27,95 @@ export async function GET(req: Request) {
       billWhere.shop = { isActive: true };
     }
 
-    // 1. Fetch current month bills
-    const currentBills = await prisma.bill.findMany({
-      where: billWhere,
-      include: {
-        shop: { include: { market: true } },
-        tenant: true,
-      },
-      orderBy: { dueAmount: "desc" },
-    });
+    const yearlyExpenseStart = new Date(year, 0, 1);
+    const yearlyExpenseEnd = new Date(year, 11, 31, 23, 59, 59);
+
+    const tenantWhere: any = { isActive: true, status: { in: ["ACTIVE", "NOTICE_GIVEN"] } };
+    if (marketId !== "ALL") {
+      tenantWhere.shop = { marketId, isActive: true };
+    }
+
+    // Execute all 6 database queries concurrently via Promise.all for maximum speed
+    const [
+      currentBills,
+      currentExpenses,
+      yearlyBills,
+      yearlyExpenses,
+      allMarkets,
+      activeTenants,
+    ] = await Promise.all([
+      // 1. Current month bills
+      prisma.bill.findMany({
+        where: billWhere,
+        include: {
+          shop: { include: { market: true } },
+          tenant: true,
+        },
+        orderBy: { dueAmount: "desc" },
+      }),
+      // 2. Current month expenses
+      prisma.expense.findMany({
+        where: expenseWhere,
+        include: {
+          category: true,
+          market: true,
+        },
+      }),
+      // 3. Yearly bills for trends
+      prisma.bill.findMany({
+        where: {
+          year,
+          ...(marketId !== "ALL" ? { shop: { marketId, isActive: true } } : { shop: { isActive: true } }),
+        },
+        select: {
+          month: true,
+          totalAmount: true,
+          paidAmount: true,
+        },
+      }),
+      // 4. Yearly expenses for trends
+      prisma.expense.findMany({
+        where: {
+          date: { gte: yearlyExpenseStart, lte: yearlyExpenseEnd },
+          ...(marketId !== "ALL" ? { marketId } : {}),
+        },
+        select: {
+          date: true,
+          amount: true,
+        },
+      }),
+      // 5. Market rankings
+      prisma.market.findMany({
+        where: { isActive: true },
+        include: {
+          shops: {
+            where: { isActive: true },
+            include: {
+              bills: {
+                where: { month, year },
+              },
+            },
+          },
+          expenses: {
+            where: {
+              date: { gte: expenseDateStart, lte: expenseDateEnd },
+            },
+          },
+        },
+      }),
+      // 6. Active tenants & advance calculations
+      prisma.tenant.findMany({
+        where: tenantWhere,
+        include: {
+          shop: { include: { market: true } },
+          advanceTransactions: true,
+          bills: {
+            where: { status: { in: ["DUE", "PARTIAL"] } },
+            orderBy: [{ year: "asc" }, { month: "asc" }],
+          },
+        },
+      }),
+    ]);
 
     const expectedRent = currentBills.reduce((sum, b) => sum + b.totalAmount, 0);
     const collectedRent = currentBills.reduce((sum, b) => sum + b.paidAmount, 0);
@@ -47,15 +127,6 @@ export async function GET(req: Request) {
     const totalBillsCount = currentBills.length;
 
     const collectionRate = expectedRent > 0 ? (collectedRent / expectedRent) * 100 : 0;
-
-    // 2. Fetch current month expenses
-    const currentExpenses = await prisma.expense.findMany({
-      where: expenseWhere,
-      include: {
-        category: true,
-        market: true,
-      },
-    });
 
     const totalExpense = currentExpenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = collectedRent - totalExpense;
@@ -103,32 +174,6 @@ export async function GET(req: Request) {
     expensesByCategory.sort((a, b) => b.amount - a.amount);
 
     // 5. 12-Month Financial Performance for Yearly Charts
-    const yearlyBills = await prisma.bill.findMany({
-      where: {
-        year,
-        ...(marketId !== "ALL" ? { shop: { marketId, isActive: true } } : { shop: { isActive: true } }),
-      },
-      select: {
-        month: true,
-        totalAmount: true,
-        paidAmount: true,
-      },
-    });
-
-    const yearlyExpenseStart = new Date(year, 0, 1);
-    const yearlyExpenseEnd = new Date(year, 11, 31, 23, 59, 59);
-
-    const yearlyExpenses = await prisma.expense.findMany({
-      where: {
-        date: { gte: yearlyExpenseStart, lte: yearlyExpenseEnd },
-        ...(marketId !== "ALL" ? { marketId } : {}),
-      },
-      select: {
-        date: true,
-        amount: true,
-      },
-    });
-
     const monthlyTrends = Array.from({ length: 12 }, (_, i) => {
       const m = i + 1;
       const mBills = yearlyBills.filter((b) => b.month === m);
@@ -151,25 +196,6 @@ export async function GET(req: Request) {
     });
 
     // 6. Market Profitability Comparison
-    const allMarkets = await prisma.market.findMany({
-      where: { isActive: true },
-      include: {
-        shops: {
-          where: { isActive: true },
-          include: {
-            bills: {
-              where: { month, year },
-            },
-          },
-        },
-        expenses: {
-          where: {
-            date: { gte: expenseDateStart, lte: expenseDateEnd },
-          },
-        },
-      },
-    });
-
     const marketRankings = allMarkets.map((m) => {
       const mBills = m.shops.flatMap((s) => s.bills);
       const mCollected = mBills.reduce((sum, b) => sum + b.paidAmount, 0);
@@ -189,27 +215,8 @@ export async function GET(req: Request) {
       };
     });
 
-    // Sort by net profit descending
     marketRankings.sort((a, b) => b.rawNetProfit - a.rawNetProfit);
     const mostProfitableMarket = marketRankings[0] || null;
-
-    // 5. Total Advance Held (Liability) & At-Risk Tenants
-    const tenantWhere: any = { isActive: true, status: { in: ["ACTIVE", "NOTICE_GIVEN"] } };
-    if (marketId !== "ALL") {
-      tenantWhere.shop = { marketId, isActive: true };
-    }
-
-    const activeTenants = await prisma.tenant.findMany({
-      where: tenantWhere,
-      include: {
-        shop: { include: { market: true } },
-        advanceTransactions: true,
-        bills: {
-          where: { status: { in: ["DUE", "PARTIAL"] } },
-          orderBy: [{ year: "asc" }, { month: "asc" }],
-        },
-      },
-    });
 
     let totalAdvanceHeld = 0;
     const atRiskTenants: any[] = [];
@@ -280,28 +287,35 @@ export async function GET(req: Request) {
       return b.totalDue - a.totalDue;
     });
 
-    return NextResponse.json({
-      kpis: {
-        expectedRent, // in paisa
-        collectedRent,
-        totalDue,
-        totalExpense,
-        netProfit,
-        collectionRate,
-        paidShopsCount,
-        partialShopsCount,
-        dueShopsCount,
-        totalBillsCount,
-        totalAdvanceHeld, // in paisa (Liability)
-        atRiskTenantsCount: atRiskTenants.length,
+    return NextResponse.json(
+      {
+        kpis: {
+          expectedRent, // in paisa
+          collectedRent,
+          totalDue,
+          totalExpense,
+          netProfit,
+          collectionRate,
+          paidShopsCount,
+          partialShopsCount,
+          dueShopsCount,
+          totalBillsCount,
+          totalAdvanceHeld, // in paisa (Liability)
+          atRiskTenantsCount: atRiskTenants.length,
+        },
+        atRiskTenants,
+        dueShops,
+        expensesByCategory,
+        monthlyTrends,
+        marketRankings,
+        mostProfitableMarket,
       },
-      atRiskTenants,
-      dueShops,
-      expensesByCategory,
-      monthlyTrends,
-      marketRankings,
-      mostProfitableMarket,
-    });
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, stale-while-revalidate=5",
+        },
+      }
+    );
   } catch (error) {
     console.error("Dashboard API error:", error);
     return NextResponse.json({ error: "Failed to load dashboard data" }, { status: 500 });

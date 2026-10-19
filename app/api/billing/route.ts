@@ -42,34 +42,45 @@ export async function GET(req: Request) {
       orderBy: [{ year: "desc" }, { month: "desc" }, { shop: { shopNumber: "asc" } }],
     });
 
-    // Calculate previous unpaid balance carry-forward for each shop
-    const billsWithCarryForward = await Promise.all(
-      bills.map(async (bill) => {
-        // Find unpaid bills from previous periods for this shop
-        const previousUnpaid = await prisma.bill.aggregate({
+    // Calculate previous unpaid balance carry-forward for each shop in ONE single batch query
+    const shopIds = Array.from(new Set(bills.map((b) => b.shopId)));
+    const allUnpaidBills = shopIds.length > 0
+      ? await prisma.bill.findMany({
           where: {
-            shopId: bill.shopId,
-            OR: [
-              { year: { lt: bill.year } },
-              { year: bill.year, month: { lt: bill.month } },
-            ],
+            shopId: { in: shopIds },
             status: { in: ["DUE", "PARTIAL"] },
           },
-          _sum: {
+          select: {
+            shopId: true,
+            year: true,
+            month: true,
             dueAmount: true,
           },
-        });
+        })
+      : [];
 
-        const carryForwardDue = previousUnpaid._sum.dueAmount || 0;
-        const totalPayableWithArrears = bill.dueAmount + carryForwardDue;
+    const unpaidByShop = new Map<string, { year: number; month: number; dueAmount: number }[]>();
+    for (const b of allUnpaidBills) {
+      if (!unpaidByShop.has(b.shopId)) {
+        unpaidByShop.set(b.shopId, []);
+      }
+      unpaidByShop.get(b.shopId)!.push(b);
+    }
 
-        return {
-          ...bill,
-          carryForwardDue,
-          totalPayableWithArrears,
-        };
-      })
-    );
+    const billsWithCarryForward = bills.map((bill) => {
+      const priorBills = unpaidByShop.get(bill.shopId) || [];
+      const carryForwardDue = priorBills
+        .filter((b) => b.year < bill.year || (b.year === bill.year && b.month < bill.month))
+        .reduce((sum, b) => sum + b.dueAmount, 0);
+
+      const totalPayableWithArrears = bill.dueAmount + carryForwardDue;
+
+      return {
+        ...bill,
+        carryForwardDue,
+        totalPayableWithArrears,
+      };
+    });
 
     let filtered = billsWithCarryForward;
     if (search && search.trim() !== "") {
@@ -83,7 +94,14 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({ bills: filtered });
+    return NextResponse.json(
+      { bills: filtered },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, stale-while-revalidate=5",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch bills:", error);
     return NextResponse.json({ error: "Failed to fetch bills" }, { status: 500 });

@@ -27,23 +27,53 @@ import { PremiumLoader } from "@/components/ui/premium-loader";
 
 function MainApp() {
   const { activeTab } = useApp();
+  const [visitedTabs, setVisitedTabs] = useState<Set<string>>(() => new Set([activeTab || "dashboard"]));
+
+  useEffect(() => {
+    if (activeTab) {
+      setVisitedTabs((prev) => {
+        if (prev.has(activeTab)) return prev;
+        const next = new Set(prev);
+        next.add(activeTab);
+        return next;
+      });
+    }
+  }, [activeTab]);
 
   return (
     <div className="flex-1 flex overflow-hidden">
       {/* Desktop Sidebar */}
       <Sidebar />
 
-      {/* Main Content Area */}
+      {/* Main Content Area — Instantaneous Tab Switching */}
       <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-24 md:pb-8 max-w-7xl mx-auto w-full">
-        {activeTab === "dashboard" && <DashboardView />}
-        {activeTab === "markets" && <MarketsView />}
-        {activeTab === "shops" && <ShopsView />}
-        {activeTab === "billing" && <BillingView />}
-        {activeTab === "collections" && <CollectionsView />}
-        {activeTab === "dues" && <DuesView />}
-        {activeTab === "expenses" && <ExpensesView />}
-        {activeTab === "reports" && <ReportsView />}
-        {activeTab === "settings" && <SettingsView />}
+        <div className={activeTab === "dashboard" ? "block" : "hidden"}>
+          {visitedTabs.has("dashboard") && <DashboardView />}
+        </div>
+        <div className={activeTab === "markets" ? "block" : "hidden"}>
+          {visitedTabs.has("markets") && <MarketsView />}
+        </div>
+        <div className={activeTab === "shops" ? "block" : "hidden"}>
+          {visitedTabs.has("shops") && <ShopsView />}
+        </div>
+        <div className={activeTab === "billing" ? "block" : "hidden"}>
+          {visitedTabs.has("billing") && <BillingView />}
+        </div>
+        <div className={activeTab === "collections" ? "block" : "hidden"}>
+          {visitedTabs.has("collections") && <CollectionsView />}
+        </div>
+        <div className={activeTab === "dues" ? "block" : "hidden"}>
+          {visitedTabs.has("dues") && <DuesView />}
+        </div>
+        <div className={activeTab === "expenses" ? "block" : "hidden"}>
+          {visitedTabs.has("expenses") && <ExpensesView />}
+        </div>
+        <div className={activeTab === "reports" ? "block" : "hidden"}>
+          {visitedTabs.has("reports") && <ReportsView />}
+        </div>
+        <div className={activeTab === "settings" ? "block" : "hidden"}>
+          {visitedTabs.has("settings") && <SettingsView />}
+        </div>
       </main>
 
       {/* Mobile Bottom Navigation */}

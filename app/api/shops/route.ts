@@ -62,7 +62,14 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({ shops: filtered });
+    return NextResponse.json(
+      { shops: filtered },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, stale-while-revalidate=5",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch shops:", error);
     return NextResponse.json({ error: "Failed to fetch shops" }, { status: 500 });

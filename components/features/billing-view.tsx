@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { ManageBillChargesModal } from "./modals/manage-bill-charges-modal";
+import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function BillingView() {
   const { t, locale } = useTranslation();
@@ -39,11 +40,23 @@ export function BillingView() {
     openQuickCollect,
   } = useApp();
 
-  const [bills, setBills] = useState<any[]>([]);
   const [chargeTypes, setChargeTypes] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  const queryParams = new URLSearchParams();
+  if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
+  queryParams.set("month", String(selectedMonth));
+  queryParams.set("year", String(selectedYear));
+  if (statusFilter !== "ALL") queryParams.set("status", statusFilter);
+  if (search) queryParams.set("search", search);
+  const billingUrl = `/api/billing?${queryParams.toString()}`;
+
+  const { data: billingData, isLoading, isSyncing, refetch: refetchBills } = useRealtimeData<{ bills: any[] }>(
+    billingUrl,
+    { tag: "billing", refreshInterval: 12000 }
+  );
+  const bills = billingData?.bills || [];
 
   // Add Variable Charge Modal
   const [isAddChargeOpen, setIsAddChargeOpen] = useState(false);
@@ -72,31 +85,7 @@ export function BillingView() {
     fetchCharges();
   }, []);
 
-  // Fetch bills
-  useEffect(() => {
-    const fetchBills = async () => {
-      try {
-        setIsLoading(true);
-        const queryParams = new URLSearchParams();
-        if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
-        queryParams.set("month", String(selectedMonth));
-        queryParams.set("year", String(selectedYear));
-        if (statusFilter !== "ALL") queryParams.set("status", statusFilter);
-        if (search) queryParams.set("search", search);
 
-        const res = await fetch(`/api/billing?${queryParams.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setBills(data.bills || []);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchBills();
-  }, [selectedMarketId, selectedMonth, selectedYear, statusFilter, search, refreshKey]);
 
   const handleAddCharge = async (e: React.FormEvent) => {
     e.preventDefault();

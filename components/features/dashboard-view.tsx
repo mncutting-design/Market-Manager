@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useRealtimeData } from "@/lib/realtime-sync";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
 import {
@@ -69,8 +70,6 @@ export function DashboardView() {
     setActiveTab,
   } = useApp();
 
-  const [data, setData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [selectedAdjustTenant, setSelectedAdjustTenant] = useState<any | null>(null);
   const [activeSettlementTenantId, setActiveSettlementTenantId] = useState<string | null>(null);
@@ -80,25 +79,11 @@ export function DashboardView() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-        const res = await fetch(
-          `/api/dashboard?marketId=${selectedMarketId}&month=${selectedMonth}&year=${selectedYear}`
-        );
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
-        }
-      } catch (e) {
-        console.error("Dashboard fetch error:", e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchDashboard();
-  }, [selectedMarketId, selectedMonth, selectedYear, refreshKey]);
+  const dashboardUrl = `/api/dashboard?marketId=${selectedMarketId}&month=${selectedMonth}&year=${selectedYear}`;
+  const { data, isLoading, isSyncing, refetch } = useRealtimeData<any>(dashboardUrl, {
+    tag: "dashboard",
+    refreshInterval: 12000,
+  });
 
   if (isLoading || !data) {
     return (

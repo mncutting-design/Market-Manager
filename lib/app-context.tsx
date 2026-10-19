@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { broadcastMutation } from "./realtime-sync";
 
 export interface MarketSummary {
   id: string;
@@ -25,7 +26,7 @@ interface AppContextType {
   isLoadingMarkets: boolean;
   refreshMarkets: () => Promise<void>;
   refreshKey: number;
-  triggerRefresh: () => void;
+  triggerRefresh: (tag?: string) => void;
   // Navigation
   activeTab: string;
   setActiveTab: (tab: string) => void;
@@ -130,8 +131,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchApprovals();
   }, [refreshKey]);
 
-  const triggerRefresh = () => {
+  const triggerRefresh = (tag: string = "ALL") => {
     setRefreshKey((prev) => prev + 1);
+    broadcastMutation(tag);
   };
 
   const openQuickCollect = (data?: { marketId?: string; shopId?: string; billId?: string; dueAmount?: number }) => {

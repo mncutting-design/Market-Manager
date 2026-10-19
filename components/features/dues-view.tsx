@@ -20,38 +20,24 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { AdjustAdvanceModal } from "./modals/adjust-advance-modal";
+import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function DuesView() {
   const { t, locale } = useTranslation();
   const { selectedMarketId, refreshKey, openQuickCollect } = useApp();
 
-  const [duesData, setDuesData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selectedAdjustTenant, setSelectedAdjustTenant] = useState<any | null>(null);
 
-  const fetchDues = async () => {
-    try {
-      setIsLoading(true);
-      const queryParams = new URLSearchParams();
-      if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
-      if (search) queryParams.set("search", search);
+  const queryParams = new URLSearchParams();
+  if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
+  if (search) queryParams.set("search", search);
+  const duesUrl = `/api/dues?${queryParams.toString()}`;
 
-      const res = await fetch(`/api/dues?${queryParams.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setDuesData(data);
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchDues();
-  }, [selectedMarketId, search, refreshKey]);
+  const { data: duesData, isLoading, isSyncing, refetch: fetchDues } = useRealtimeData<any>(
+    duesUrl,
+    { tag: "dues", refreshInterval: 12000 }
+  );
 
   const handleExportCSV = () => {
     if (!duesData?.dues) return;

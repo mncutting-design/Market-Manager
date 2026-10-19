@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRealtimeData } from "@/lib/realtime-sync";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
 import { formatCurrency, formatDate, toBanglaDigits } from "@/lib/format";
@@ -14,31 +15,18 @@ export function CollectionsView() {
   const { t, locale } = useTranslation();
   const { selectedMarketId, refreshKey, openQuickCollect, showReceipt } = useApp();
 
-  const [payments, setPayments] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
 
-  useEffect(() => {
-    const fetchPayments = async () => {
-      try {
-        setIsLoading(true);
-        const queryParams = new URLSearchParams();
-        if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
-        if (search) queryParams.set("search", search);
+  const queryParams = new URLSearchParams();
+  if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
+  if (search) queryParams.set("search", search);
+  const collectionsUrl = `/api/collections?${queryParams.toString()}`;
 
-        const res = await fetch(`/api/collections?${queryParams.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setPayments(data.payments || []);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchPayments();
-  }, [selectedMarketId, search, refreshKey]);
+  const { data: collectionsData, isLoading, isSyncing, refetch: refetchPayments } = useRealtimeData<{ payments: any[] }>(
+    collectionsUrl,
+    { tag: "collections", refreshInterval: 12000 }
+  );
+  const payments = collectionsData?.payments || [];
 
   return (
     <div className="space-y-6 animate-in fade-in duration-200">

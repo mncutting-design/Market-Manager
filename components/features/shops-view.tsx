@@ -37,15 +37,26 @@ import { TenantProfileModal } from "./modals/tenant-profile-modal";
 import { SettlementWizardModal } from "./modals/settlement-wizard-modal";
 import { generateFloorOptions, formatFloorName } from "@/lib/floors";
 import { DiffViewer } from "@/components/ui/diff-viewer";
+import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function ShopsView() {
   const { t, locale } = useTranslation();
   const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh, isAdmin, refreshApprovals } = useApp();
 
-  const [shops, setShops] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+
+  const queryParams = new URLSearchParams();
+  if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
+  if (statusFilter !== "ALL") queryParams.set("status", statusFilter);
+  if (search) queryParams.set("search", search);
+  const shopsUrl = `/api/shops?${queryParams.toString()}`;
+
+  const { data: shopsData, isLoading, isSyncing, refetch: refetchShops } = useRealtimeData<{ shops: any[] }>(
+    shopsUrl,
+    { tag: "shops", refreshInterval: 15000 }
+  );
+  const shops = shopsData?.shops || [];
 
   // Modals
   const [isAddShopOpen, setIsAddShopOpen] = useState(false);
@@ -119,29 +130,7 @@ export function ShopsView() {
   const [rentNote, setRentNote] = useState("");
   const [isSubmittingRent, setIsSubmittingRent] = useState(false);
 
-  // Fetch shops
-  useEffect(() => {
-    const fetchShops = async () => {
-      try {
-        setIsLoading(true);
-        const queryParams = new URLSearchParams();
-        if (selectedMarketId && selectedMarketId !== "ALL") queryParams.set("marketId", selectedMarketId);
-        if (statusFilter !== "ALL") queryParams.set("status", statusFilter);
-        if (search) queryParams.set("search", search);
 
-        const res = await fetch(`/api/shops?${queryParams.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setShops(data.shops || []);
-        }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchShops();
-  }, [selectedMarketId, statusFilter, search, refreshKey]);
 
   // Handlers
   const handleAddShop = async (e: React.FormEvent) => {

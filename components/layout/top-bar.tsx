@@ -18,6 +18,7 @@ import {
   FolderArchive,
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
+import { toast } from "sonner";
 
 export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const { t, locale, toggleLocale } = useTranslation();
@@ -32,6 +33,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
     setActiveTab,
     openApprovals,
     pendingApprovalsCount,
+    triggerRefresh,
   } = useApp();
 
   const [isDark, setIsDark] = useState(false);
@@ -168,8 +170,31 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           </div>
         </div>
 
-        {/* 3. RIGHT CORNER: Language Switcher, Theme Toggle & Profile */}
+        {/* 3. RIGHT CORNER: Realtime Sync, Language Switcher, Theme Toggle & Profile */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end">
+          {/* Realtime Live Sync Indicator & Quick Sync Trigger */}
+          <button
+            onClick={() => {
+              triggerRefresh("ALL");
+              toast.success(
+                locale === "bn"
+                  ? "সকল ডেটা রিয়েলটাইমে সিঙ্ক করা হয়েছে!"
+                  : "All data synchronized in real-time!"
+              );
+            }}
+            type="button"
+            className="flex items-center gap-1.5 px-2.5 h-10 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all cursor-pointer text-xs font-bold shadow-xs active:scale-95"
+            title={locale === "bn" ? "রিয়েলটাইম সিঙ্ক সক্রিয় (ক্লিক করে এখনই রিফ্রেশ করুন)" : "Realtime Sync Active (Click to sync now)"}
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="hidden md:inline text-xs">
+              {locale === "bn" ? "লাইভ সিঙ্ক" : "Live Sync"}
+            </span>
+          </button>
+
           {/* Visible Bilingual Language Switcher Button */}
           <button
             onClick={toggleLocale}

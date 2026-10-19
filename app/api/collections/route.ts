@@ -47,7 +47,14 @@ export async function GET(req: Request) {
       );
     }
 
-    return NextResponse.json({ payments: filtered });
+    return NextResponse.json(
+      { payments: filtered },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, stale-while-revalidate=5",
+        },
+      }
+    );
   } catch (error) {
     console.error("Failed to fetch payments:", error);
     return NextResponse.json({ error: "Failed to fetch payments" }, { status: 500 });
