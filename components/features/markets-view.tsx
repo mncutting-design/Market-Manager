@@ -164,7 +164,7 @@ export function MarketsView() {
       </div>
 
       {/* Markets Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
         {markets.map((m) => {
           const occupancyRate = m.totalShops > 0 ? (m.occupiedShops / m.totalShops) * 100 : 0;
           const floors = m.totalFloors || 5;

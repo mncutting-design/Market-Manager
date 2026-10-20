@@ -641,7 +641,7 @@ export function ShopsView() {
           <p className="text-xs text-slate-500 mt-2">{t("markets.createFirstMarket")}</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-4">
           {sortedShops.map((shop) => (
             <Card
               key={shop.id}
@@ -655,12 +655,12 @@ export function ShopsView() {
                   setIsAssignTenantOpen(true);
                 }
               }}
-              className="p-5 flex flex-col justify-between hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-lg transition-all shadow-xs cursor-pointer group"
+              className="p-4 sm:p-4.5 flex flex-col justify-between hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-lg transition-all shadow-xs cursor-pointer group"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex items-center gap-2">
+                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex items-center gap-2">
                       <span>{shop.shopNumber}</span>
                       <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
                         ({formatFloorName(shop.floor, locale)})
@@ -700,7 +700,7 @@ export function ShopsView() {
                 </div>
 
                 {/* Tenant Info or Vacant notice */}
-                <div className="my-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
+                <div className="my-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
                   {shop.tenant ? (
                     <div className="space-y-1">
                       <div
@@ -746,7 +746,7 @@ export function ShopsView() {
               </div>
 
               {/* Actions Footer - 100% Mobile Responsive */}
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
+              <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
                 <Button
                   size="sm"
                   variant="outline"
