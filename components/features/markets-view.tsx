@@ -315,7 +315,7 @@ export function MarketsView() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title={editingMarket ? t("markets.editMarket") : t("markets.addMarket")}
-        maxWidth="md"
+        maxWidth="lg"
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

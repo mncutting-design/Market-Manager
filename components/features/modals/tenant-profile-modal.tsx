@@ -309,7 +309,7 @@ export function TenantProfileModal({
             ? `${tenantData.shop.shopNumber} — ${tenantData.shop.market.name}`
             : ""
         }
-        maxWidth="xl"
+        maxWidth="3xl"
       >
         {isLoading || !tenantData ? (
           <div className="py-16 text-center text-slate-500">{t("common.loading")}</div>
@@ -334,8 +334,8 @@ export function TenantProfileModal({
               <StatusBadge status={tenantData.status} />
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 text-xs font-semibold overflow-x-auto">
+            {/* Navigation Tabs - Hidden scrollbar with smooth touch scrolling */}
+            <div className="flex border-b border-slate-200 dark:border-slate-800 text-xs font-semibold overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setActiveTab("profile")}

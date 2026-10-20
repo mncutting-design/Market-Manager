@@ -175,7 +175,7 @@ export function ApprovalsModal() {
           ? "ম্যানেজার কর্তৃক প্রস্তাবিত পরিবর্তনের উদ্দেশ্য ও কেবল পরিবর্তিত ফিল্ডগুলো যাচাই করে অনুমোদন করুন।"
           : "Review purpose of changes and strictly modified fields before approving."
       }
-      maxWidth="xl"
+      maxWidth="3xl"
     >
       <div className="space-y-4 w-full">
         {/* Status Filter Tabs - Scrollable on mobile */}

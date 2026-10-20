@@ -104,7 +104,7 @@ export function AddExpenseModal() {
       onClose={() => setIsAddExpenseOpen(false)}
       title={t("expenses.addExpense")}
       description={t("expenses.subtitle")}
-      maxWidth="md"
+      maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Market Selection */}

@@ -803,7 +803,7 @@ export function ShopsView() {
         isOpen={isAddShopOpen}
         onClose={() => setIsAddShopOpen(false)}
         title={t("shops.addShop")}
-        maxWidth="md"
+        maxWidth="lg"
       >
         <form onSubmit={handleAddShop} className="space-y-4">
           {/* Market Selection */}
@@ -942,7 +942,7 @@ export function ShopsView() {
           isOpen={isAssignTenantOpen}
           onClose={() => setIsAssignTenantOpen(false)}
           title={t("tenants.assignTitle", { shop: selectedShop.shopNumber })}
-          maxWidth="md"
+          maxWidth="2xl"
         >
           <form onSubmit={handleAssignTenant} className="space-y-4">
             <div>
@@ -1028,7 +1028,7 @@ export function ShopsView() {
           onClose={() => setIsUpdateRentOpen(false)}
           title={t("shops.updateRent")}
           description={`${selectedShop.shopNumber} — ${selectedShop.marketName}`}
-          maxWidth="md"
+          maxWidth="lg"
         >
           <form onSubmit={handleUpdateRent} className="space-y-4">
             <div>
@@ -1126,7 +1126,7 @@ export function ShopsView() {
             </div>
           }
           description={`${editingShop.shopNumber} — ${editingShop.marketName}`}
-          maxWidth="lg"
+          maxWidth="2xl"
         >
           <form onSubmit={handleSaveShopEdit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

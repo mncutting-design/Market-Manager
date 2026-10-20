@@ -204,7 +204,7 @@ export function SettlementWizardModal({
           ? `${previewData.shop.shopNumber} — ${previewData.tenant.name} (${previewData.shop.marketName})`
           : t("settlement.subtitle")
       }
-      maxWidth="lg"
+      maxWidth="3xl"
     >
       {isLoading || !previewData ? (
         <div className="py-12 text-center text-slate-500">{t("common.loading")}</div>

@@ -341,3 +341,69 @@ html.lang-bn textarea {
     print-color-adjust: exact !important;
   }
 }
+
+/* ========================================================
+   MODERN SLEEK SCROLLBARS & MODAL RESPONSIVE UTILITIES
+   ======================================================== */
+
+/* Utility to hide native scrollbar while preserving smooth scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Modern, ultra-slim, non-intrusive scrollbar for all dialogs, popups, and scroll areas */
+.custom-scrollbar::-webkit-scrollbar,
+[role="dialog"] ::-webkit-scrollbar,
+[role="dialog"]::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+[role="dialog"] ::-webkit-scrollbar-track,
+[role="dialog"]::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+[role="dialog"] ::-webkit-scrollbar-thumb,
+[role="dialog"]::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.35);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+[role="dialog"] ::-webkit-scrollbar-thumb:hover,
+[role="dialog"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.65);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb,
+.dark [role="dialog"] ::-webkit-scrollbar-thumb,
+.dark [role="dialog"]::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.dark [role="dialog"] ::-webkit-scrollbar-thumb:hover,
+.dark [role="dialog"]::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.custom-scrollbar,
+[role="dialog"] * {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(100, 116, 139, 0.35) transparent;
+}
+
+.dark .custom-scrollbar,
+.dark [role="dialog"] * {
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+}
+

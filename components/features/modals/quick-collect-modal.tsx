@@ -249,7 +249,7 @@ export function QuickCollectModal() {
       onClose={() => setIsQuickCollectOpen(false)}
       title={t("collections.collectPayment")}
       description={t("collections.subtitle")}
-      maxWidth="md"
+      maxWidth="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Select Market */}

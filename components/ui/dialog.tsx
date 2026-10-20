@@ -41,18 +41,18 @@ export function Dialog({
 
   const maxWidths: Record<string, string> = {
     sm: "w-full max-w-sm",
-    md: "w-full max-w-md",
-    lg: "w-full max-w-lg",
-    xl: "w-full max-w-xl",
-    "2xl": "w-full max-w-2xl",
-    "3xl": "w-full max-w-3xl",
-    "4xl": "w-full max-w-4xl",
-    "5xl": "w-full max-w-5xl",
+    md: "w-full max-w-md sm:max-w-lg",
+    lg: "w-full max-w-lg sm:max-w-xl md:max-w-2xl",
+    xl: "w-full max-w-xl sm:max-w-2xl md:max-w-3xl",
+    "2xl": "w-full max-w-2xl sm:max-w-3xl md:max-w-4xl",
+    "3xl": "w-full max-w-3xl sm:max-w-4xl md:max-w-5xl",
+    "4xl": "w-full max-w-4xl sm:max-w-5xl md:max-w-6xl",
+    "5xl": "w-full max-w-5xl sm:max-w-6xl md:max-w-7xl",
     full: "w-full max-w-[96vw]",
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 md:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto custom-scrollbar">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in no-print"
@@ -60,12 +60,12 @@ export function Dialog({
         aria-hidden="true"
       />
 
-      {/* Dialog box - Ultra responsive on mobile and desktop */}
+      {/* Dialog box - 100% viewport-fit responsive on mobile and desktop */}
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white dark:bg-[#182234] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-[#2d3b52] transition-all animate-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[90vh] flex flex-col my-auto",
+          "relative z-50 w-full bg-white dark:bg-[#182234] rounded-2xl p-3 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-[#2d3b52] transition-all animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col my-auto",
           maxWidths[maxWidth] || maxWidths.lg
         )}
       >
@@ -94,8 +94,8 @@ export function Dialog({
           </div>
         )}
 
-        {/* Scrollable Content Body */}
-        <div className="overflow-y-auto py-2.5 sm:py-4 flex-1 overscroll-contain pr-0.5 sm:pr-1">
+        {/* Scrollable Content Body with sleek custom scrollbar */}
+        <div className="overflow-y-auto py-2 sm:py-3.5 flex-1 overscroll-contain pr-0.5 sm:pr-1 custom-scrollbar">
           {children}
         </div>
       </div>

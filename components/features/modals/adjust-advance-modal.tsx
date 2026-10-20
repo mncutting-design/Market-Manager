@@ -139,7 +139,7 @@ export function AdjustAdvanceModal({
       onClose={onClose}
       title={t("adjustAdvance.title")}
       description={`${shopNumber} — ${tenantName} (${marketName})`}
-      maxWidth="md"
+      maxWidth="lg"
     >
       {isLoading ? (
         <div className="py-8 text-center text-slate-500">{t("common.loading")}</div>

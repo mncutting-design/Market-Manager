@@ -162,7 +162,7 @@ export function UrgentApprovalModal() {
     <Dialog
       isOpen={!!activeRequest}
       onClose={handleSkip}
-      maxWidth="xl"
+      maxWidth="2xl"
       title={
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/40 flex items-center justify-center animate-bounce shrink-0">

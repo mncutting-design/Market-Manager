@@ -190,7 +190,7 @@ export function ManageBillChargesModal({
         </div>
       }
       description={`${bill.shop?.shopNumber} — ${bill.tenant?.name || ""} (${formatMonth(bill.month, locale, bill.year)})`}
-      maxWidth="md"
+      maxWidth="lg"
     >
       <div className="space-y-4">
         {/* Rent & Total Breakdown Header */}
