@@ -163,7 +163,7 @@ export async function PUT(req: Request) {
   }
 
   try {
-    const { id, role, password, name } = await req.json();
+    const { id, role, password, newPassword, name } = await req.json();
     if (!id) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
@@ -175,8 +175,15 @@ export async function PUT(req: Request) {
     if (name) {
       updateData.name = name.trim();
     }
-    if (password) {
-      updateData.passwordHash = await bcrypt.hash(password, 10);
+    const finalPassword = newPassword || password;
+    if (finalPassword) {
+      if (finalPassword.length < 4) {
+        return NextResponse.json(
+          { error: "Password must be at least 4 characters long" },
+          { status: 400 }
+        );
+      }
+      updateData.passwordHash = await bcrypt.hash(finalPassword, 10);
     }
 
     const updated = await prisma.user.update({
@@ -187,12 +194,87 @@ export async function PUT(req: Request) {
         name: true,
         email: true,
         role: true,
+        locale: true,
+        createdAt: true,
       },
     });
 
-    return NextResponse.json({ success: true, user: updated });
+    return NextResponse.json({
+      success: true,
+      user: updated,
+      message: finalPassword ? "Password reset successfully!" : "User updated successfully",
+    });
   } catch (error) {
     console.error("Update user error:", error);
     return NextResponse.json({ error: "Failed to update user" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Only ADMIN can delete users
+  if (!hasPermission(session.role, "canManageUsers")) {
+    return NextResponse.json(
+      { error: "Only Admins have permission to delete users" },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const url = new URL(req.url);
+    let id = url.searchParams.get("id");
+    if (!id) {
+      try {
+        const body = await req.json();
+        id = body.id;
+      } catch {}
+    }
+
+    if (!id) {
+      return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+    }
+
+    // Safety checks: Cannot delete self
+    if (session.id === id) {
+      return NextResponse.json(
+        { error: "আপনি নিজের অ্যাকাউন্ট ডিলিট করতে পারবেন না (Cannot delete your own account)" },
+        { status: 400 }
+      );
+    }
+
+    // Safety checks: Cannot delete primary NAZRUL
+    const target = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!target) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    if (
+      target.name.toUpperCase() === "NAZRUL" ||
+      target.email.toLowerCase().includes("nazrul")
+    ) {
+      return NextResponse.json(
+        { error: "মূল সুপার এডমিন (NAZRUL) ডিলিট করা সম্ভব নয় (Cannot delete primary Super Admin)" },
+        { status: 403 }
+      );
+    }
+
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: `User '${target.name}' deleted successfully`,
+    });
+  } catch (error) {
+    console.error("Delete user error:", error);
+    return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }

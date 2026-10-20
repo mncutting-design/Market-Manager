@@ -12,6 +12,7 @@ import {
   AlertCircle,
   Wrench,
   FileSpreadsheet,
+  Users,
   Settings,
   ChevronLeft,
   ChevronRight,
@@ -32,6 +33,7 @@ export function Sidebar() {
     { id: "dues", labelKey: "nav.dues", icon: AlertCircle, badgeColor: "bg-red-500" },
     { id: "expenses", labelKey: "nav.expenses", icon: Wrench },
     { id: "reports", labelKey: "nav.reports", icon: FileSpreadsheet },
+    { id: "users", labelKey: "nav.users", icon: Users },
     { id: "settings", labelKey: "nav.settings", icon: Settings },
   ];
 

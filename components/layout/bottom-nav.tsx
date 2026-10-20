@@ -13,6 +13,7 @@ import {
   Store,
   Receipt,
   AlertCircle,
+  Users,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ export function BottomNav() {
     { id: "shops", labelKey: "nav.shops", icon: Store },
     { id: "billing", labelKey: "nav.billing", icon: Receipt },
     { id: "dues", labelKey: "nav.dues", icon: AlertCircle, badgeColor: "text-red-500" },
+    { id: "users", labelKey: "nav.users", icon: Users },
     { id: "settings", labelKey: "nav.settings", icon: Settings },
   ];
 

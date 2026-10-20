@@ -23,6 +23,7 @@ import { CollectionsView } from "@/components/features/collections-view";
 import { DuesView } from "@/components/features/dues-view";
 import { ExpensesView } from "@/components/features/expenses-view";
 import { ReportsView } from "@/components/features/reports-view";
+import { UsersView } from "@/components/features/users-view";
 import { SettingsView } from "@/components/features/settings-view";
 import { PremiumLoader } from "@/components/ui/premium-loader";
 
@@ -76,6 +77,9 @@ function MainApp() {
         </div>
         <div className={activeTab === "reports" ? "block" : "hidden"}>
           {visitedTabs.has("reports") && <ReportsView />}
+        </div>
+        <div className={activeTab === "users" ? "block" : "hidden"}>
+          {visitedTabs.has("users") && <UsersView />}
         </div>
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           {visitedTabs.has("settings") && <SettingsView />}
