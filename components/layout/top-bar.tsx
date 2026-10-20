@@ -17,6 +17,7 @@ import {
   ShieldCheck,
   FolderArchive,
   KeyRound,
+  Trash2,
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { toast } from "sonner";
@@ -325,6 +326,19 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                     <FolderArchive className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                     <span>{locale === "bn" ? "প্রজেক্ট জিপ ডাউনলোড" : "Download Project ZIP"}</span>
                   </a>
+
+                  {currentUser?.role === "ADMIN" && (
+                    <button
+                      onClick={() => {
+                        setIsProfileOpen(false);
+                        setActiveTab("settings");
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer"
+                    >
+                      <Trash2 className="w-4 h-4 text-rose-500" />
+                      <span>{locale === "bn" ? "ডেটা মুছে ফেলুন / রিসেট" : "Clear Data / Reset"}</span>
+                    </button>
+                  )}
                 </div>
 
                 <div className="border-t border-slate-100 dark:border-slate-700/80 pt-1">

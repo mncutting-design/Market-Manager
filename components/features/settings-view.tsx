@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { TenantPolicyCard } from "./settings/tenant-policy-card";
 import { AuditLogsCard } from "./settings/audit-logs-card";
 import { UsersRolesCard } from "./settings/users-roles-card";
+import { ClearDataCard } from "./settings/clear-data-card";
 
 export function SettingsView() {
   const { t, locale, setLocale } = useTranslation();
@@ -274,6 +275,9 @@ export function SettingsView() {
           </a>
         </CardContent>
       </Card>
+
+      {/* 8. Admin-Only Danger Zone: Clear System Data (Including User / Excluding User) */}
+      <ClearDataCard />
     </div>
   );
 }
