@@ -263,9 +263,8 @@ export async function PUT(req: Request) {
     }
 
     // Direct Admin update
-    await prisma.$transaction(async (tx) => {
+    const updatedBill = await prisma.$transaction(async (tx) => {
       if (itemId) {
-        // Edit existing item
         await tx.billItem.update({
           where: { id: itemId },
           data: {
@@ -285,33 +284,28 @@ export async function PUT(req: Request) {
         });
       }
 
-      // Recalculate bill total and due based on all items
       const allItems = await tx.billItem.findMany({ where: { billId } });
       const itemsTotal = allItems.reduce((acc, item) => acc + item.amount, 0);
       const newTotal = bill.rentAmount + itemsTotal;
       const newDue = newTotal - bill.paidAmount;
       const newStatus = newDue <= 0 ? "PAID" : bill.paidAmount > 0 ? "PARTIAL" : "DUE";
 
-      await tx.bill.update({
+      return await tx.bill.update({
         where: { id: billId },
         data: {
           totalAmount: newTotal,
           dueAmount: Math.max(0, newDue),
           status: newStatus,
         },
+        include: {
+          shop: { include: { market: true } },
+          tenant: true,
+          billItems: { include: { chargeType: true } },
+        },
       });
     });
 
-    const updatedBill = await prisma.bill.findUnique({
-      where: { id: billId },
-      include: {
-        shop: { include: { market: true } },
-        tenant: true,
-        billItems: { include: { chargeType: true } },
-      },
-    });
-
-    return NextResponse.json({ bill: updatedBill });
+    return NextResponse.json({ success: true, bill: updatedBill });
   } catch (error) {
     console.error("Failed to add charge to bill:", error);
     return NextResponse.json({ error: "Failed to add charge to bill" }, { status: 500 });
@@ -370,8 +364,8 @@ export async function DELETE(req: Request) {
       });
     }
 
-    // Direct Admin execution
-    await prisma.$transaction(async (tx) => {
+    // Direct Admin execution - single round-trip returning updated bill
+    const updatedBill = await prisma.$transaction(async (tx) => {
       await tx.billItem.delete({
         where: { id: itemId },
       });
@@ -382,23 +376,19 @@ export async function DELETE(req: Request) {
       const newDue = newTotal - bill.paidAmount;
       const newStatus = newDue <= 0 ? "PAID" : bill.paidAmount > 0 ? "PARTIAL" : "DUE";
 
-      await tx.bill.update({
+      return await tx.bill.update({
         where: { id: billId },
         data: {
           totalAmount: newTotal,
           dueAmount: Math.max(0, newDue),
           status: newStatus,
         },
+        include: {
+          shop: { include: { market: true } },
+          tenant: true,
+          billItems: { include: { chargeType: true } },
+        },
       });
-    });
-
-    const updatedBill = await prisma.bill.findUnique({
-      where: { id: billId },
-      include: {
-        shop: { include: { market: true } },
-        tenant: true,
-        billItems: { include: { chargeType: true } },
-      },
     });
 
     return NextResponse.json({ success: true, bill: updatedBill });

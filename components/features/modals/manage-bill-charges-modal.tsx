@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { formatCurrency, formatMonth } from "@/lib/format";
 import { Dialog } from "@/components/ui/dialog";
@@ -14,7 +14,7 @@ interface ManageBillChargesModalProps {
   isOpen: boolean;
   onClose: () => void;
   bill: any;
-  onUpdated?: () => void;
+  onUpdated?: (updatedBill?: any) => void;
 }
 
 const PRESET_CHARGES = [
@@ -34,13 +34,79 @@ export function ManageBillChargesModal({
 }: ManageBillChargesModalProps) {
   const { t, locale } = useTranslation();
 
+  const [currentBill, setCurrentBill] = useState(bill);
+  const [items, setItems] = useState<any[]>(bill?.billItems || []);
   const [description, setDescription] = useState("");
   const [amountBDT, setAmountBDT] = useState<number>(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [deletingItemId, setDeletingItemId] = useState<string | null>(null);
+
+  // Sync if bill prop changes
+  useEffect(() => {
+    if (bill) {
+      setCurrentBill(bill);
+      setItems(bill.billItems || []);
+    }
+  }, [bill]);
 
   if (!isOpen || !bill) return null;
 
+  const additionalTotal = items.reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
+  const rentAmount = currentBill?.rentAmount || 0;
+  const totalAmount = rentAmount + additionalTotal;
+  const paidAmount = currentBill?.paidAmount || 0;
+  const dueAmount = Math.max(0, totalAmount - paidAmount);
+
+  // ⚡ 0ms INSTANT REALTIME OPTIMISTIC DELETE
+  const handleDeleteCharge = async (itemId: string) => {
+    const itemToDelete = items.find((i) => i.id === itemId);
+    if (!itemToDelete) return;
+
+    // Instantly remove from UI and recalculate amounts
+    const updatedItems = items.filter((i) => i.id !== itemId);
+    const newAdditionalTotal = updatedItems.reduce((acc, i) => acc + (i.amount || 0), 0);
+    const newTotal = rentAmount + newAdditionalTotal;
+    const newDue = Math.max(0, newTotal - paidAmount);
+
+    setItems(updatedItems);
+    setCurrentBill((prev: any) => ({
+      ...prev,
+      billItems: updatedItems,
+      totalAmount: newTotal,
+      dueAmount: newDue,
+    }));
+
+    toast.info(locale === "bn" ? "চার্জ বাতিল করা হয়েছে" : "Charge removed");
+
+    try {
+      const res = await fetch(`/api/billing?billId=${bill.id}&itemId=${itemId}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        // Rollback on rejection
+        setItems((prev) => [...prev, itemToDelete]);
+        setCurrentBill(bill);
+        toast.error(data.error || (locale === "bn" ? "চার্জ মোছা ব্যর্থ হয়েছে" : "Failed to delete charge"));
+        return;
+      }
+
+      if (data.bill) {
+        setCurrentBill(data.bill);
+        setItems(data.bill.billItems || []);
+        onUpdated?.(data.bill);
+      } else {
+        onUpdated?.();
+      }
+    } catch (e) {
+      // Rollback on network error
+      setItems((prev) => [...prev, itemToDelete]);
+      setCurrentBill(bill);
+      toast.error(locale === "bn" ? "চার্জ মোছা ব্যর্থ হয়েছে" : "Failed to delete charge");
+    }
+  };
+
+  // ⚡ 0ms INSTANT REALTIME OPTIMISTIC ADD
   const handleAddCharge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (amountBDT <= 0) {
@@ -48,60 +114,70 @@ export function ManageBillChargesModal({
       return;
     }
 
+    const paisa = Math.round(amountBDT * 100);
+    const itemDesc = description.trim() || (locale === "bn" ? "অতিরিক্ত খরচ" : "Additional Cost");
+    const tempId = `temp-${Date.now()}`;
+
+    // Instantly add to UI and recalculate amounts
+    const tempItem = {
+      id: tempId,
+      description: itemDesc,
+      amount: paisa,
+    };
+
+    const updatedItems = [...items, tempItem];
+    const newAdditionalTotal = updatedItems.reduce((acc, i) => acc + (i.amount || 0), 0);
+    const newTotal = rentAmount + newAdditionalTotal;
+    const newDue = Math.max(0, newTotal - paidAmount);
+
+    setItems(updatedItems);
+    setCurrentBill((prev: any) => ({
+      ...prev,
+      billItems: updatedItems,
+      totalAmount: newTotal,
+      dueAmount: newDue,
+    }));
+
+    setDescription("");
+    setAmountBDT(0);
+    toast.success(locale === "bn" ? "অতিরিক্ত খরচ সফলভাবে যোগ হয়েছে!" : "Additional cost added!");
+
     try {
       setIsSubmitting(true);
-      const paisa = Math.round(amountBDT * 100);
       const res = await fetch("/api/billing", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           billId: bill.id,
-          description: description.trim() || (locale === "bn" ? "অতিরিক্ত খরচ" : "Additional Cost"),
+          description: itemDesc,
           amount: paisa,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
+        // Rollback
+        setItems((prev) => prev.filter((i) => i.id !== tempId));
+        setCurrentBill(bill);
         toast.error(data.error || "Failed to add charge");
         return;
       }
 
-      toast.success(locale === "bn" ? "অতিরিক্ত খরচ সফলভাবে যোগ হয়েছে!" : "Additional cost added!");
-      setDescription("");
-      setAmountBDT(0);
-      onUpdated?.();
+      if (data.bill) {
+        setCurrentBill(data.bill);
+        setItems(data.bill.billItems || []);
+        onUpdated?.(data.bill);
+      } else {
+        onUpdated?.();
+      }
     } catch (e) {
+      setItems((prev) => prev.filter((i) => i.id !== tempId));
+      setCurrentBill(bill);
       toast.error("Failed to add charge");
     } finally {
       setIsSubmitting(false);
     }
   };
-
-  const handleDeleteCharge = async (itemId: string) => {
-    try {
-      setDeletingItemId(itemId);
-      const res = await fetch(`/api/billing?billId=${bill.id}&itemId=${itemId}`, {
-        method: "DELETE",
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error || "Failed to delete charge");
-        return;
-      }
-
-      toast.info(locale === "bn" ? "চার্জ বাতিল করা হয়েছে" : "Charge removed");
-      onUpdated?.();
-    } catch (e) {
-      toast.error("Failed to delete charge");
-    } finally {
-      setDeletingItemId(null);
-    }
-  };
-
-  const billItems = bill.billItems || [];
-  const additionalTotal = billItems.reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
 
   return (
     <Dialog
@@ -122,7 +198,7 @@ export function ManageBillChargesModal({
           <div>
             <span className="text-[11px] text-slate-500">{locale === "bn" ? "মূল ভাড়া" : "Base Rent"}</span>
             <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
-              {formatCurrency(bill.rentAmount, locale)}
+              {formatCurrency(rentAmount, locale)}
             </p>
           </div>
           <div>
@@ -134,7 +210,7 @@ export function ManageBillChargesModal({
           <div>
             <span className="text-[11px] text-slate-500">{locale === "bn" ? "মোট প্রদেয়" : "Total Payable"}</span>
             <p className="text-sm font-bold text-teal-600 dark:text-teal-400">
-              {formatCurrency(bill.totalAmount, locale)}
+              {formatCurrency(totalAmount, locale)}
             </p>
           </div>
         </div>
@@ -145,7 +221,7 @@ export function ManageBillChargesModal({
             {locale === "bn" ? "বর্তমান অতিরিক্ত খরচসমূহ:" : "Current Additional Costs:"}
           </h4>
 
-          {billItems.length === 0 ? (
+          {items.length === 0 ? (
             <div className="p-4 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
               {locale === "bn"
                 ? "কোনো অতিরিক্ত খরচ যোগ করা হয়নি (শুধুমাত্র মূল ভাড়া প্রযোজ্য)।"
@@ -153,10 +229,10 @@ export function ManageBillChargesModal({
             </div>
           ) : (
             <div className="space-y-2">
-              {billItems.map((item: any) => (
+              {items.map((item: any) => (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs"
+                  className="flex items-center justify-between p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs transition-all duration-150 animate-in fade-in"
                 >
                   <div>
                     <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
@@ -173,8 +249,7 @@ export function ManageBillChargesModal({
                     <button
                       type="button"
                       onClick={() => handleDeleteCharge(item.id)}
-                      disabled={deletingItemId === item.id}
-                      className="p-1 rounded text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 active:scale-90 transition-all cursor-pointer"
                       title={locale === "bn" ? "মুছে ফেলুন" : "Delete"}
                     >
                       <Trash2 className="w-3.5 h-3.5" />

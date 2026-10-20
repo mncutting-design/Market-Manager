@@ -318,7 +318,12 @@ export function BillingView() {
             setActiveBill(null);
           }}
           bill={activeBill}
-          onUpdated={() => triggerRefresh()}
+          onUpdated={(updatedBill) => {
+            if (updatedBill) {
+              setActiveBill(updatedBill);
+            }
+            refetchBills();
+          }}
         />
       )}
     </div>
