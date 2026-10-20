@@ -93,6 +93,32 @@ export function ReportsView() {
         [t("billing.dueAmount")]: Math.round(r.dueAmount / 100),   // Numeric cell!
         [t("common.status")]: r.status,
       }));
+    } else if (reportType === "month_wise_summary" && data.rows) {
+      fileName = `month-wise-report-${reportYear}`;
+      sheetData = data.rows.map((r: any) => ({
+        [locale === "bn" ? "মাস" : "Month"]: formatMonth(r.month, locale),
+        [t("billing.totalBill")]: Math.round(r.totalBilled / 100),
+        [t("billing.paidAmount")]: Math.round(r.totalCollected / 100),
+        [t("billing.dueAmount")]: Math.round(r.totalDue / 100),
+        [t("reports.totalExpenses")]: Math.round(r.totalExpense / 100),
+        [t("reports.netIncome")]: Math.round(r.netProfit / 100),
+        [t("reports.collectionEfficiency")]: Math.round(r.collectionRate),
+        [locale === "bn" ? "পরিশোধিত দোকান" : "Paid Shops"]: r.paidCount,
+        [locale === "bn" ? "বকেয়া দোকান" : "Due Shops"]: r.dueCount,
+      }));
+      if (data.summary) {
+        sheetData.push({
+          [locale === "bn" ? "মাস" : "Month"]: locale === "bn" ? "বার্ষিক মোট (Yearly Total)" : "Yearly Total",
+          [t("billing.totalBill")]: Math.round(data.summary.yearlyBilled / 100),
+          [t("billing.paidAmount")]: Math.round(data.summary.yearlyCollected / 100),
+          [t("billing.dueAmount")]: Math.round(data.summary.yearlyDue / 100),
+          [t("reports.totalExpenses")]: Math.round(data.summary.yearlyExpense / 100),
+          [t("reports.netIncome")]: Math.round(data.summary.yearlyNetProfit / 100),
+          [t("reports.collectionEfficiency")]: Math.round(data.summary.yearlyCollectionRate),
+          [locale === "bn" ? "পরিশোধিত দোকান" : "Paid Shops"]: "",
+          [locale === "bn" ? "বকেয়া দোকান" : "Due Shops"]: "",
+        });
+      }
     } else if (reportType === "market_pnl" && data.rows) {
       fileName = `market-profit-loss-${reportYear}`;
       sheetData = data.rows.map((r: any) => ({
@@ -202,6 +228,7 @@ export function ReportsView() {
       <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto no-scrollbar no-print">
         {[
           { id: "monthly_collection", labelKey: "reports.monthlyCollection" },
+          { id: "month_wise_summary", labelKey: "reports.monthWiseSummary" },
           { id: "market_pnl", labelKey: "reports.marketProfitLoss" },
           { id: "expense_by_category", labelKey: "reports.expenseByCategory" },
           { id: "collector_summary", customLabel: locale === "bn" ? "কালেক্টর ও স্টাফ আদায়" : "Collector Performance" },
@@ -244,7 +271,7 @@ export function ReportsView() {
           />
         )}
 
-        {reportType === "monthly_collection" && (
+        {(reportType === "monthly_collection" || reportType === "collector_summary" || reportType === "channel_summary") && (
           <Select
             label={t("dashboard.selectMonth")}
             value={reportMonth}
@@ -358,6 +385,163 @@ export function ReportsView() {
                 </table>
               </div>
             </Card>
+          )}
+
+          {/* 1b. Month-Wise Financial Statement */}
+          {reportType === "month_wise_summary" && data.rows && (
+            <div className="space-y-4">
+              {/* Yearly KPI Summary Cards */}
+              {data.summary && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                  <Card className="p-3.5 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                      {locale === "bn" ? "বার্ষিক মোট দাবি" : "Yearly Total Billed"}
+                    </p>
+                    <p className="text-base md:text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+                      {formatCurrency(data.summary.yearlyBilled, locale)}
+                    </p>
+                  </Card>
+
+                  <Card className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60">
+                    <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                      {locale === "bn" ? "বার্ষিক আদায়" : "Yearly Collected"}
+                    </p>
+                    <p className="text-base md:text-xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                      {formatCurrency(data.summary.yearlyCollected, locale)}
+                    </p>
+                  </Card>
+
+                  <Card className="p-3.5 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/60">
+                    <p className="text-[11px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                      {locale === "bn" ? "বার্ষিক বকেয়া" : "Yearly Total Due"}
+                    </p>
+                    <p className="text-base md:text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+                      {formatCurrency(data.summary.yearlyDue, locale)}
+                    </p>
+                  </Card>
+
+                  <Card className="p-3.5 bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60">
+                    <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                      {locale === "bn" ? "বার্ষিক পরিচালন ব্যয়" : "Yearly Expenses"}
+                    </p>
+                    <p className="text-base md:text-xl font-bold text-amber-700 dark:text-amber-400 mt-1">
+                      {formatCurrency(data.summary.yearlyExpense, locale)}
+                    </p>
+                  </Card>
+
+                  <Card className="p-3.5 bg-teal-50/50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-900/60 col-span-2 sm:col-span-1">
+                    <p className="text-[11px] font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wider">
+                      {locale === "bn" ? "বার্ষিক নিট লাভ" : "Yearly Net Profit"}
+                    </p>
+                    <p className="text-base md:text-xl font-bold text-teal-700 dark:text-teal-400 mt-1">
+                      {formatCurrency(data.summary.yearlyNetProfit, locale)}
+                    </p>
+                  </Card>
+                </div>
+              )}
+
+              {/* Monthly Statement Table */}
+              <Card className="overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs md:text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                        <th className="p-3.5">{locale === "bn" ? "মাস" : "Month"}</th>
+                        <th className="p-3.5 text-right">{t("billing.totalBill")}</th>
+                        <th className="p-3.5 text-right">{t("billing.paidAmount")}</th>
+                        <th className="p-3.5 text-right">{t("billing.dueAmount")}</th>
+                        <th className="p-3.5 text-right">{t("reports.totalExpenses")}</th>
+                        <th className="p-3.5 text-right">{t("reports.netIncome")}</th>
+                        <th className="p-3.5 text-right">{t("reports.collectionEfficiency")}</th>
+                        <th className="p-3.5 text-center">{locale === "bn" ? "পরিশোধ / বকেয়া" : "Paid / Due"}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {data.rows.map((row: any) => (
+                        <tr
+                          key={row.month}
+                          className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                        >
+                          <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 font-semibold text-[11px] flex items-center justify-center shrink-0">
+                              {locale === "bn" ? toBanglaDigits(row.month) : row.month}
+                            </span>
+                            <span>{formatMonth(row.month, locale, reportYear)}</span>
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-slate-900 dark:text-slate-100">
+                            {formatCurrency(row.totalBilled, locale)}
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(row.totalCollected, locale)}
+                          </td>
+                          <td className="p-3.5 text-right font-bold text-red-600 dark:text-red-400">
+                            {row.totalDue > 0 ? formatCurrency(row.totalDue, locale) : "—"}
+                          </td>
+                          <td className="p-3.5 text-right font-semibold text-amber-600 dark:text-amber-400">
+                            {formatCurrency(row.totalExpense, locale)}
+                          </td>
+                          <td className={`p-3.5 text-right font-bold ${row.netProfit >= 0 ? "text-teal-700 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}>
+                            {formatCurrency(row.netProfit, locale)}
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="font-semibold text-xs">
+                                {formatPercent(row.collectionRate, locale)}
+                              </span>
+                              <div className="w-12 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                <div
+                                  className="h-full bg-teal-500 rounded-full"
+                                  style={{ width: `${Math.min(100, Math.round(row.collectionRate))}%` }}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-3.5 text-center text-xs">
+                            <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
+                              {locale === "bn" ? toBanglaDigits(row.paidCount) : row.paidCount}
+                            </span>
+                            <span className="text-slate-400 mx-1">/</span>
+                            <span className="inline-flex items-center gap-1 font-semibold text-red-500">
+                              {locale === "bn" ? toBanglaDigits(row.dueCount + row.partialCount) : row.dueCount + row.partialCount}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    {data.summary && (
+                      <tfoot>
+                        <tr className="bg-slate-100/80 dark:bg-slate-800/80 font-bold border-t-2 border-slate-300 dark:border-slate-700">
+                          <td className="p-3.5 text-slate-900 dark:text-white">
+                            {locale === "bn" ? "বার্ষিক মোট (Yearly Total)" : "Yearly Total"}
+                          </td>
+                          <td className="p-3.5 text-right text-slate-900 dark:text-white">
+                            {formatCurrency(data.summary.yearlyBilled, locale)}
+                          </td>
+                          <td className="p-3.5 text-right text-emerald-700 dark:text-emerald-400">
+                            {formatCurrency(data.summary.yearlyCollected, locale)}
+                          </td>
+                          <td className="p-3.5 text-right text-red-600 dark:text-red-400">
+                            {formatCurrency(data.summary.yearlyDue, locale)}
+                          </td>
+                          <td className="p-3.5 text-right text-amber-700 dark:text-amber-400">
+                            {formatCurrency(data.summary.yearlyExpense, locale)}
+                          </td>
+                          <td className={`p-3.5 text-right ${data.summary.yearlyNetProfit >= 0 ? "text-teal-700 dark:text-teal-300" : "text-red-600"}`}>
+                            {formatCurrency(data.summary.yearlyNetProfit, locale)}
+                          </td>
+                          <td className="p-3.5 text-right text-teal-700 dark:text-teal-300">
+                            {formatPercent(data.summary.yearlyCollectionRate, locale)}
+                          </td>
+                          <td className="p-3.5 text-center text-slate-500">
+                            —
+                          </td>
+                        </tr>
+                      </tfoot>
+                    )}
+                  </table>
+                </div>
+              </Card>
+            </div>
           )}
 
           {/* 2. Market Profit & Loss Statement */}

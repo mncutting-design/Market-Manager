@@ -3,7 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
-import { formatCurrency, formatDate, toBanglaDigits } from "@/lib/format";
+import {
+  formatCurrency,
+  formatDate,
+  toBanglaDigits,
+  parseShopSerial,
+  compareShopSerials,
+  STANDARD_SHOP_BLOCKS,
+} from "@/lib/format";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +40,8 @@ import {
   AlertTriangle,
   User,
   UserCheck,
+  ArrowUpDown,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TenantProfileModal } from "./modals/tenant-profile-modal";
@@ -61,6 +70,100 @@ export function ShopsView() {
     { tag: "shops", refreshInterval: 15000 }
   );
   const shops = shopsData?.shops || [];
+
+  // Sorting and Block Serial Filter States
+  const [sortBy, setSortBy] = useState<string>("SHOP_ASC");
+  const [selectedBlock, setSelectedBlock] = useState<string>("ALL");
+
+  // Extract detected line/blocks from shops
+  const availableBlocks = React.useMemo(() => {
+    const blockCounts = new Map<string, number>();
+    for (const s of shops) {
+      const parsed = parseShopSerial(s.shopNumber);
+      if (parsed.blockKey) {
+        blockCounts.set(parsed.blockKey, (blockCounts.get(parsed.blockKey) || 0) + 1);
+      }
+    }
+    const blocks = STANDARD_SHOP_BLOCKS.map((sb) => {
+      const count = (blockCounts.get(sb.key) || 0) + (blockCounts.get(sb.englishKey) || 0);
+      return {
+        key: sb.key,
+        englishKey: sb.englishKey,
+        label: locale === "bn" ? sb.labelBn : sb.labelEn,
+        count,
+      };
+    });
+    return blocks;
+  }, [shops, locale]);
+
+  // Filter by line / block if selected
+  const filteredByBlock = React.useMemo(() => {
+    if (selectedBlock === "ALL") return shops;
+    return shops.filter((s) => {
+      const parsed = parseShopSerial(s.shopNumber);
+      const targetStd = STANDARD_SHOP_BLOCKS.find((b) => b.key === selectedBlock);
+      return (
+        parsed.blockKey === selectedBlock ||
+        (targetStd && parsed.blockKey === targetStd.englishKey)
+      );
+    });
+  }, [shops, selectedBlock]);
+
+  // Sort shops by user selection or default serialized order
+  const sortedShops = React.useMemo(() => {
+    const list = [...filteredByBlock];
+    switch (sortBy) {
+      case "SHOP_ASC":
+        return list.sort((a, b) => compareShopSerials(a.shopNumber, b.shopNumber));
+      case "SHOP_DESC":
+        return list.sort((a, b) => compareShopSerials(b.shopNumber, a.shopNumber));
+      case "TENANT_ASC":
+        return list.sort((a, b) => {
+          const nameA = a.tenant?.name || "zzz";
+          const nameB = b.tenant?.name || "zzz";
+          return nameA.localeCompare(nameB, locale === "bn" ? "bn" : "en");
+        });
+      case "TENANT_DESC":
+        return list.sort((a, b) => {
+          const nameA = a.tenant?.name || "";
+          const nameB = b.tenant?.name || "";
+          return nameB.localeCompare(nameA, locale === "bn" ? "bn" : "en");
+        });
+      case "RENT_DESC":
+        return list.sort((a, b) => (b.currentRent || b.defaultRent) - (a.currentRent || a.defaultRent));
+      case "RENT_ASC":
+        return list.sort((a, b) => (a.currentRent || a.defaultRent) - (b.currentRent || b.defaultRent));
+      case "ADVANCE_DESC":
+        return list.sort((a, b) => (b.tenant?.advanceDeposit || 0) - (a.tenant?.advanceDeposit || 0));
+      case "FLOOR_ASC":
+        return list.sort((a, b) => (a.floor || "").localeCompare(b.floor || ""));
+      case "STATUS":
+        return list.sort((a, b) => a.status.localeCompare(b.status));
+      default:
+        return list.sort((a, b) => compareShopSerials(a.shopNumber, b.shopNumber));
+    }
+  }, [filteredByBlock, sortBy, locale]);
+
+  // Auto-generate next serial shop number for a block
+  const handleAutoGenerateSerial = (blockLetter: string = "এ") => {
+    const targetMId = addShopMarketId || (selectedMarketId !== "ALL" ? selectedMarketId : markets[0]?.id);
+    const marketShops = shops.filter((s) => s.marketId === targetMId);
+    let maxNum = 0;
+    const targetStd = STANDARD_SHOP_BLOCKS.find((b) => b.key === blockLetter);
+    for (const s of marketShops) {
+      const parsed = parseShopSerial(s.shopNumber);
+      if (parsed.blockKey === blockLetter || (targetStd && parsed.blockKey === targetStd.englishKey)) {
+        if (parsed.num > maxNum) maxNum = parsed.num;
+      }
+    }
+    const nextNum = maxNum + 1;
+    const formattedNumBn = nextNum < 10 ? `০${toBanglaDigits(nextNum)}` : toBanglaDigits(nextNum);
+    const formattedNumEn = nextNum < 10 ? `0${nextNum}` : `${nextNum}`;
+    const generated = locale === "bn"
+      ? `${blockLetter}-${formattedNumBn}`
+      : `${targetStd?.englishKey || blockLetter}-${formattedNumEn}`;
+    setShopNumber(generated);
+  };
 
   // Modals
   const [isAddShopOpen, setIsAddShopOpen] = useState(false);
@@ -391,35 +494,108 @@ export function ShopsView() {
         )}
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        {/* Search matching Latin & Bangla digits */}
-        <div className="relative flex-1">
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t("common.searchShopsPlaceholder")}
-            prefixIcon={<Search className="w-4 h-4" />}
-          />
+      {/* Filter and Search Bar with Sorting in Header Area */}
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row gap-2.5">
+          {/* Search matching Latin & Bangla digits */}
+          <div className="relative flex-1">
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t("common.searchShopsPlaceholder")}
+              prefixIcon={<Search className="w-4 h-4" />}
+            />
+          </div>
+
+          {/* Sorting Option in Header Area */}
+          <div className="w-full sm:w-64 shrink-0">
+            <Select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="h-10 text-xs font-semibold"
+            >
+              <option value="SHOP_ASC">
+                {locale === "bn" ? "দোকান নং (এ, বি, সি... ১, ২, ৩)" : "Shop Number (A to Z / 1, 2, 3)"}
+              </option>
+              <option value="SHOP_DESC">
+                {locale === "bn" ? "দোকান নং (এফ, ই, ডি... উল্টো)" : "Shop Number (Z to A / Reverse)"}
+              </option>
+              <option value="TENANT_ASC">
+                {locale === "bn" ? "ভাড়াটিয়া নাম (অ - হ)" : "Tenant Name (A - Z)"}
+              </option>
+              <option value="TENANT_DESC">
+                {locale === "bn" ? "ভাড়াটিয়া নাম (হ - অ)" : "Tenant Name (Z - A)"}
+              </option>
+              <option value="RENT_DESC">
+                {locale === "bn" ? "মাসিক ভাড়া (বেশি থেকে কম)" : "Rent (High to Low)"}
+              </option>
+              <option value="RENT_ASC">
+                {locale === "bn" ? "মাসিক ভাড়া (কম থেকে বেশি)" : "Rent (Low to High)"}
+              </option>
+              <option value="ADVANCE_DESC">
+                {locale === "bn" ? "জামানত জমা (বেশি থেকে কম)" : "Advance Held (High to Low)"}
+              </option>
+              <option value="FLOOR_ASC">
+                {locale === "bn" ? "ফ্লোর অনুসারে (নিচতলা, ২য়...)" : "Floor (Ground, 1st...)"}
+              </option>
+              <option value="STATUS">
+                {locale === "bn" ? "স্ট্যাটাস (বরাদ্দকৃত / ফাঁকা)" : "Status (Occupied / Vacant)"}
+              </option>
+            </Select>
+          </div>
+
+          {/* Status filter tabs - Scrollable on mobile */}
+          <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
+            {["ALL", "OCCUPIED", "VACANT"].map((status) => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
+                  statusFilter === status
+                    ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
+                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                }`}
+              >
+                {status === "ALL"
+                  ? t("common.all")
+                  : status === "OCCUPIED"
+                  ? t("status.occupied")
+                  : t("status.vacant")}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Status filter tabs - Scrollable on mobile */}
-        <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
-          {["ALL", "OCCUPIED", "VACANT"].map((status) => (
+        {/* Market-wise Block / Serialised Line Pills (এ, বি, সি, ডি, ই, এফ / A, B, C, D, E, F) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-teal-600" />
+            <span>{locale === "bn" ? "সিরিয়াল / ব্লক:" : "Serial / Block:"}</span>
+          </span>
+          <button
+            onClick={() => setSelectedBlock("ALL")}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer border ${
+              selectedBlock === "ALL"
+                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs"
+                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+            }`}
+          >
+            {locale === "bn" ? "সব সিরিয়াল" : "All Blocks"} ({shops.length})
+          </button>
+          {availableBlocks.map((b) => (
             <button
-              key={status}
-              onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
-                statusFilter === status
-                  ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+              key={b.key}
+              onClick={() => setSelectedBlock(b.key)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer border flex items-center gap-1.5 ${
+                selectedBlock === b.key
+                  ? "bg-teal-600 text-white border-teal-600 shadow-xs"
+                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
               }`}
             >
-              {status === "ALL"
-                ? t("common.all")
-                : status === "OCCUPIED"
-                ? t("status.occupied")
-                : t("status.vacant")}
+              <span>{b.label}</span>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedBlock === b.key ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+                {locale === "bn" ? toBanglaDigits(b.count) : b.count}
+              </span>
             </button>
           ))}
         </div>
@@ -428,17 +604,24 @@ export function ShopsView() {
       {/* Content: Cards on Mobile, Responsive Table on Desktop */}
       {isLoading ? (
         <TableSkeleton rows={6} />
-      ) : shops.length === 0 ? (
+      ) : sortedShops.length === 0 ? (
         <Card className="p-12 text-center">
           <Store className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
           <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
             {t("shops.noShopsFound")}
           </p>
-          <p className="text-xs text-slate-500 mt-1">{t("markets.createFirstMarket")}</p>
+          {selectedBlock !== "ALL" && (
+            <div className="mt-3">
+              <Button size="sm" variant="outline" onClick={() => setSelectedBlock("ALL")}>
+                {locale === "bn" ? "ব্লক ফিল্টার মুছুন" : "Clear Block Filter"}
+              </Button>
+            </div>
+          )}
+          <p className="text-xs text-slate-500 mt-2">{t("markets.createFirstMarket")}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {shops.map((shop) => (
+          {sortedShops.map((shop) => (
             <Card
               key={shop.id}
               onClick={() => {
@@ -651,6 +834,26 @@ export function ShopsView() {
                 placeholder="e.g. 101 or G-05"
                 required
               />
+              <div className="mt-2">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    {locale === "bn" ? "অটো সিরিয়াল (মার্কেট অনুযায়ী):" : "Auto Serial (Block-wise):"}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-1">
+                  {STANDARD_SHOP_BLOCKS.map((sb) => (
+                    <button
+                      key={sb.key}
+                      type="button"
+                      onClick={() => handleAutoGenerateSerial(sb.key)}
+                      className="px-2 py-0.5 text-xs font-bold rounded-md bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer shadow-2xs"
+                      title={locale === "bn" ? `${sb.labelBn} সিরিয়াল তৈরি করুন` : `Generate next serial for ${sb.labelEn}`}
+                    >
+                      +{locale === "bn" ? sb.key : sb.englishKey}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">

@@ -360,3 +360,86 @@ export function numberToWordsBDT(amountBDT: number, locale: Locale = "bn"): stri
 
   return `${result.trim()} Taka Only`;
 }
+
+/**
+ * Standard Shop Blocks in Bangladeshi Markets (এ, বি, সি, ডি, ই, এফ / A, B, C, D, E, F)
+ */
+export const STANDARD_SHOP_BLOCKS = [
+  { key: "এ", englishKey: "A", labelBn: "ব্লক এ", labelEn: "Block A" },
+  { key: "বি", englishKey: "B", labelBn: "ব্লক বি", labelEn: "Block B" },
+  { key: "সি", englishKey: "C", labelBn: "ব্লক সি", labelEn: "Block C" },
+  { key: "ডি", englishKey: "D", labelBn: "ব্লক ডি", labelEn: "Block D" },
+  { key: "ই", englishKey: "E", labelBn: "ব্লক ই", labelEn: "Block E" },
+  { key: "এফ", englishKey: "F", labelBn: "ব্লক এফ", labelEn: "Block F" },
+];
+
+const BENGALI_BLOCK_ORDERS: Record<string, number> = {
+  // Bengali syllables
+  "এ": 1, "A": 1, "a": 1, "ক": 1,
+  "বি": 2, "B": 2, "b": 2, "ব": 2, "খ": 2,
+  "সি": 3, "C": 3, "c": 3, "স": 3, "গ": 3,
+  "ডি": 4, "D": 4, "d": 4, "ড": 4, "ঘ": 4,
+  "ই": 5, "E": 5, "e": 5, "ঙ": 5,
+  "এফ": 6, "F": 6, "f": 6, "ফ": 6, "চ": 6,
+  "জি": 7, "G": 7, "g": 7, "জ": 7, "ছ": 7,
+  "এইচ": 8, "H": 8, "h": 8, "হ": 8,
+  "আই": 9, "I": 9, "i": 9,
+  "জে": 10, "J": 10, "j": 10,
+  "কে": 11, "K": 11, "k": 11,
+  "এল": 12, "L": 12, "l": 12, "ল": 12,
+  "এম": 13, "M": 13, "m": 13, "ম": 13,
+  "এন": 14, "N": 14, "n": 14, "ন": 14,
+  "ও": 15, "O": 15, "o": 15,
+  "পি": 16, "P": 16, "p": 16, "প": 16,
+};
+
+/**
+ * Parses a shop number to extract block serial and numeric part
+ * e.g. "এ-০১" -> blockKey: "এ", blockOrder: 1, num: 1
+ * e.g. "B-12" -> blockKey: "B", blockOrder: 2, num: 12
+ */
+export function parseShopSerial(shopNumber: string) {
+  if (!shopNumber) return { blockOrder: 999, blockKey: "", num: 0, raw: "" };
+
+  const str = shopNumber.trim();
+  const latinDigits = toLatinDigits(str);
+
+  // Extract block prefix (e.g., এ, বি, সি, ডি, ই, এফ or A, B, C...)
+  // Explicitly alternate multi-codepoint Bengali syllables before single letters
+  const blockMatch = str.match(/^(?:ব্লক|লাইন|সেকশন|Block|Line|Sec)?\s*(এইচ|আই|এফ|বি|সি|ডি|জি|জে|কে|এল|এম|এন|পি|এ|ই|ও|[a-zA-Z]|[ক-হ])(?:[\s\-_/]+)?/i);
+  let blockKey = "";
+  let blockOrder = 999;
+
+  if (blockMatch && blockMatch[1]) {
+    const rawLetter = blockMatch[1];
+    blockKey = rawLetter.length === 1 && /[a-zA-Z]/.test(rawLetter) ? rawLetter.toUpperCase() : rawLetter;
+    if (BENGALI_BLOCK_ORDERS[rawLetter]) {
+      blockOrder = BENGALI_BLOCK_ORDERS[rawLetter];
+    } else if (BENGALI_BLOCK_ORDERS[blockKey]) {
+      blockOrder = BENGALI_BLOCK_ORDERS[blockKey];
+    }
+  }
+
+  // Extract number (first sequence of digits in string)
+  const numMatch = latinDigits.match(/(\d+)/);
+  const num = numMatch ? parseInt(numMatch[1], 10) : 0;
+
+  return { blockOrder, blockKey, num, raw: str };
+}
+
+/**
+ * Natural comparator for shop numbers market-wise serialized by blocks (এ, বি, সি, ডি, ই, এফ)
+ */
+export function compareShopSerials(aStr: string, bStr: string): number {
+  const a = parseShopSerial(aStr);
+  const b = parseShopSerial(bStr);
+
+  if (a.blockOrder !== b.blockOrder) {
+    return a.blockOrder - b.blockOrder;
+  }
+  if (a.num !== b.num) {
+    return a.num - b.num;
+  }
+  return a.raw.localeCompare(b.raw, "bn");
+}
+

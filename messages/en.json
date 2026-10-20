@@ -303,6 +303,7 @@
     "subtitle": "Detailed analytical reports with PDF and Excel export",
     "selectReport": "Select Report Type",
     "monthlyCollection": "Monthly Collection Report",
+    "monthWiseSummary": "Month-wise Report (12 Months)",
     "dueAging": "Due & Outstanding Aging Report",
     "expenseByCategory": "Category-wise Expense Report",
     "marketProfitLoss": "Market Profit & Loss Statement",

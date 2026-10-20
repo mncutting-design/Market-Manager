@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { matchesSearchWithDigits } from "@/lib/format";
+import { matchesSearchWithDigits, compareShopSerials } from "@/lib/format";
 
 
 export async function GET(req: Request) {
@@ -61,6 +61,14 @@ export async function GET(req: Request) {
           (s.tenant && matchesSearchWithDigits(s.tenant.phone, q))
       );
     }
+
+    // Naturally serialize shops market-wise by blocks (এ, বি, সি, ডি, ই, এফ / A, B, C...) and numbers
+    filtered.sort((a, b) => {
+      if (a.marketId !== b.marketId) {
+        return a.marketName.localeCompare(b.marketName, "bn");
+      }
+      return compareShopSerials(a.shopNumber, b.shopNumber);
+    });
 
     return NextResponse.json(
       { shops: filtered },

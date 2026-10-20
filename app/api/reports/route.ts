@@ -47,6 +47,96 @@ export async function GET(req: Request) {
       return NextResponse.json({ reportType, rows });
     }
 
+    // 1b. Month-Wise Summary Report (12 Months Financial Statement)
+    if (reportType === "month_wise_summary") {
+      const billWhere: any = { year };
+      const expWhere: any = {
+        date: {
+          gte: new Date(year, 0, 1),
+          lte: new Date(year, 11, 31, 23, 59, 59),
+        },
+      };
+
+      if (marketId !== "ALL") {
+        billWhere.shop = { marketId, isActive: true };
+        expWhere.marketId = marketId;
+      } else {
+        billWhere.shop = { isActive: true };
+      }
+
+      const [allBills, allExpenses] = await Promise.all([
+        prisma.bill.findMany({
+          where: billWhere,
+          select: {
+            month: true,
+            totalAmount: true,
+            paidAmount: true,
+            dueAmount: true,
+            status: true,
+          },
+        }),
+        prisma.expense.findMany({
+          where: expWhere,
+          select: {
+            date: true,
+            amount: true,
+          },
+        }),
+      ]);
+
+      const rows = Array.from({ length: 12 }, (_, i) => {
+        const m = i + 1;
+        const mBills = allBills.filter((b) => b.month === m);
+        const mExpenses = allExpenses.filter((e) => new Date(e.date).getMonth() + 1 === m);
+
+        const totalBilled = mBills.reduce((sum, b) => sum + b.totalAmount, 0);
+        const totalCollected = mBills.reduce((sum, b) => sum + b.paidAmount, 0);
+        const totalDue = mBills.reduce((sum, b) => sum + b.dueAmount, 0);
+        const totalExpense = mExpenses.reduce((sum, e) => sum + e.amount, 0);
+        const netProfit = totalCollected - totalExpense;
+        const collectionRate = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
+
+        const paidCount = mBills.filter((b) => b.status === "PAID").length;
+        const partialCount = mBills.filter((b) => b.status === "PARTIAL").length;
+        const dueCount = mBills.filter((b) => b.status === "DUE").length;
+
+        return {
+          month: m,
+          totalBilled,
+          totalCollected,
+          totalDue,
+          totalExpense,
+          netProfit,
+          collectionRate,
+          paidCount,
+          partialCount,
+          dueCount,
+          totalBills: mBills.length,
+        };
+      });
+
+      const yearlyBilled = rows.reduce((acc, r) => acc + r.totalBilled, 0);
+      const yearlyCollected = rows.reduce((acc, r) => acc + r.totalCollected, 0);
+      const yearlyDue = rows.reduce((acc, r) => acc + r.totalDue, 0);
+      const yearlyExpense = rows.reduce((acc, r) => acc + r.totalExpense, 0);
+      const yearlyNetProfit = yearlyCollected - yearlyExpense;
+      const yearlyCollectionRate = yearlyBilled > 0 ? (yearlyCollected / yearlyBilled) * 100 : 0;
+
+      return NextResponse.json({
+        reportType,
+        year,
+        rows,
+        summary: {
+          yearlyBilled,
+          yearlyCollected,
+          yearlyDue,
+          yearlyExpense,
+          yearlyNetProfit,
+          yearlyCollectionRate,
+        },
+      });
+    }
+
     // 2. Market Profit & Loss Statement
     if (reportType === "market_pnl") {
       const markets = await prisma.market.findMany({
