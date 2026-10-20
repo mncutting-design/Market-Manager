@@ -1,20 +1,38 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { matchesSearchWithDigits } from "@/lib/format";
+import { getSession } from "@/lib/auth";
 
 
 export async function GET(req: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { searchParams } = new URL(req.url);
     const marketId = searchParams.get("marketId");
     const shopId = searchParams.get("shopId");
     const search = searchParams.get("search");
+    const collectorId = searchParams.get("collectorId") || searchParams.get("receivedById");
+    const paymentAccountId = searchParams.get("paymentAccountId");
+    const method = searchParams.get("method");
 
     const where: any = {};
     if (shopId) {
       where.bill = { shopId };
     } else if (marketId && marketId !== "ALL") {
       where.bill = { shop: { marketId } };
+    }
+    if (collectorId && collectorId !== "ALL") {
+      where.receivedById = collectorId;
+    }
+    if (paymentAccountId && paymentAccountId !== "ALL") {
+      where.paymentAccountId = paymentAccountId;
+    }
+    if (method && method !== "ALL") {
+      where.method = method;
     }
 
     const payments = await prisma.payment.findMany({
@@ -31,9 +49,12 @@ export async function GET(req: Request) {
             billItems: true,
           },
         },
+        receivedByUser: { select: { id: true, name: true, role: true } },
+        enteredByUser: { select: { id: true, name: true, role: true } },
+        paymentAccount: true,
       },
       orderBy: { paidOn: "desc" },
-      take: 100,
+      take: 150,
     });
 
     let filtered = payments;
@@ -44,7 +65,10 @@ export async function GET(req: Request) {
           matchesSearchWithDigits(p.bill.shop.shopNumber, q) ||
           matchesSearchWithDigits(p.bill.shop.market.name, q) ||
           matchesSearchWithDigits(p.bill.tenant.name, q) ||
-          matchesSearchWithDigits(p.reference || "", q)
+          matchesSearchWithDigits(p.reference || "", q) ||
+          matchesSearchWithDigits(p.transactionRef || "", q) ||
+          matchesSearchWithDigits(p.receivedBy || "", q) ||
+          matchesSearchWithDigits(p.receivedByUser?.name || "", q)
       );
     }
 
@@ -64,8 +88,25 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const body = await req.json();
-    const { billId, amount, paidOn, method = "CASH", reference, note, receivedBy } = body;
+    const {
+      billId,
+      amount,
+      paidOn,
+      method = "CASH",
+      reference,
+      note,
+      receivedById: clientReceivedById,
+      paymentAccountId,
+      transactionRef,
+      senderNumber,
+      bankName,
+    } = body;
 
     if (!billId || amount === undefined || amount === null) {
       return NextResponse.json({ error: "Bill ID and Payment Amount are required" }, { status: 400 });
@@ -89,19 +130,67 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Bill not found" }, { status: 404 });
     }
 
+    // Role enforcement for Received By collector tracking:
+    // COLLECTOR / OPERATOR can only pick themselves
+    const isCollectorStaff = session.role === "COLLECTOR" || session.role === "OPERATOR";
+    let finalReceivedById = session.id;
+
+    if (!isCollectorStaff && clientReceivedById) {
+      // ADMIN & MANAGER can select any active staff member
+      finalReceivedById = clientReceivedById;
+    }
+
+    // Resolve staff name for receipt display
+    let collectorName = session.name || "Staff";
+    if (finalReceivedById) {
+      const staffUser = await prisma.user.findUnique({
+        where: { id: finalReceivedById },
+        select: { id: true, name: true, role: true },
+      });
+      if (staffUser) {
+        collectorName = staffUser.name;
+      }
+    }
+
+    // Payment Channel validation
+    const upperMethod = method.toUpperCase();
+    if ((upperMethod === "BKASH" || upperMethod === "NAGAD") && !paymentAccountId) {
+      // Check if any payment account exists for this type
+      const defaultAcc = await prisma.paymentAccount.findFirst({
+        where: { accountType: upperMethod, isActive: true },
+      });
+      if (!defaultAcc) {
+        return NextResponse.json(
+          { error: `অনুগ্রহ করে সেটিংস থেকে ${upperMethod} অ্যাকাউন্ট যোগ করুন (Please configure ${upperMethod} account in Settings)` },
+          { status: 400 }
+        );
+      }
+    }
+
     const paymentDate = paidOn ? new Date(paidOn) : new Date();
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Create Payment record
+      // 1. Create Payment record with full tracking
       const payment = await tx.payment.create({
         data: {
           billId,
           amount: paymentPaisa,
           paidOn: paymentDate,
-          method,
-          reference: reference?.trim() || null,
+          method: upperMethod,
+          reference: reference?.trim() || transactionRef?.trim() || null,
           note: note?.trim() || null,
-          receivedBy: receivedBy?.trim() || "ম্যানেজার / Admin",
+          receivedBy: collectorName,
+          receivedById: finalReceivedById,
+          enteredById: session.id, // Strictly set from server session
+          paymentAccountId: paymentAccountId || null,
+          transactionRef: transactionRef?.trim() || reference?.trim() || null,
+          senderNumber: senderNumber?.trim() || null,
+          bankName: bankName?.trim() || null,
+        },
+        include: {
+          receivedByUser: { select: { id: true, name: true, role: true } },
+          enteredByUser: { select: { id: true, name: true, role: true } },
+          paymentAccount: true,
         },
       });
 
@@ -128,7 +217,7 @@ export async function POST(req: Request) {
       return { payment, updatedBill };
     });
 
-    // Generate formatted receipt object
+    // Generate formatted receipt object with complete channel & staff details
     const receipt = {
       receiptNo: `REC-${bill.year}${String(bill.month).padStart(2, "0")}-${result.payment.id.slice(-6).toUpperCase()}`,
       date: result.payment.paidOn,
@@ -148,8 +237,13 @@ export async function POST(req: Request) {
       remainingDue: result.updatedBill.dueAmount,
       paymentMethod: result.payment.method,
       reference: result.payment.reference,
-      receivedBy: result.payment.receivedBy,
+      receivedBy: result.payment.receivedByUser?.name || result.payment.receivedBy,
+      enteredBy: result.payment.enteredByUser?.name || session.name,
       note: result.payment.note,
+      transactionRef: result.payment.transactionRef,
+      senderNumber: result.payment.senderNumber,
+      bankName: result.payment.bankName,
+      paymentAccount: result.payment.paymentAccount,
       billItems: bill.billItems,
     };
 
@@ -164,8 +258,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to record payment" }, { status: 500 });
   }
 }
-
-import { getSession } from "@/lib/auth";
 
 // Edit payment / transaction amount or details
 export async function PUT(req: Request) {

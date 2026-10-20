@@ -5,10 +5,48 @@ import bcrypt from "bcryptjs";
 import { hasPermission } from "@/lib/permissions";
 import { getUserActivity } from "@/lib/user-tracker";
 
-export async function GET() {
+export async function GET(req: Request) {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const activeStaffOnly = searchParams.get("staff") === "true" || searchParams.get("activeStaff") === "true";
+
+  // Requirement: Payment form has a "Received by" dropdown listing active staff users.
+  // Any authenticated user can fetch the list of active staff for collector tracking.
+  if (activeStaffOnly) {
+    try {
+      const activeStaff = await prisma.user.findMany({
+        where: {
+          isActive: true,
+          role: { in: ["ADMIN", "MANAGER", "COLLECTOR", "OPERATOR"] },
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          role: true,
+        },
+        orderBy: { name: "asc" },
+      });
+
+      return NextResponse.json({ staff: activeStaff });
+    } catch (err) {
+      console.error("Failed to fetch staff:", err);
+      return NextResponse.json({
+        staff: [
+          {
+            id: session.id,
+            name: session.name,
+            email: session.email,
+            role: session.role,
+          },
+        ],
+      });
+    }
   }
 
   const isAdmin = session.role === "ADMIN";
@@ -30,6 +68,7 @@ export async function GET() {
             id: true,
             name: true,
             email: true,
+            phone: true,
             role: true,
             locale: true,
             isActive: true,
@@ -44,6 +83,7 @@ export async function GET() {
         id: session.id,
         name: session.name,
         email: session.email,
+        phone: null,
         role: session.role,
         locale: session.locale,
         isActive: true,
@@ -75,6 +115,7 @@ export async function GET() {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         locale: true,
         isActive: true,
@@ -198,14 +239,15 @@ export async function POST(req: Request) {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
-    const validRole = ["ADMIN", "MANAGER", "OPERATOR", "VIEWER"].includes(role?.toUpperCase())
-      ? role.toUpperCase()
-      : "MANAGER";
+    const validRole = ["ADMIN", "MANAGER", "COLLECTOR", "OPERATOR", "VIEWER"].includes(role?.toUpperCase())
+      ? (role.toUpperCase() === "OPERATOR" ? "COLLECTOR" : role.toUpperCase())
+      : "COLLECTOR";
 
     const newUser = await prisma.user.create({
       data: {
         name: rawUsername,
         email: internalEmail,
+        phone: body.phone?.trim() || null,
         passwordHash,
         role: validRole,
         locale: "bn",
@@ -215,6 +257,7 @@ export async function POST(req: Request) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         locale: true,
         isActive: true,
@@ -244,7 +287,7 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { id, role, password, newPassword, name, isActive } = body;
+    const { id, role, password, newPassword, name, phone, isActive } = body;
     if (!id) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
@@ -285,14 +328,15 @@ export async function PUT(req: Request) {
     }
 
     // 2. Role update
-    if (role && ["ADMIN", "MANAGER", "OPERATOR", "VIEWER"].includes(role)) {
-      if (isNazrul && role !== "ADMIN") {
+    if (role && ["ADMIN", "MANAGER", "COLLECTOR", "OPERATOR", "VIEWER"].includes(role.toUpperCase())) {
+      const normalizedRole = role.toUpperCase() === "OPERATOR" ? "COLLECTOR" : role.toUpperCase();
+      if (isNazrul && normalizedRole !== "ADMIN") {
         return NextResponse.json(
           { error: "মূল সুপার এডমিন (NAZRUL)-এর রোল পরিবর্তন করা যাবে না" },
           { status: 400 }
         );
       }
-      updateData.role = role;
+      updateData.role = normalizedRole;
     }
 
     // 3. Name update
@@ -300,7 +344,12 @@ export async function PUT(req: Request) {
       updateData.name = name.trim();
     }
 
-    // 4. Password update (Admin reset)
+    // 4. Phone update
+    if (phone !== undefined) {
+      updateData.phone = phone?.trim() || null;
+    }
+
+    // 5. Password update (Admin reset)
     const finalPassword = newPassword || password;
     if (finalPassword) {
       if (finalPassword.length < 4) {
@@ -319,6 +368,7 @@ export async function PUT(req: Request) {
         id: true,
         name: true,
         email: true,
+        phone: true,
         role: true,
         locale: true,
         isActive: true,

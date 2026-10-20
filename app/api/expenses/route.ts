@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { matchesSearchWithDigits } from "@/lib/format";
-
+import { getSession } from "@/lib/auth";
 
 export async function GET(req: Request) {
   try {
@@ -37,6 +37,7 @@ export async function GET(req: Request) {
       include: {
         market: { select: { id: true, name: true } },
         category: true,
+        enteredByUser: { select: { id: true, name: true, role: true } },
       },
       orderBy: { date: "desc" },
     });
@@ -49,7 +50,9 @@ export async function GET(req: Request) {
           matchesSearchWithDigits(e.market.name, q) ||
           matchesSearchWithDigits(e.category.name_bn, q) ||
           matchesSearchWithDigits(e.category.name_en, q) ||
-          matchesSearchWithDigits(e.description || "", q)
+          matchesSearchWithDigits(e.description || "", q) ||
+          matchesSearchWithDigits(e.createdByName || "", q) ||
+          matchesSearchWithDigits(e.enteredByUser?.name || "", q)
       );
     }
 
@@ -64,6 +67,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
+    const session = await getSession();
     const body = await req.json();
     const { marketId, categoryId, amount, date, description, attachmentUrl, paymentMethod = "CASH" } = body;
 
@@ -88,10 +92,13 @@ export async function POST(req: Request) {
         description: description?.trim() || null,
         attachmentUrl: attachmentUrl?.trim() || null,
         paymentMethod,
+        enteredById: session?.id || null,
+        createdByName: session?.name || "Staff",
       },
       include: {
         market: true,
         category: true,
+        enteredByUser: { select: { id: true, name: true, role: true } },
       },
     });
 
@@ -102,7 +109,6 @@ export async function POST(req: Request) {
   }
 }
 
-import { getSession } from "@/lib/auth";
 
 export async function PUT(req: Request) {
   try {

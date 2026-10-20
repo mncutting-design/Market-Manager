@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { TenantPolicyCard } from "./settings/tenant-policy-card";
 import { AuditLogsCard } from "./settings/audit-logs-card";
 import { UsersRolesCard } from "./settings/users-roles-card";
+import { PaymentAccountsCard } from "./settings/payment-accounts-card";
 import { ClearDataCard } from "./settings/clear-data-card";
 
 export function SettingsView() {
@@ -226,7 +227,10 @@ export function SettingsView() {
       {/* 4. Role-Based Permissions & User Management */}
       <UsersRolesCard />
 
-      {/* 4. Full Database Backup & Export */}
+      {/* 5. Payment Channels & Receiving Accounts */}
+      <PaymentAccountsCard />
+
+      {/* 6. Full Database Backup & Export */}
       <Card className="p-6 border-teal-200 dark:border-teal-800 bg-teal-50/20 dark:bg-teal-950/10">
         <CardHeader className="p-0 pb-2">
           <CardTitle className="text-base font-semibold text-teal-800 dark:text-teal-200 flex items-center gap-2">

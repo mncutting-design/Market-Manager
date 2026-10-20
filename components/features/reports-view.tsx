@@ -137,6 +137,28 @@ export function ReportsView() {
         "Unrecovered Loss (BDT)": Math.round(u.unrecoveredAmount / 100),
         [t("common.date")]: formatDate(u.settledAt, locale),
       }));
+    } else if (reportType === "collector_summary" && data.rows) {
+      fileName = `collector-performance-${reportMonth}-${reportYear}`;
+      sheetData = data.rows.map((c: any) => ({
+        "Collector Name": c.collectorName,
+        "Role": c.role,
+        "Total Collections (Count)": c.count,
+        "Cash (BDT)": Math.round(c.cashAmount / 100),
+        "bKash (BDT)": Math.round(c.bkashAmount / 100),
+        "Nagad (BDT)": Math.round(c.nagadAmount / 100),
+        "Bank (BDT)": Math.round(c.bankAmount / 100),
+        "Total Collected (BDT)": Math.round(c.totalAmount / 100),
+        "Share (%)": Math.round(c.percentage),
+      }));
+    } else if (reportType === "channel_summary" && data.rows) {
+      fileName = `channel-accounts-${reportMonth}-${reportYear}`;
+      sheetData = data.rows.map((ch: any) => ({
+        "Channel / Account": ch.channelName,
+        "Method": ch.method,
+        "Collections (Count)": ch.count,
+        "Total Received (BDT)": Math.round(ch.totalAmount / 100),
+        "Share (%)": Math.round(ch.percentage),
+      }));
     }
 
     const worksheet = XLSX.utils.json_to_sheet(sheetData);
@@ -182,10 +204,12 @@ export function ReportsView() {
           { id: "monthly_collection", labelKey: "reports.monthlyCollection" },
           { id: "market_pnl", labelKey: "reports.marketProfitLoss" },
           { id: "expense_by_category", labelKey: "reports.expenseByCategory" },
+          { id: "collector_summary", customLabel: locale === "bn" ? "কালেক্টর ও স্টাফ আদায়" : "Collector Performance" },
+          { id: "channel_summary", customLabel: locale === "bn" ? "পেমেন্ট চ্যানেল ও একাউন্ট" : "Payment Channels" },
           { id: "tenant_ledger", labelKey: "reports.tenantLedger" },
           { id: "settlements", labelKey: "reports.settlements" },
           { id: "unrecovered_receivables", labelKey: "reports.unrecoveredReceivables" },
-        ].map((tab) => (
+        ].map((tab: any) => (
           <button
             key={tab.id}
             onClick={() => setReportType(tab.id)}
@@ -195,7 +219,7 @@ export function ReportsView() {
                 : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
             }`}
           >
-            {t(tab.labelKey)}
+            {tab.customLabel || t(tab.labelKey)}
           </button>
         ))}
       </div>
@@ -409,6 +433,114 @@ export function ReportsView() {
                           {locale === "bn" ? toBanglaDigits(row.count) : row.count}
                         </td>
                         <td className="p-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
+                          {formatCurrency(row.totalAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold">
+                          {formatPercent(row.percentage, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* 5. Collector & Staff Summary Report */}
+          {reportType === "collector_summary" && data.rows && (
+            <Card className="overflow-hidden">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {locale === "bn" ? "কালেকশন স্টাফদের মোট আদায়:" : "Total Staff Collections:"}
+                </span>
+                <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {formatCurrency(data.totalCollected || 0, locale)}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs md:text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="p-3.5">কালেকশন স্টাফ (Collector)</th>
+                      <th className="p-3.5">রোল (Role)</th>
+                      <th className="p-3.5 text-center">মোট রিসিট</th>
+                      <th className="p-3.5 text-right">ক্যাশ (Cash)</th>
+                      <th className="p-3.5 text-right">ডিজিটাল ও ব্যাংক</th>
+                      <th className="p-3.5 text-right">মোট আদায়</th>
+                      <th className="p-3.5 text-right">অংশ (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.rows.map((row: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                          {row.collectorName}
+                        </td>
+                        <td className="p-3.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            {row.role}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {locale === "bn" ? toBanglaDigits(row.count) : row.count}
+                        </td>
+                        <td className="p-3.5 text-right font-medium">
+                          {formatCurrency(row.cashAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-medium">
+                          {formatCurrency(row.bkashAmount + row.nagadAmount + row.bankAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                          {formatCurrency(row.totalAmount, locale)}
+                        </td>
+                        <td className="p-3.5 text-right font-semibold">
+                          {formatPercent(row.percentage, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          )}
+
+          {/* 6. Payment Channel & Account Breakdown */}
+          {reportType === "channel_summary" && data.rows && (
+            <Card className="overflow-hidden">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {locale === "bn" ? "পেমেন্ট চ্যানেলে মোট জমা:" : "Total Channel Receipts:"}
+                </span>
+                <span className="text-base font-extrabold text-teal-600 dark:text-teal-400 font-mono">
+                  {formatCurrency(data.totalCollected || 0, locale)}
+                </span>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs md:text-sm border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <th className="p-3.5">পেমেন্ট চ্যানেল / একাউন্ট</th>
+                      <th className="p-3.5">মাধ্যম (Method)</th>
+                      <th className="p-3.5 text-center">মোট লেনদেন সংখ্যা</th>
+                      <th className="p-3.5 text-right">মোট জমা (BDT)</th>
+                      <th className="p-3.5 text-right">অংশ (%)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    {data.rows.map((row: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                          {row.channelName}
+                        </td>
+                        <td className="p-3.5">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                            {row.method}
+                          </span>
+                        </td>
+                        <td className="p-3.5 text-center">
+                          {locale === "bn" ? toBanglaDigits(row.count) : row.count}
+                        </td>
+                        <td className="p-3.5 text-right font-bold text-teal-600 dark:text-teal-400">
                           {formatCurrency(row.totalAmount, locale)}
                         </td>
                         <td className="p-3.5 text-right font-semibold">

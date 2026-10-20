@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       where.entityType = entityType;
     }
 
-    const [requests, pendingCount] = await Promise.all([
+    const [requests, pendingCount, topUpRequests, pendingTopUpCount] = await Promise.all([
       prisma.changeRequest.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -26,10 +26,20 @@ export async function GET(req: Request) {
       prisma.changeRequest.count({
         where: { status: "PENDING" },
       }),
+      prisma.advanceTopUpRequest.findMany({
+        where: status !== "ALL" ? { status } : {},
+        include: { tenant: { include: { shop: { include: { market: true } } } } },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.advanceTopUpRequest.count({
+        where: { status: "PENDING" },
+      }),
     ]);
 
-    const parsed = requests.map((r) => ({
+    const parsedCR = requests.map((r) => ({
       ...r,
+      isTopUpRequest: false,
       currentDataParsed: (() => {
         try {
           return JSON.parse(r.currentData || "{}");
@@ -46,9 +56,41 @@ export async function GET(req: Request) {
       })(),
     }));
 
+    const parsedTopUp = topUpRequests.map((tu) => ({
+      id: tu.id,
+      isTopUpRequest: true,
+      entityType: "ADVANCE_TOPUP",
+      entityId: tu.tenantId,
+      entityTitle: `${tu.tenant.name} (${tu.tenant.shop.shopNumber}) - জামানত টপ-আপ`,
+      actionType: "TOPUP",
+      status: tu.status,
+      currentData: JSON.stringify({ currentAdvance: tu.tenant.advanceDeposit }),
+      proposedData: JSON.stringify({
+        topupAmount: tu.amount,
+        method: tu.method,
+        note: tu.note,
+      }),
+      currentDataParsed: { currentAdvance: tu.tenant.advanceDeposit },
+      proposedDataParsed: {
+        topupAmount: tu.amount,
+        method: tu.method,
+        note: tu.note,
+      },
+      requestedBy: tu.requestedBy,
+      requesterRole: "COLLECTOR",
+      createdAt: tu.createdAt,
+      reviewedBy: tu.decidedBy,
+      reviewNote: tu.decisionNote,
+      reviewedAt: tu.decidedAt,
+    }));
+
+    const combined = [...parsedCR, ...parsedTopUp].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
     return NextResponse.json({
-      requests: parsed,
-      pendingCount,
+      requests: combined,
+      pendingCount: pendingCount + pendingTopUpCount,
     });
   } catch (error) {
     console.error("Failed to fetch change requests:", error);
@@ -157,7 +199,103 @@ export async function PUT(req: Request) {
     });
 
     if (!cr) {
-      return NextResponse.json({ error: "Change request not found" }, { status: 404 });
+      const topUpReq = await prisma.advanceTopUpRequest.findUnique({
+        where: { id },
+        include: { tenant: { include: { shop: true } } },
+      });
+
+      if (!topUpReq) {
+        return NextResponse.json({ error: "Request not found" }, { status: 404 });
+      }
+
+      if (topUpReq.status !== "PENDING") {
+        return NextResponse.json({ error: `This request is already ${topUpReq.status}` }, { status: 400 });
+      }
+
+      if (status === "REJECTED") {
+        const updated = await prisma.$transaction(async (tx) => {
+          const res = await tx.advanceTopUpRequest.update({
+            where: { id },
+            data: {
+              status: "REJECTED",
+              decidedBy: session.name || "Admin",
+              decidedAt: new Date(),
+              decisionNote: reviewNote?.trim() || null,
+            },
+          });
+          if (topUpReq.requestedById) {
+            await tx.notification.create({
+              data: {
+                userId: topUpReq.requestedById,
+                title: "জামানত টপ-আপ আবেদন প্রত্যাখ্যাত",
+                message: `দোকান ${topUpReq.tenant.shop.shopNumber}-এর ${topUpReq.tenant.name}-এর জামানত টপ-আপ আবেদনটি প্রত্যাখ্যাত হয়েছে।`,
+                type: "WARNING",
+                link: "/dashboard",
+              },
+            });
+          }
+          await logAudit({
+            userId: session.id,
+            userName: session.name || "Admin",
+            action: "ADVANCE_TOPUP_REJECTED",
+            entityType: "AdvanceTopUpRequest",
+            entityId: id,
+            details: { reason: reviewNote },
+            tx,
+          });
+          return res;
+        });
+        return NextResponse.json({ success: true, request: updated });
+      }
+
+      const updated = await prisma.$transaction(async (tx) => {
+        const res = await tx.advanceTopUpRequest.update({
+          where: { id },
+          data: {
+            status: "APPROVED",
+            decidedBy: session.name || "Admin",
+            decidedAt: new Date(),
+            decisionNote: reviewNote?.trim() || null,
+          },
+        });
+        await tx.advanceTransaction.create({
+          data: {
+            tenantId: topUpReq.tenantId,
+            type: "TOPUP",
+            amount: topUpReq.amount,
+            reason: topUpReq.note || `Approved advance top-up requested by ${topUpReq.requestedBy}`,
+            createdBy: "Admin",
+            createdByName: session.name || "Admin",
+            enteredById: session.id,
+          },
+        });
+        await tx.tenant.update({
+          where: { id: topUpReq.tenantId },
+          data: { advanceDeposit: { increment: topUpReq.amount } },
+        });
+        if (topUpReq.requestedById) {
+          await tx.notification.create({
+            data: {
+              userId: topUpReq.requestedById,
+              title: "জামানত টপ-আপ আবেদন অনুমোদিত",
+              message: `দোকান ${topUpReq.tenant.shop.shopNumber}-এর ${topUpReq.tenant.name}-এর জন্য ৳${(topUpReq.amount / 100).toLocaleString()} জামানত টপ-আপ অনুমোদিত হয়েছে।`,
+              type: "SUCCESS",
+              link: "/dashboard",
+            },
+          });
+        }
+        await logAudit({
+          userId: session.id,
+          userName: session.name || "Admin",
+          action: "ADVANCE_TOPUP_APPROVED",
+          entityType: "AdvanceTopUpRequest",
+          entityId: id,
+          details: { amount: topUpReq.amount },
+          tx,
+        });
+        return res;
+      });
+      return NextResponse.json({ success: true, request: updated });
     }
 
     if (cr.status !== "PENDING") {

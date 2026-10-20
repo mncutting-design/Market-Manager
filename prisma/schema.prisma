@@ -11,12 +11,18 @@ model User {
   id           String   @id @default(cuid())
   name         String
   email        String   @unique
+  phone        String?
   passwordHash String
-  role         String   @default("ADMIN") // ADMIN, MANAGER
+  role         String   @default("ADMIN") // ADMIN, MANAGER, COLLECTOR, OPERATOR, VIEWER
   locale       String   @default("bn")    // bn, en
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  paymentsReceived Payment[]             @relation("PaymentReceivedBy")
+  paymentsEntered  Payment[]             @relation("PaymentEnteredBy")
+  expensesEntered  Expense[]             @relation("ExpenseEnteredBy")
+  topUpRequests    AdvanceTopUpRequest[] @relation("TopUpRequestedBy")
 }
 
 model Market {
@@ -60,25 +66,32 @@ model Shop {
 }
 
 model Tenant {
-  id             String    @id @default(cuid())
-  shopId         String
-  name           String
-  phone          String
-  nid            String?
-  advanceDeposit Int       @default(0) // in paisa (legacy/migration reference)
-  rentAmount     Int       // current agreed rent in paisa
-  status         String    @default("ACTIVE") // ACTIVE, NOTICE_GIVEN, SETTLED, ARCHIVED
-  startDate      DateTime  @default(now())
-  endDate        DateTime?
-  isActive       Boolean   @default(true)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id                String    @id @default(cuid())
+  shopId            String
+  name              String
+  phone             String
+  nid               String?
+  permanentAddress  String?
+  referenceName     String?
+  referencePhone    String?
+  referenceRelation String?
+  photoUrl          String?
+  documentUrl       String?
+  advanceDeposit    Int       @default(0) // in paisa (legacy/migration reference)
+  rentAmount        Int       // current agreed rent in paisa
+  status            String    @default("ACTIVE") // ACTIVE, NOTICE_GIVEN, SETTLED, ARCHIVED
+  startDate         DateTime  @default(now())
+  endDate           DateTime?
+  isActive          Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
-  shop                Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop                Shop                  @relation(fields: [shopId], references: [id], onDelete: Cascade)
   bills               Bill[]
   rentHistory         RentHistory[]
   advanceTransactions AdvanceTransaction[]
   settlements         Settlement[]
+  topUpRequests       AdvanceTopUpRequest[]
 
   @@index([shopId])
   @@index([status])
@@ -95,6 +108,8 @@ model AdvanceTransaction {
   relatedSettlementId String?
   reason              String
   createdBy           String   @default("Admin")
+  createdByName       String?
+  enteredById         String?
   createdAt           DateTime @default(now())
 
   tenant            Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
@@ -104,6 +119,7 @@ model AdvanceTransaction {
   @@index([tenantId])
   @@index([type])
   @@index([createdAt])
+  @@index([enteredById])
 }
 
 model Settlement {
@@ -277,20 +293,32 @@ model BillItem {
 }
 
 model Payment {
-  id         String   @id @default(cuid())
-  billId     String
-  amount     Int      // in paisa
-  paidOn     DateTime @default(now())
-  method     String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE, ADVANCE_ADJUSTMENT
-  reference  String?
-  note       String?
-  receivedBy String?
-  createdAt  DateTime @default(now())
+  id               String   @id @default(cuid())
+  billId           String
+  amount           Int      // in paisa
+  paidOn           DateTime @default(now())
+  method           String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE, ADVANCE_ADJUSTMENT
+  reference        String?
+  note             String?
+  receivedBy       String?  // Name (display)
+  receivedById     String?  // User ID of collector staff
+  enteredById      String?  // User ID who entered payment
+  paymentAccountId String?  // Account ID for bKash, Nagad, Bank
+  transactionRef   String?  // TrxID / Cheque Number
+  senderNumber     String?  // e.g. bKash/Nagad sender phone number
+  bankName         String?  // Selected bank name
+  createdAt        DateTime @default(now())
 
-  bill Bill @relation(fields: [billId], references: [id], onDelete: Cascade)
+  bill             Bill            @relation(fields: [billId], references: [id], onDelete: Cascade)
+  receivedByUser   User?           @relation("PaymentReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
+  enteredByUser    User?           @relation("PaymentEnteredBy", fields: [enteredById], references: [id], onDelete: SetNull)
+  paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id], onDelete: SetNull)
 
   @@index([billId])
   @@index([paidOn])
+  @@index([receivedById])
+  @@index([enteredById])
+  @@index([paymentAccountId])
 }
 
 model ExpenseCategory {
@@ -317,15 +345,19 @@ model Expense {
   description   String?
   attachmentUrl String?
   paymentMethod String   @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE
+  enteredById   String?
+  createdByName String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  market   Market          @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  category ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  market        Market          @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  enteredByUser User?           @relation("ExpenseEnteredBy", fields: [enteredById], references: [id], onDelete: SetNull)
 
   @@index([marketId])
   @@index([categoryId])
   @@index([date])
+  @@index([enteredById])
 }
 
 model ChangeRequest {
@@ -346,6 +378,64 @@ model ChangeRequest {
 
   @@index([status])
   @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model AdvanceTopUpRequest {
+  id            String    @id @default(cuid())
+  tenantId      String
+  amount        Int       // in paisa
+  method        String    @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE
+  note          String?
+  requestedBy   String    // User name
+  requestedById String?
+  status        String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  decidedBy     String?
+  decidedAt     DateTime?
+  decisionNote  String?
+  createdAt     DateTime  @default(now())
+
+  tenant          Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  requestedByUser User?  @relation("TopUpRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([requestedById])
+}
+
+model PaymentAccount {
+  id          String    @id @default(cuid())
+  accountType String    // BKASH, NAGAD, BANK
+  name_en     String
+  name_bn     String
+  number      String    // Phone or Account number
+  bankName    String?   // Sonali, Janata, Agrani, Rupali, Islami, Dutch-Bangla, City, BRAC, Other
+  branch      String?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  payments    Payment[]
+
+  @@index([accountType])
+  @@index([isActive])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?  // Target user, or null for role broadcast
+  role      String?  // Target role e.g. "ADMIN", "MANAGER", "COLLECTOR"
+  title     String
+  message   String
+  type      String   @default("INFO") // INFO, SUCCESS, WARNING, APPROVAL
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([role])
+  @@index([isRead])
   @@index([createdAt])
 }
 

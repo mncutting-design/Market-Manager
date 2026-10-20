@@ -34,6 +34,8 @@ import {
   RotateCcw,
   DoorOpen,
   ShieldAlert,
+  CreditCard,
+  UserCheck,
 } from "lucide-react";
 import { AdjustAdvanceModal } from "./modals/adjust-advance-modal";
 import { SettlementWizardModal } from "./modals/settlement-wizard-modal";
@@ -68,6 +70,7 @@ export function DashboardView() {
     openAddExpense,
     openGenerateBills,
     setActiveTab,
+    isAdmin,
   } = useApp();
 
   const [mounted, setMounted] = useState(false);
@@ -98,7 +101,16 @@ export function DashboardView() {
     );
   }
 
-  const { kpis, dueShops, expensesByCategory, monthlyTrends, marketRankings, mostProfitableMarket } = data;
+  const {
+    kpis,
+    dueShops,
+    expensesByCategory,
+    monthlyTrends,
+    marketRankings,
+    mostProfitableMarket,
+    collectionsByChannel = {},
+    collectionsByCollector = [],
+  } = data;
 
   const collectionPercent = Math.round(kpis.collectionRate || 0);
 
@@ -207,6 +219,36 @@ export function DashboardView() {
           >
             <Sparkles className="w-3.5 h-3.5 mr-1.5" />
             {locale === "bn" ? "ডেমো ডেটা লোড করুন" : "Load Demo Data"}
+          </Button>
+        </div>
+      )}
+
+      {/* Pending Approvals Urgent Banner */}
+      {kpis.pendingApprovalsCount > 0 && isAdmin && (
+        <div
+          onClick={() => setActiveTab("approvals")}
+          className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/60 flex items-center justify-between gap-3 cursor-pointer hover:bg-amber-500/15 transition-all shadow-xs"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center shrink-0">
+              <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                {locale === "bn"
+                  ? `${toBanglaDigits(kpis.pendingApprovalsCount)}টি অনুমোদন অপেক্ষমাণ রয়েছে`
+                  : `${kpis.pendingApprovalsCount} Pending Approvals Require Attention`}
+              </p>
+              <p className="text-xs text-amber-700/80 dark:text-amber-400/80">
+                {locale === "bn"
+                  ? "ভাড়াটিয়া তথ্য পরিবর্তন অথবা জামানত জমা (টপ-আপ) আবেদন অনুমোদন বা বাতিল করতে ক্লিক করুন।"
+                  : "Review pending tenant edits and advance deposit top-up requests."}
+              </p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="border-amber-400 text-amber-800 dark:text-amber-200 shrink-0 h-8 text-xs">
+            {locale === "bn" ? "অনুমোদন করুন" : "Review Now"}
+            <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Button>
         </div>
       )}
@@ -679,6 +721,138 @@ export function DashboardView() {
             )}
           </Card>
         </div>
+      </div>
+
+      {/* Collections by Channel & Collector Breakdown */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* Collections by Channel */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-teal-500" />
+                <span>{locale === "bn" ? "পেমেন্ট মাধ্যমভিত্তিক কালেকশন" : "Collections by Payment Method"}</span>
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {locale === "bn" ? "বর্তমান মাসের আদায়কৃত অর্থের মাধ্যমভিত্তিক বিবরণ" : "Breakdown of rent received by channel this month"}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setActiveTab("collections")}
+              className="text-xs h-7"
+            >
+              {t("nav.collections")}
+              <ArrowRight className="w-3.5 h-3.5 ml-1" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[
+              { key: "CASH", labelBn: "ক্যাশ", labelEn: "Cash", iconBg: "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400" },
+              { key: "BKASH", labelBn: "বিকাশ", labelEn: "bKash", iconBg: "bg-pink-50 dark:bg-pink-950/40 text-pink-600 dark:text-pink-400" },
+              { key: "NAGAD", labelBn: "নগদ", labelEn: "Nagad", iconBg: "bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400" },
+              { key: "BANK", labelBn: "ব্যাংক", labelEn: "Bank", iconBg: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400" },
+              { key: "CHEQUE", labelBn: "চেক", labelEn: "Cheque", iconBg: "bg-purple-50 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400" },
+            ].map((ch) => {
+              const item = collectionsByChannel[ch.key] || { amount: 0, count: 0 };
+              const percent = kpis.collectedRent > 0 ? Math.round((item.amount / kpis.collectedRent) * 100) : 0;
+              return (
+                <div
+                  key={ch.key}
+                  className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex flex-col justify-between"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${ch.iconBg}`}>
+                      {locale === "bn" ? ch.labelBn : ch.labelEn}
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {locale === "bn" ? toBanglaDigits(item.count) : item.count} {locale === "bn" ? "টি" : "rcpts"}
+                    </span>
+                  </div>
+                  <div className="mt-2.5">
+                    <p className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                      {formatCurrency(item.amount, locale)}
+                    </p>
+                    <div className="mt-1.5 w-full bg-slate-200 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-teal-500 rounded-full transition-all"
+                        style={{ width: `${Math.min(100, percent)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+
+        {/* Collector Performance */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h4 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserCheck className="w-4 h-4 text-teal-500" />
+                <span>{locale === "bn" ? "কালেকশন স্টাফ পারফরম্যান্স" : "Collector Performance"}</span>
+              </h4>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {locale === "bn" ? "কে কত টাকা আদায় করেছেন (Received by)" : "Amount collected by staff members this month"}
+              </p>
+            </div>
+            {isAdmin && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setActiveTab("users")}
+                className="text-xs h-7"
+              >
+                {locale === "bn" ? "স্টাফ ম্যানেজমেন্ট" : "Staff"}
+                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+              </Button>
+            )}
+          </div>
+
+          {collectionsByCollector.length === 0 ? (
+            <div className="p-8 text-center text-xs text-slate-400">
+              {locale === "bn" ? "এই মাসে কোনো কালেকশন রেকর্ড পাওয়া যায়নি।" : "No collections recorded this month yet."}
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {collectionsByCollector.slice(0, 5).map((col: any) => {
+                const percent = kpis.collectedRent > 0 ? Math.round((col.amount / kpis.collectedRent) * 100) : 0;
+                return (
+                  <div
+                    key={col.id}
+                    className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between gap-3 shadow-xs"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 font-bold text-xs flex items-center justify-center shrink-0">
+                        {col.name ? col.name.slice(0, 2).toUpperCase() : "ST"}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
+                          {col.name}
+                        </p>
+                        <p className="text-[10px] text-slate-500">
+                          {locale === "bn" ? toBanglaDigits(col.count) : col.count} {locale === "bn" ? "টি রসিদ আদায়" : "receipts collected"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-extrabold text-teal-600 dark:text-teal-400">
+                        {formatCurrency(col.amount, locale)}
+                      </p>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {locale === "bn" ? toBanglaDigits(percent) : percent}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* 12-Month Charts Section (Recharts) */}

@@ -35,7 +35,17 @@ export async function GET(req: Request) {
       tenantWhere.shop = { marketId, isActive: true };
     }
 
-    // Execute all 6 database queries concurrently via Promise.all for maximum speed
+    const paymentDateStart = new Date(year, month - 1, 1);
+    const paymentDateEnd = new Date(year, month, 0, 23, 59, 59);
+
+    const paymentWhere: any = {
+      createdAt: { gte: paymentDateStart, lte: paymentDateEnd },
+    };
+    if (marketId !== "ALL") {
+      paymentWhere.bill = { shop: { marketId } };
+    }
+
+    // Execute database queries concurrently via Promise.all for maximum speed
     const [
       currentBills,
       currentExpenses,
@@ -43,6 +53,9 @@ export async function GET(req: Request) {
       yearlyExpenses,
       allMarkets,
       activeTenants,
+      currentPayments,
+      pendingChangeRequests,
+      pendingTopUps,
     ] = await Promise.all([
       // 1. Current month bills
       prisma.bill.findMany({
@@ -114,6 +127,22 @@ export async function GET(req: Request) {
             orderBy: [{ year: "asc" }, { month: "asc" }],
           },
         },
+      }),
+      // 7. Current month payments for channels & collectors
+      prisma.payment.findMany({
+        where: paymentWhere,
+        include: {
+          receivedByUser: { select: { id: true, name: true } },
+          paymentAccount: { select: { id: true, name_en: true, name_bn: true, number: true, accountType: true } },
+        },
+      }),
+      // 8. Pending change requests
+      prisma.changeRequest.count({
+        where: { status: "PENDING" },
+      }),
+      // 9. Pending top-up requests
+      prisma.advanceTopUpRequest.count({
+        where: { status: "PENDING" },
       }),
     ]);
 
@@ -287,6 +316,37 @@ export async function GET(req: Request) {
       return b.totalDue - a.totalDue;
     });
 
+    // Aggregations for payments by method / channel
+    const channelTotals: Record<string, { count: number; amount: number }> = {
+      CASH: { count: 0, amount: 0 },
+      BKASH: { count: 0, amount: 0 },
+      NAGAD: { count: 0, amount: 0 },
+      BANK: { count: 0, amount: 0 },
+      CHEQUE: { count: 0, amount: 0 },
+    };
+    for (const p of currentPayments) {
+      const m = p.method || "CASH";
+      if (!channelTotals[m]) channelTotals[m] = { count: 0, amount: 0 };
+      channelTotals[m].count++;
+      channelTotals[m].amount += p.amount;
+    }
+
+    // Aggregations for payments by collector
+    const collectorMap = new Map<string, { id: string; name: string; amount: number; count: number }>();
+    for (const p of currentPayments) {
+      const colId = p.receivedById || "unassigned";
+      const colName = p.receivedByUser?.name || p.receivedBy || "Direct / Admin";
+      if (!collectorMap.has(colId)) {
+        collectorMap.set(colId, { id: colId, name: colName, amount: 0, count: 0 });
+      }
+      const item = collectorMap.get(colId)!;
+      item.amount += p.amount;
+      item.count++;
+    }
+    const collectorBreakdown = Array.from(collectorMap.values()).sort((a, b) => b.amount - a.amount);
+
+    const pendingApprovalsCount = pendingChangeRequests + pendingTopUps;
+
     return NextResponse.json(
       {
         kpis: {
@@ -302,7 +362,10 @@ export async function GET(req: Request) {
           totalBillsCount,
           totalAdvanceHeld, // in paisa (Liability)
           atRiskTenantsCount: atRiskTenants.length,
+          pendingApprovalsCount,
         },
+        collectionsByChannel: channelTotals,
+        collectionsByCollector: collectorBreakdown,
         atRiskTenants,
         dueShops,
         expensesByCategory,

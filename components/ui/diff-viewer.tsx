@@ -36,6 +36,14 @@ const DEFAULT_FIELD_LABELS: Record<string, { en: string; bn: string; type?: "cur
   phone: { en: "Phone Number", bn: "ফোন নম্বর", type: "text" },
   nid: { en: "NID Number", bn: "এনআইডি নম্বর", type: "text" },
   amount: { en: "Amount", bn: "টাকার পরিমাণ", type: "currency" },
+  topupAmount: { en: "Top-up Amount", bn: "টপ-আপের পরিমাণ", type: "currency" },
+  currentAdvance: { en: "Current Advance Balance", bn: "বর্তমান জামানত ব্যালেন্স", type: "currency" },
+  permanentAddress: { en: "Permanent Address", bn: "স্থায়ী ঠিকানা", type: "text" },
+  referenceName: { en: "Reference Person Name", bn: "রেফারেন্স ব্যক্তির নাম", type: "text" },
+  referencePhone: { en: "Reference Person Phone", bn: "রেফারেন্স ব্যক্তির ফোন", type: "text" },
+  referenceRelation: { en: "Reference Relation", bn: "রেফারেন্সের সাথে সম্পর্ক", type: "text" },
+  method: { en: "Payment Channel", bn: "পেমেন্ট চ্যানেল", type: "text" },
+  note: { en: "Note / Remarks", bn: "নোট / কারণ", type: "text" },
   category: { en: "Expense Category", bn: "খরচের খাত", type: "text" },
   description: { en: "Description", bn: "বিবরণ", type: "text" },
   isActive: { en: "Account Status", bn: "লগইন কার্যকারিতা", type: "text" },
@@ -98,6 +106,33 @@ export function getChangePurposeSummary({
 } {
   const isBn = locale === "bn";
   const bullets: string[] = [];
+
+  if (entityType === "ADVANCE_TOPUP" || actionType === "TOPUP") {
+    const topupAmt = proposedData.topupAmount || proposedData.amount || 0;
+    const curAdv = currentData.currentAdvance || currentData.advanceBalance || 0;
+    const method = proposedData.method || "CASH";
+    const note = proposedData.note;
+
+    if (isBn) {
+      bullets.push(`টপ-আপ জামানতের পরিমাণ: ${formatCurrency(topupAmt, "bn")}`);
+      bullets.push(`বর্তমান ব্যালেন্স: ${formatCurrency(curAdv, "bn")} ➔ অনুমোদনের পর হবে: ${formatCurrency(curAdv + topupAmt, "bn")}`);
+      bullets.push(`পেমেন্ট চ্যানেল: ${method}`);
+      if (note) bullets.push(`কারণ / নোট: ${note}`);
+    } else {
+      bullets.push(`Top-up Deposit Amount: ${formatCurrency(topupAmt, "en")}`);
+      bullets.push(`Current Advance: ${formatCurrency(curAdv, "en")} ➔ After approval: ${formatCurrency(curAdv + topupAmt, "en")}`);
+      bullets.push(`Payment Channel: ${method}`);
+      if (note) bullets.push(`Reason / Note: ${note}`);
+    }
+
+    return {
+      title: isBn
+        ? `🎯 উদ্দেশ্য: ${entityTitle || "ভাড়াটিয়া"} - জামানত টপ-আপ অনুমোদন`
+        : `🎯 Purpose: ${entityTitle || "Tenant"} - Advance Top-Up Approval`,
+      bullets,
+      actionBadge: isBn ? "টপ-আপ আবেদন" : "Top-Up Request",
+    };
+  }
 
   if (actionType === "DELETE") {
     return {

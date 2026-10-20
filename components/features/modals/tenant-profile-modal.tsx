@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { formatCurrency, formatDate, toBanglaDigits } from "@/lib/format";
+import { useApp } from "@/lib/app-context";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
@@ -20,11 +21,19 @@ import {
   PlusCircle,
   RotateCcw,
   DoorOpen,
-  ArrowDownLeft,
-  ArrowUpRight,
   History,
   AlertCircle,
   FileCheck2,
+  Edit3,
+  UserCheck,
+  CheckCircle2,
+  XCircle,
+  FileText,
+  Clock,
+  Home,
+  Users,
+  Camera,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdjustAdvanceModal } from "./adjust-advance-modal";
@@ -47,33 +56,84 @@ export function TenantProfileModal({
   onUpdated,
 }: TenantProfileModalProps) {
   const { t, locale } = useTranslation();
+  const { isAdmin, currentUser, triggerRefresh } = useApp();
 
+  const [activeTab, setActiveTab] = useState<"profile" | "edit" | "advance" | "topups">("profile");
   const [isLoading, setIsLoading] = useState(true);
-  const [data, setData] = useState<any>(null);
+  const [tenantData, setTenantData] = useState<any>(null);
+  const [advanceData, setAdvanceData] = useState<any>(null);
+  const [topUpRequests, setTopUpRequests] = useState<any[]>([]);
 
   // Sub-modals
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [isSettleOpen, setIsSettleOpen] = useState(false);
-  const [isTopupOpen, setIsTopupOpen] = useState(false);
+  const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
   const [statementData, setStatementData] = useState<any | null>(null);
+
+  // Edit Tenant Form State
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editNid, setEditNid] = useState("");
+  const [editPermanentAddress, setEditPermanentAddress] = useState("");
+  const [editReferenceName, setEditReferenceName] = useState("");
+  const [editReferencePhone, setEditReferencePhone] = useState("");
+  const [editReferenceRelation, setEditReferenceRelation] = useState("");
+  const [editRentAmountBDT, setEditRentAmountBDT] = useState<number>(0);
+  const [editEffectiveFrom, setEditEffectiveFrom] = useState(new Date().toISOString().slice(0, 10));
+  const [editStartDate, setEditStartDate] = useState("");
+  const [editEndDate, setEditEndDate] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // Topup Form State
   const [topupAmountBDT, setTopupAmountBDT] = useState<number>(0);
-  const [topupType, setTopupType] = useState<"TOPUP" | "DEPOSIT_RECEIVED">("TOPUP");
-  const [topupReason, setTopupReason] = useState("");
+  const [topupMethod, setTopupMethod] = useState("CASH");
+  const [topupNote, setTopupNote] = useState("");
   const [isSubmittingTopup, setIsSubmittingTopup] = useState(false);
 
-  const fetchTenantData = async () => {
+  // Rejection note state for admin deciding top-up
+  const [decidingTopUpId, setDecidingTopUpId] = useState<string | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [isDecidingTopup, setIsDecidingTopup] = useState(false);
+
+  const fetchAllData = async () => {
     if (!tenantId) return;
     try {
       setIsLoading(true);
-      const res = await fetch(`/api/tenants/${tenantId}/advance`);
-      if (res.ok) {
-        const json = await res.json();
-        setData(json);
+      const [tRes, advRes, topRes] = await Promise.all([
+        fetch(`/api/tenants/${tenantId}`),
+        fetch(`/api/tenants/${tenantId}/advance`),
+        fetch(`/api/tenants/${tenantId}/topup-request`),
+      ]);
+
+      if (tRes.ok) {
+        const json = await tRes.json();
+        const tObj = json.tenant;
+        setTenantData(tObj);
+        // Sync edit form fields
+        setEditName(tObj.name || "");
+        setEditPhone(tObj.phone || "");
+        setEditNid(tObj.nid || "");
+        setEditPermanentAddress(tObj.permanentAddress || "");
+        setEditReferenceName(tObj.referenceName || "");
+        setEditReferencePhone(tObj.referencePhone || "");
+        setEditReferenceRelation(tObj.referenceRelation || "");
+        setEditRentAmountBDT(Math.round((tObj.rentAmount || 0) / 100));
+        setEditStartDate(tObj.startDate ? new Date(tObj.startDate).toISOString().slice(0, 10) : "");
+        setEditEndDate(tObj.endDate ? new Date(tObj.endDate).toISOString().slice(0, 10) : "");
+      }
+
+      if (advRes.ok) {
+        const json = await advRes.json();
+        setAdvanceData(json);
+      }
+
+      if (topRes.ok) {
+        const json = await topRes.json();
+        setTopUpRequests(json.requests || []);
       }
     } catch (e) {
-      console.error("Failed to load tenant advance profile:", e);
+      console.error("Failed to load tenant full profile:", e);
     } finally {
       setIsLoading(false);
     }
@@ -81,11 +141,69 @@ export function TenantProfileModal({
 
   useEffect(() => {
     if (isOpen && tenantId) {
-      fetchTenantData();
+      fetchAllData();
     }
   }, [isOpen, tenantId]);
 
   if (!isOpen) return null;
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim() || !editPhone.trim()) {
+      toast.error(locale === "bn" ? "ভাড়াটিয়ার নাম ও মোবাইল নম্বর আবশ্যক" : "Name and Phone are required");
+      return;
+    }
+
+    try {
+      setIsSavingEdit(true);
+      const res = await fetch(`/api/tenants/${tenantId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editName.trim(),
+          phone: editPhone.trim(),
+          nid: editNid.trim() || null,
+          permanentAddress: editPermanentAddress.trim() || null,
+          referenceName: editReferenceName.trim() || null,
+          referencePhone: editReferencePhone.trim() || null,
+          referenceRelation: editReferenceRelation.trim() || null,
+          rentAmount: Math.round(editRentAmountBDT * 100),
+          effectiveFrom: editEffectiveFrom,
+          startDate: editStartDate || undefined,
+          endDate: editEndDate || null,
+          note: editNote.trim() || undefined,
+        }),
+      });
+
+      const resJson = await res.json();
+      if (!res.ok) {
+        toast.error(resJson.error || "Failed to update tenant");
+        return;
+      }
+
+      if (resJson.requiresApproval) {
+        toast.success(
+          locale === "bn"
+            ? "ভাড়াটিয়া পরিবর্তনের আবেদন অ্যাডমিন অনুমোদনের জন্য জমা হয়েছে"
+            : "Edit request submitted for admin approval"
+        );
+      } else {
+        toast.success(
+          locale === "bn" ? "ভাড়াটিয়ার তথ্য সফলভাবে হালনাগাদ করা হয়েছে" : "Tenant profile updated successfully"
+        );
+      }
+
+      await fetchAllData();
+      setActiveTab("profile");
+      if (onRefreshNeeded) onRefreshNeeded();
+      if (onUpdated) onUpdated();
+      triggerRefresh("shops");
+    } catch (e) {
+      toast.error("Failed to save changes");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
 
   const handleRecordTopup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,245 +215,766 @@ export function TenantProfileModal({
 
     try {
       setIsSubmittingTopup(true);
-      const res = await fetch(`/api/tenants/${tenantId}/advance`, {
+      const res = await fetch(`/api/tenants/${tenantId}/topup-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          type: topupType,
           amount: paisa,
-          reason: topupReason.trim() || undefined,
+          method: topupMethod,
+          note: topupNote.trim() || undefined,
         }),
       });
 
       const resData = await res.json();
       if (!res.ok) {
-        toast.error(resData.error || "Failed to record deposit");
+        toast.error(resData.error || "Failed to process top-up");
         return;
       }
 
-      toast.success(t("advance.depositSuccess"));
-      setIsTopupOpen(false);
+      if (resData.direct) {
+        toast.success(locale === "bn" ? "জামানত টপ-আপ সফলভাবে জমা হয়েছে" : "Advance top-up recorded directly");
+      } else {
+        toast.success(
+          locale === "bn"
+            ? "জামানত টপ-আপ আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে"
+            : "Top-up request submitted for approval"
+        );
+      }
+
+      setIsTopupModalOpen(false);
       setTopupAmountBDT(0);
-      setTopupReason("");
-      fetchTenantData();
+      setTopupNote("");
+      await fetchAllData();
       if (onRefreshNeeded) onRefreshNeeded();
       if (onUpdated) onUpdated();
+      triggerRefresh("shops");
     } catch (e) {
-      toast.error("Failed to record deposit");
+      toast.error("Failed to process top-up");
     } finally {
       setIsSubmittingTopup(false);
     }
   };
 
-  const tenant = data?.tenant;
-  const advanceBalance = data?.advanceBalance || 0;
-  const requiredAdvance = data?.requiredAdvance || 0;
-  const shortfall = data?.shortfall || 0;
-  const transactions = data?.transactions || [];
+  const handleDecideTopUp = async (id: string, action: "APPROVE" | "REJECT", reason?: string) => {
+    try {
+      setIsDecidingTopup(true);
+      const res = await fetch("/api/approvals/topup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, action, note: reason }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to process approval");
+        return;
+      }
+
+      toast.success(
+        action === "APPROVE"
+          ? locale === "bn"
+            ? "টপ-আপ সফলভাবে অনুমোদিত এবং জামানত যোগ হয়েছে"
+            : "Top-up approved and credited to advance balance"
+          : locale === "bn"
+          ? "টপ-আপ আবেদনটি বাতিল করা হয়েছে"
+          : "Top-up request rejected"
+      );
+
+      setDecidingTopUpId(null);
+      setRejectReason("");
+      await fetchAllData();
+      if (onRefreshNeeded) onRefreshNeeded();
+      if (onUpdated) onUpdated();
+      triggerRefresh("shops");
+    } catch (e) {
+      toast.error("Failed to update status");
+    } finally {
+      setIsDecidingTopup(false);
+    }
+  };
+
+  const advanceBalance = advanceData?.advanceBalance || 0;
+  const requiredAdvance = advanceData?.requiredAdvance || 0;
+  const shortfall = advanceData?.shortfall || 0;
+  const transactions = advanceData?.transactions || [];
 
   return (
     <>
       <Dialog
         isOpen={isOpen}
         onClose={onClose}
-        title={tenant?.name || t("advance.title")}
-        description={tenant ? `${tenant.shopNumber} — ${tenant.marketName}` : ""}
-        maxWidth="lg"
+        title={tenantData?.name || t("tenants.title")}
+        description={
+          tenantData?.shop
+            ? `${tenantData.shop.shopNumber} — ${tenantData.shop.market.name}`
+            : ""
+        }
+        maxWidth="xl"
       >
-        {isLoading || !data ? (
-          <div className="py-12 text-center text-slate-500">{t("common.loading")}</div>
+        {isLoading || !tenantData ? (
+          <div className="py-16 text-center text-slate-500">{t("common.loading")}</div>
         ) : (
-          <div className="space-y-6">
-            {/* Header info badge & Phone */}
+          <div className="space-y-4">
+            {/* Top Header Card */}
             <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52] text-xs">
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                   <Phone className="w-3.5 h-3.5 text-teal-600" />
-                  {tenant.phone}
+                  {tenantData.phone}
                 </span>
                 <span>•</span>
                 <span className="text-slate-600 dark:text-slate-300">
-                  {t("tenants.rentAmount")}: <strong>{formatCurrency(tenant.rentAmount, locale)}</strong>
+                  {t("tenants.rentAmount")}: <strong>{formatCurrency(tenantData.rentAmount, locale)}</strong>
+                </span>
+                <span>•</span>
+                <span className="text-slate-600 dark:text-slate-300">
+                  {t("advance.advanceBalance")}: <strong className="text-teal-600 font-mono">{formatCurrency(advanceBalance, locale)}</strong>
                 </span>
               </div>
-              <StatusBadge status={tenant.status} />
+              <StatusBadge status={tenantData.status} />
             </div>
 
-            {/* 3 Summary Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-              {/* 1. Advance Balance */}
-              <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/20">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
-                    {t("advance.advanceBalance")}
-                  </span>
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
-                    Liability
-                  </span>
-                </div>
-                <p className="text-xl font-extrabold text-teal-600 dark:text-teal-300 font-mono mt-1">
-                  {formatCurrency(advanceBalance, locale)}
-                </p>
-              </div>
-
-              {/* 2. Required Advance */}
-              <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50 dark:bg-[#182234]">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                    {t("advance.requiredAdvance")}
-                  </span>
-                  <span className="text-[10px] font-semibold text-slate-400">
-                    {data.policy?.requiredAdvanceMonths} months
-                  </span>
-                </div>
-                <p className="text-xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-1">
-                  {formatCurrency(requiredAdvance, locale)}
-                </p>
-              </div>
-
-              {/* 3. Shortfall */}
-              <div
-                className={`p-4 rounded-xl border ${
-                  shortfall > 0
-                    ? "border-amber-300 dark:border-amber-700/80 bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200"
-                    : "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200"
+            {/* Navigation Tabs */}
+            <div className="flex border-b border-slate-200 dark:border-slate-800 text-xs font-semibold overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setActiveTab("profile")}
+                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === "profile"
+                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold uppercase tracking-wider">
-                    {t("advance.shortfall")}
+                <User className="w-4 h-4" />
+                <span>{t("tenants.profileDetails")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("edit")}
+                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === "edit"
+                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>{t("tenants.editProfile")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("advance")}
+                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === "advance"
+                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <Wallet className="w-4 h-4" />
+                <span>{t("tenants.advanceLedger")}</span>
+                {shortfall > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-500 ml-0.5" />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab("topups")}
+                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                  activeTab === "topups"
+                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
+                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                }`}
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>{t("tenants.topUpRequests")}</span>
+                {topUpRequests.filter((r) => r.status === "PENDING").length > 0 && (
+                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                    {topUpRequests.filter((r) => r.status === "PENDING").length}
                   </span>
-                  {shortfall > 0 && (
-                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
-                      Deficit
-                    </span>
-                  )}
-                </div>
-                <p className="text-xl font-extrabold font-mono mt-1">
-                  {shortfall > 0 ? formatCurrency(shortfall, locale) : "৳ 0"}
-                </p>
-              </div>
+                )}
+              </button>
             </div>
 
-            {/* Quick Action Toolbar */}
-            {tenant.status !== "SETTLED" && tenant.status !== "ARCHIVED" && (
-              <div className="flex flex-wrap items-center gap-2 pt-1 border-b border-slate-100 dark:border-[#2d3b52] pb-4">
-                <Button
-                  size="sm"
-                  onClick={() => setIsAdjustOpen(true)}
-                  className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
-                  {t("adjustAdvance.title")}
-                </Button>
+            {/* TAB 1: PROFILE DETAILS */}
+            {activeTab === "profile" && (
+              <div className="space-y-5 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Basic Personal Details Card */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50/60 dark:bg-[#182234]/60 space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 border-b border-slate-200/80 dark:border-slate-800 pb-2">
+                      <User className="w-4 h-4 text-teal-600" />
+                      <span>{t("tenants.title")}</span>
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-400">{t("tenants.tenantName")}</span>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{tenantData.name}</p>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">{t("tenants.phone")}</span>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 font-mono mt-0.5">{tenantData.phone}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-slate-400">{t("tenants.nid")}</span>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 font-mono mt-0.5">
+                          {tenantData.nid || "—"}
+                        </p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-slate-400">{t("tenants.permanentAddress")}</span>
+                        <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                          {tenantData.permanentAddress || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setTopupAmountBDT(Math.round(shortfall / 100) || 10000);
-                    setIsTopupOpen(true);
-                  }}
-                  className="text-xs"
-                >
-                  <PlusCircle className="w-3.5 h-3.5 mr-1.5 text-teal-600" />
-                  {t("advance.addDepositOrTopup")}
-                </Button>
+                  {/* Reference Person Card */}
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50/60 dark:bg-[#182234]/60 space-y-3">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 border-b border-slate-200/80 dark:border-slate-800 pb-2">
+                      <Users className="w-4 h-4 text-teal-600" />
+                      <span>রেফারেন্স ব্যক্তির তথ্য (Reference Person)</span>
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-slate-400">{t("tenants.referenceName")}</span>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                          {tenantData.referenceName || "—"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-slate-400">{t("tenants.referencePhone")}</span>
+                        <p className="font-bold text-slate-800 dark:text-slate-200 font-mono mt-0.5">
+                          {tenantData.referencePhone || "—"}
+                        </p>
+                      </div>
+                      <div className="col-span-2">
+                        <span className="text-slate-400">{t("tenants.referenceRelation")}</span>
+                        <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                          {tenantData.referenceRelation || "—"}
+                        </p>
+                      </div>
+                      <div className="col-span-2 pt-2 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-xs">
+                        <span className="text-slate-400">{t("tenants.startDate")}:</span>
+                        <span className="font-semibold">{formatDate(tenantData.startDate, locale)}</span>
+                      </div>
+                      <div className="col-span-2 flex items-center justify-between text-xs">
+                        <span className="text-slate-400">{t("tenants.endDate")}:</span>
+                        <span className="font-semibold">{tenantData.endDate ? formatDate(tenantData.endDate, locale) : "অনির্দিষ্ট (Ongoing)"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => setIsSettleOpen(true)}
-                  className="text-xs ml-auto"
-                >
-                  <DoorOpen className="w-3.5 h-3.5 mr-1.5" />
-                  {t("settlement.settleAndVacate")}
-                </Button>
+                {/* Rent History Table */}
+                <div className="space-y-2 pt-1">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <History className="w-4 h-4 text-teal-600" />
+                    <span>{t("tenants.rentHistory")}</span>
+                  </h4>
+                  {(!tenantData.rentHistory || tenantData.rentHistory.length === 0) ? (
+                    <p className="text-xs text-slate-400 py-3 text-center border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+                      ভাড়া পরিবর্তনের কোনো পূর্ববর্তী ইতিহাস নেই
+                    </p>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs">
+                      <table className="w-full text-left">
+                        <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300">
+                          <tr>
+                            <th className="p-2.5">কার্যকরের তারিখ</th>
+                            <th className="p-2.5 text-right">নির্ধারিত ভাড়া</th>
+                            <th className="p-2.5">নোট ও বিবরণ</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {tenantData.rentHistory.map((rh: any) => (
+                            <tr key={rh.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
+                              <td className="p-2.5 text-slate-500 whitespace-nowrap">
+                                {formatDate(rh.effectiveFrom, locale)}
+                              </td>
+                              <td className="p-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap">
+                                {formatCurrency(rh.rentAmount, locale)}
+                              </td>
+                              <td className="p-2.5 text-slate-700 dark:text-slate-300">
+                                {rh.note || "ভাড়া পরিবর্তন"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Advance Ledger Timeline */}
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <History className="w-4 h-4 text-teal-600" />
-                  <span>{t("advance.timeline")}</span>
-                </h4>
-                <span className="text-[11px] text-slate-400">
-                  {locale === "bn" ? toBanglaDigits(transactions.length) : transactions.length} entries
-                </span>
-              </div>
+            {/* TAB 2: EDIT TENANT */}
+            {activeTab === "edit" && (
+              <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.tenantName")} *
+                    </label>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="e.g. মোঃ রফিকুল ইসলাম"
+                      required
+                    />
+                  </div>
 
-              {transactions.length === 0 ? (
-                <p className="text-xs text-slate-400 py-4 text-center">{t("advance.noTransactions")}</p>
-              ) : (
-                <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs max-h-64 overflow-y-auto">
-                  <table className="w-full text-left">
-                    <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300 sticky top-0">
-                      <tr>
-                        <th className="p-2.5">Date</th>
-                        <th className="p-2.5">Type</th>
-                        <th className="p-2.5">Reason / Note</th>
-                        <th className="p-2.5 text-right">Amount</th>
-                        <th className="p-2.5 text-right">{t("advance.runningBalance")}</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {transactions.map((tx: any) => {
-                        const isCredit = tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP";
-                        return (
-                          <tr key={tx.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
-                            <td className="p-2.5 text-slate-500 whitespace-nowrap">
-                              {formatDate(tx.createdAt, locale)}
-                            </td>
-                            <td className="p-2.5 whitespace-nowrap">
-                              <span
-                                className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                  tx.type === "DEPOSIT_RECEIVED"
-                                    ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                                    : tx.type === "TOPUP"
-                                    ? "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300"
-                                    : tx.type === "ADJUSTED_TO_DUE"
-                                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                                    : tx.type === "DEDUCTION"
-                                    ? "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300"
-                                    : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
-                                }`}
-                              >
-                                {tx.type === "DEPOSIT_RECEIVED"
-                                  ? t("advance.depositReceived")
-                                  : tx.type === "TOPUP"
-                                  ? t("advance.topup")
-                                  : tx.type === "ADJUSTED_TO_DUE"
-                                  ? t("advance.adjustedToDue")
-                                  : tx.type === "DEDUCTION"
-                                  ? t("advance.deduction")
-                                  : t("advance.refund")}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.phone")} *
+                    </label>
+                    <Input
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      placeholder="01711-XXXXXX"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.nid")}
+                    </label>
+                    <Input
+                      value={editNid}
+                      onChange={(e) => setEditNid(e.target.value)}
+                      placeholder="জাতীয় পরিচয়পত্র নম্বর"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.rentAmount")} (৳ BDT) *
+                    </label>
+                    <NumberInput
+                      value={editRentAmountBDT}
+                      onChange={(val) => setEditRentAmountBDT(val)}
+                      prefix="৳"
+                      className="font-bold"
+                    />
+                  </div>
+
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.permanentAddress")}
+                    </label>
+                    <textarea
+                      value={editPermanentAddress}
+                      onChange={(e) => setEditPermanentAddress(e.target.value)}
+                      placeholder="গ্রাম/রোড, ডাকঘর, থানা, জেলা (বাংলা ও ইংরেজি উভয় ভাষায় গ্রহণযোগ্য)"
+                      className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#182234] text-slate-800 dark:text-slate-100 min-h-[64px]"
+                    />
+                  </div>
+
+                  {/* Reference Person fields */}
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.referenceName")}
+                    </label>
+                    <Input
+                      value={editReferenceName}
+                      onChange={(e) => setEditReferenceName(e.target.value)}
+                      placeholder="রেফারেন্স ব্যক্তির নাম"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.referencePhone")}
+                    </label>
+                    <Input
+                      value={editReferencePhone}
+                      onChange={(e) => setEditReferencePhone(e.target.value)}
+                      placeholder="01811-XXXXXX"
+                    />
+                  </div>
+
+                  <div className="col-span-1 md:col-span-2">
+                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                      {t("tenants.referenceRelation")}
+                    </label>
+                    <Input
+                      value={editReferenceRelation}
+                      onChange={(e) => setEditReferenceRelation(e.target.value)}
+                      placeholder="e.g. ভাই / পিতা / ব্যবসায়িক অংশীদার"
+                    />
+                  </div>
+
+                  {/* Effective Month if Rent is altered */}
+                  {editRentAmountBDT * 100 !== tenantData.rentAmount && (
+                    <div className="col-span-1 md:col-span-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-200">
+                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                        <span>ভাড়া পরিবর্তন শনাক্ত হয়েছে — কার্যকরের তারিখ আবশ্যক</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="block text-[11px] text-slate-600 dark:text-slate-300 mb-0.5">
+                            {t("tenants.effectiveFrom")}
+                          </label>
+                          <Input
+                            type="date"
+                            value={editEffectiveFrom}
+                            onChange={(e) => setEditEffectiveFrom(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[11px] text-slate-600 dark:text-slate-300 mb-0.5">
+                            ভাড়া পরিবর্তনের কারণ
+                          </label>
+                          <Input
+                            value={editNote}
+                            onChange={(e) => setEditNote(e.target.value)}
+                            placeholder="e.g. বার্ষিক চুক্তি অনুযায়ী ১০% বৃদ্ধি"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <Button type="button" variant="outline" onClick={() => setActiveTab("profile")}>
+                    {t("common.cancel")}
+                  </Button>
+                  <Button type="submit" isLoading={isSavingEdit} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
+                    <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                    {isAdmin ? "সংরক্ষণ করুন (Save Profile)" : "অনুমোদনের জন্য পাঠান (Submit for Approval)"}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {/* TAB 3: ADVANCE LEDGER */}
+            {activeTab === "advance" && (
+              <div className="space-y-5 pt-2">
+                {/* 3 Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/20">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
+                        {t("advance.advanceBalance")}
+                      </span>
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                        Liability
+                      </span>
+                    </div>
+                    <p className="text-xl font-extrabold text-teal-600 dark:text-teal-300 font-mono mt-1">
+                      {formatCurrency(advanceBalance, locale)}
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50 dark:bg-[#182234]">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                        {t("advance.requiredAdvance")}
+                      </span>
+                      <span className="text-[10px] font-semibold text-slate-400">
+                        {advanceData?.policy?.requiredAdvanceMonths || 3} months
+                      </span>
+                    </div>
+                    <p className="text-xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-1">
+                      {formatCurrency(requiredAdvance, locale)}
+                    </p>
+                  </div>
+
+                  <div
+                    className={`p-4 rounded-xl border ${
+                      shortfall > 0
+                        ? "border-amber-300 dark:border-amber-700/80 bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200"
+                        : "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase tracking-wider">
+                        {t("advance.shortfall")}
+                      </span>
+                      {shortfall > 0 && (
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
+                          Deficit
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xl font-extrabold font-mono mt-1">
+                      {shortfall > 0 ? formatCurrency(shortfall, locale) : "৳ 0"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Quick Action Toolbar */}
+                {tenantData.status !== "SETTLED" && tenantData.status !== "ARCHIVED" && (
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-b border-slate-100 dark:border-[#2d3b52] pb-4">
+                    <Button
+                      size="sm"
+                      onClick={() => setIsAdjustOpen(true)}
+                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
+                      {t("adjustAdvance.title")}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setTopupAmountBDT(Math.round(shortfall / 100) || 10000);
+                        setIsTopupModalOpen(true);
+                      }}
+                      className="text-xs"
+                    >
+                      <PlusCircle className="w-3.5 h-3.5 mr-1.5 text-teal-600" />
+                      {isAdmin ? t("tenants.directTopUp") : t("tenants.requestTopUp")}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => setIsSettleOpen(true)}
+                      className="text-xs ml-auto"
+                    >
+                      <DoorOpen className="w-3.5 h-3.5 mr-1.5" />
+                      {t("settlement.settleAndVacate")}
+                    </Button>
+                  </div>
+                )}
+
+                {/* Advance Ledger Timeline */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                      <History className="w-4 h-4 text-teal-600" />
+                      <span>{t("advance.timeline")}</span>
+                    </h4>
+                    <span className="text-[11px] text-slate-400">
+                      {locale === "bn" ? toBanglaDigits(transactions.length) : transactions.length} entries
+                    </span>
+                  </div>
+
+                  {transactions.length === 0 ? (
+                    <p className="text-xs text-slate-400 py-4 text-center">{t("advance.noTransactions")}</p>
+                  ) : (
+                    <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs max-h-64 overflow-y-auto">
+                      <table className="w-full text-left">
+                        <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300 sticky top-0">
+                          <tr>
+                            <th className="p-2.5">Date</th>
+                            <th className="p-2.5">Type</th>
+                            <th className="p-2.5">Reason / Note</th>
+                            <th className="p-2.5">Entered by</th>
+                            <th className="p-2.5 text-right">Amount</th>
+                            <th className="p-2.5 text-right">{t("advance.runningBalance")}</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                          {transactions.map((tx: any) => {
+                            const isCredit = tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP";
+                            return (
+                              <tr key={tx.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
+                                <td className="p-2.5 text-slate-500 whitespace-nowrap">
+                                  {formatDate(tx.createdAt, locale)}
+                                </td>
+                                <td className="p-2.5 whitespace-nowrap">
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                      tx.type === "DEPOSIT_RECEIVED"
+                                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                        : tx.type === "TOPUP"
+                                        ? "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300"
+                                        : tx.type === "ADJUSTED_TO_DUE"
+                                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                        : tx.type === "DEDUCTION"
+                                        ? "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300"
+                                        : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                                    }`}
+                                  >
+                                    {tx.type === "DEPOSIT_RECEIVED"
+                                      ? t("advance.depositReceived")
+                                      : tx.type === "TOPUP"
+                                      ? t("advance.topup")
+                                      : tx.type === "ADJUSTED_TO_DUE"
+                                      ? t("advance.adjustedToDue")
+                                      : tx.type === "DEDUCTION"
+                                      ? t("advance.deduction")
+                                      : t("advance.refund")}
+                                  </span>
+                                </td>
+                                <td className="p-2.5 text-slate-700 dark:text-slate-300 max-w-xs truncate">
+                                  {tx.reason}
+                                </td>
+                                <td className="p-2.5 text-slate-500 text-[11px] whitespace-nowrap">
+                                  {tx.createdByName || tx.createdBy || "Admin"}
+                                </td>
+                                <td
+                                  className={`p-2.5 text-right font-mono font-bold whitespace-nowrap ${
+                                    isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                                  }`}
+                                >
+                                  {isCredit ? "+" : "-"} {formatCurrency(tx.amount, locale)}
+                                </td>
+                                <td className="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                  {formatCurrency(tx.runningBalance, locale)}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 4: TOP-UP REQUESTS */}
+            {activeTab === "topups" && (
+              <div className="space-y-4 pt-2">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                    <PlusCircle className="w-4 h-4 text-teal-600" />
+                    <span>জামানত টপ-আপ আবেদন তালিকা</span>
+                  </h4>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setTopupAmountBDT(Math.round(shortfall / 100) || 10000);
+                      setIsTopupModalOpen(true);
+                    }}
+                    className="text-xs bg-teal-600 hover:bg-teal-500 text-white"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5 mr-1" />
+                    {isAdmin ? "নতুন টপ-আপ জমা (Direct)" : "টপ-আপের আবেদন করুন"}
+                  </Button>
+                </div>
+
+                {topUpRequests.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-6 text-center border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+                    কোনো টপ-আপ আবেদন পাওয়া যায়নি
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {topUpRequests.map((req: any) => {
+                      const isPending = req.status === "PENDING";
+                      return (
+                        <div
+                          key={req.id}
+                          className="p-3.5 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50/60 dark:bg-[#182234]/60 space-y-2 text-xs"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-base font-mono text-teal-700 dark:text-teal-400">
+                                {formatCurrency(req.amount, locale)}
                               </span>
-                            </td>
-                            <td className="p-2.5 text-slate-700 dark:text-slate-300 max-w-xs truncate">
-                              {tx.reason}
-                            </td>
-                            <td
-                              className={`p-2.5 text-right font-mono font-bold whitespace-nowrap ${
-                                isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                {req.method}
+                              </span>
+                            </div>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                req.status === "APPROVED"
+                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                  : req.status === "REJECTED"
+                                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
                               }`}
                             >
-                              {isCredit ? "+" : "-"} {formatCurrency(tx.amount, locale)}
-                            </td>
-                            <td className="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
-                              {formatCurrency(tx.runningBalance, locale)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
+                              {req.status === "APPROVED" ? "অনুমোদিত" : req.status === "REJECTED" ? "প্রত্যাখ্যাত" : "অপেক্ষমাণ (Pending)"}
+                            </span>
+                          </div>
 
-            <div className="pt-2 flex justify-end">
+                          <div className="text-slate-600 dark:text-slate-300">
+                            {req.note && <p className="italic">"{req.note}"</p>}
+                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-1">
+                              <span>আবেদনকারী: <strong className="text-slate-700 dark:text-slate-300">{req.requestedBy}</strong></span>
+                              <span>•</span>
+                              <span>তারিখ: {formatDate(req.createdAt, locale)}</span>
+                              {req.decidedBy && (
+                                <>
+                                  <span>•</span>
+                                  <span>সিদ্ধান্ত গ্রহণকারী: {req.decidedBy}</span>
+                                </>
+                              )}
+                            </div>
+                            {req.decisionNote && (
+                              <p className="mt-1 text-rose-600 dark:text-rose-400 font-semibold text-[11px]">
+                                সিদ্ধান্তের কারণ: {req.decisionNote}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Admin Action Buttons for Pending Top-Up Request */}
+                          {isAdmin && isPending && (
+                            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end gap-2">
+                              {decidingTopUpId === req.id ? (
+                                <div className="flex items-center gap-2 w-full">
+                                  <Input
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    placeholder="বাতিলের কারণ লিখুন (আবশ্যক)..."
+                                    className="h-8 text-xs flex-1"
+                                    autoFocus
+                                  />
+                                  <Button
+                                    size="sm"
+                                    variant="destructive"
+                                    className="h-8 text-xs font-bold"
+                                    disabled={!rejectReason.trim() || isDecidingTopup}
+                                    onClick={() => handleDecideTopUp(req.id, "REJECT", rejectReason)}
+                                  >
+                                    বাতিল নিশ্চিত করুন
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs"
+                                    onClick={() => {
+                                      setDecidingTopUpId(null);
+                                      setRejectReason("");
+                                    }}
+                                  >
+                                    ফিরুন
+                                  </Button>
+                                </div>
+                              ) : (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                                    onClick={() => setDecidingTopUpId(req.id)}
+                                  >
+                                    <XCircle className="w-3.5 h-3.5 mr-1" />
+                                    প্রত্যাখ্যান (Reject)
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                                    disabled={isDecidingTopup}
+                                    onClick={() => handleDecideTopUp(req.id, "APPROVE")}
+                                  >
+                                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                                    অনুমোদন করুন (Approve)
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="pt-3 flex justify-end border-t border-slate-100 dark:border-[#2d3b52]">
               <Button variant="outline" onClick={onClose}>
                 {t("common.close")}
               </Button>
@@ -346,29 +985,32 @@ export function TenantProfileModal({
 
       {/* Record Deposit / Top-up Sub-dialog */}
       <Dialog
-        isOpen={isTopupOpen}
-        onClose={() => setIsTopupOpen(false)}
-        title={t("advance.addDepositOrTopup")}
-        description={`${tenant?.shopNumber} — ${tenant?.name}`}
+        isOpen={isTopupModalOpen}
+        onClose={() => setIsTopupModalOpen(false)}
+        title={isAdmin ? t("tenants.directTopUp") : t("tenants.requestTopUp")}
+        description={`${tenantData?.shop?.shopNumber} — ${tenantData?.name}`}
         maxWidth="sm"
       >
         <form onSubmit={handleRecordTopup} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              {t("advance.transactionType")}
+              পেমেন্ট চ্যানেল (Payment Channel)
             </label>
             <Select
-              value={topupType}
-              onChange={(e) => setTopupType(e.target.value as any)}
+              value={topupMethod}
+              onChange={(e) => setTopupMethod(e.target.value)}
             >
-              <option value="TOPUP">{t("advance.topup")}</option>
-              <option value="DEPOSIT_RECEIVED">{t("advance.depositReceived")}</option>
+              <option value="CASH">ক্যাশ (CASH)</option>
+              <option value="BKASH">বিকাশ (bKash)</option>
+              <option value="NAGAD">নগদ (Nagad)</option>
+              <option value="BANK">ব্যাংক ট্রান্সফার (Bank)</option>
+              <option value="CHEQUE">চেক (Cheque)</option>
             </Select>
           </div>
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-              {t("common.amount")} (৳ BDT)
+              {t("common.amount")} (৳ BDT) *
             </label>
             <NumberInput
               value={topupAmountBDT}
@@ -384,35 +1026,35 @@ export function TenantProfileModal({
               {t("common.notes")} ({t("common.optional")})
             </label>
             <Input
-              value={topupReason}
-              onChange={(e) => setTopupReason(e.target.value)}
-              placeholder="e.g. অতিরিক্ত জামানত জমা"
+              value={topupNote}
+              onChange={(e) => setTopupNote(e.target.value)}
+              placeholder="e.g. অতিরিক্ত নিরাপত্তা জামানত"
             />
           </div>
 
           <div className="pt-2 flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsTopupOpen(false)}>
+            <Button type="button" variant="outline" onClick={() => setIsTopupModalOpen(false)}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" isLoading={isSubmittingTopup} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
-              {t("common.save")}
+              {isAdmin ? "জমা সম্পন্ন করুন" : "আবেদন পাঠান"}
             </Button>
           </div>
         </form>
       </Dialog>
 
       {/* Adjust Advance Modal */}
-      {tenant && (
+      {tenantData && (
         <AdjustAdvanceModal
           isOpen={isAdjustOpen}
           onClose={() => setIsAdjustOpen(false)}
-          tenantId={tenant.id}
-          tenantName={tenant.name}
-          shopNumber={tenant.shopNumber}
-          marketName={tenant.marketName}
+          tenantId={tenantData.id}
+          tenantName={tenantData.name}
+          shopNumber={tenantData.shop?.shopNumber}
+          marketName={tenantData.shop?.market?.name}
           initialDueAmount={0}
           onSuccess={() => {
-            fetchTenantData();
+            fetchAllData();
             if (onRefreshNeeded) onRefreshNeeded();
             if (onUpdated) onUpdated();
           }}
@@ -420,13 +1062,13 @@ export function TenantProfileModal({
       )}
 
       {/* Settlement Wizard Modal */}
-      {tenant && (
+      {tenantData && (
         <SettlementWizardModal
           isOpen={isSettleOpen}
           onClose={() => setIsSettleOpen(false)}
-          tenantId={tenant.id}
+          tenantId={tenantData.id}
           onSettlementComplete={(settlement) => {
-            fetchTenantData();
+            fetchAllData();
             if (onRefreshNeeded) onRefreshNeeded();
             if (onUpdated) onUpdated();
             setStatementData(settlement);

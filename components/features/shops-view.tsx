@@ -31,6 +31,8 @@ import {
   Eye,
   ShieldCheck,
   AlertTriangle,
+  User,
+  UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TenantProfileModal } from "./modals/tenant-profile-modal";
@@ -497,10 +499,18 @@ export function ShopsView() {
                 <div className="my-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
                   {shop.tenant ? (
                     <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">{t("shops.currentTenant")}:</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100">
-                          {shop.tenant.name}
+                      <div
+                        className="flex items-center justify-between cursor-pointer group/t hover:text-teal-600 transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveProfileTenantId(shop.tenant.id);
+                        }}
+                        title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল দেখুন" : "View Tenant Profile"}
+                      >
+                        <span className="text-slate-500 group-hover/t:text-teal-600">{t("shops.currentTenant")}:</span>
+                        <span className="font-bold text-slate-900 dark:text-slate-100 group-hover/t:text-teal-600 flex items-center gap-1">
+                          <User className="w-3.5 h-3.5 text-teal-600" />
+                          <span>{shop.tenant.name}</span>
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
@@ -568,19 +578,19 @@ export function ShopsView() {
                   </Button>
                 ) : (
                   <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
-                    {/* Advance Ledger Button */}
+                    {/* Tenant Profile & Advance Ledger Button */}
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-8 px-2 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 flex-1 sm:flex-initial"
+                      className="text-xs h-8 px-2 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 flex-1 sm:flex-initial font-medium"
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveProfileTenantId(shop.tenant.id);
                       }}
-                      title={t("advance.title")}
+                      title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল ও জামানত" : "Tenant Profile & Advance"}
                     >
-                      <Wallet className="w-3.5 h-3.5 mr-1 text-teal-600" />
-                      <span>{t("advance.title")}</span>
+                      <UserCheck className="w-3.5 h-3.5 mr-1 text-teal-600" />
+                      <span>{locale === "bn" ? "প্রোফাইল ও জামানত" : "Profile & Advance"}</span>
                     </Button>
 
                     {/* Settle & Vacate Button */}

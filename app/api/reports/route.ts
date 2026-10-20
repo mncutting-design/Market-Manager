@@ -257,6 +257,156 @@ export async function GET(req: Request) {
       return NextResponse.json({ reportType, totalAllExpenses, rows });
     }
 
+    // 5. Collector & Staff Summary Report
+    if (reportType === "collector_summary") {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+
+      const where: any = {
+        paidOn: { gte: startDate, lte: endDate },
+      };
+      if (marketId !== "ALL") {
+        where.bill = { shop: { marketId } };
+      }
+
+      const payments = await prisma.payment.findMany({
+        where,
+        include: {
+          receivedByUser: { select: { id: true, name: true, role: true } },
+          enteredByUser: { select: { id: true, name: true, role: true } },
+          bill: { include: { shop: { include: { market: true } }, tenant: true } },
+          paymentAccount: true,
+        },
+        orderBy: { paidOn: "desc" },
+      });
+
+      const collectorMap = new Map<string, any>();
+      let totalCollected = 0;
+
+      for (const p of payments) {
+        totalCollected += p.amount;
+        const colKey = p.receivedById || p.receivedBy || "Other";
+        const colName = p.receivedByUser?.name || p.receivedBy || "Staff";
+        const colRole = p.receivedByUser?.role || "COLLECTOR";
+
+        if (!collectorMap.has(colKey)) {
+          collectorMap.set(colKey, {
+            collectorId: colKey,
+            collectorName: colName,
+            role: colRole,
+            totalAmount: 0,
+            count: 0,
+            cashAmount: 0,
+            bkashAmount: 0,
+            nagadAmount: 0,
+            bankAmount: 0,
+            payments: [],
+          });
+        }
+
+        const c = collectorMap.get(colKey);
+        c.totalAmount += p.amount;
+        c.count += 1;
+        if (p.method === "CASH") c.cashAmount += p.amount;
+        else if (p.method === "BKASH") c.bkashAmount += p.amount;
+        else if (p.method === "NAGAD") c.nagadAmount += p.amount;
+        else if (p.method === "BANK" || p.method === "CHEQUE") c.bankAmount += p.amount;
+
+        c.payments.push({
+          id: p.id,
+          paidOn: p.paidOn,
+          shopNumber: p.bill.shop.shopNumber,
+          tenantName: p.bill.tenant.name,
+          marketName: p.bill.shop.market.name,
+          amount: p.amount,
+          method: p.method,
+          enteredBy: p.enteredByUser?.name || "Staff",
+        });
+      }
+
+      const rows = Array.from(collectorMap.values()).map((c) => ({
+        ...c,
+        percentage: totalCollected > 0 ? (c.totalAmount / totalCollected) * 100 : 0,
+      }));
+
+      rows.sort((a, b) => b.totalAmount - a.totalAmount);
+      return NextResponse.json({ reportType, totalCollected, rows });
+    }
+
+    // 6. Payment Channel & Account Breakdown
+    if (reportType === "channel_summary") {
+      const startDate = new Date(year, month - 1, 1);
+      const endDate = new Date(year, month, 0, 23, 59, 59);
+
+      const where: any = {
+        paidOn: { gte: startDate, lte: endDate },
+      };
+      if (marketId !== "ALL") {
+        where.bill = { shop: { marketId } };
+      }
+
+      const payments = await prisma.payment.findMany({
+        where,
+        include: {
+          paymentAccount: true,
+          bill: { include: { shop: { include: { market: true } }, tenant: true } },
+          receivedByUser: { select: { id: true, name: true } },
+        },
+        orderBy: { paidOn: "desc" },
+      });
+
+      const channelMap = new Map<string, any>();
+      let totalCollected = 0;
+
+      for (const p of payments) {
+        totalCollected += p.amount;
+        let channelKey = p.method;
+        let channelName = p.method;
+
+        if (p.paymentAccount) {
+          channelKey = `ACC_${p.paymentAccount.id}`;
+          channelName = `${p.paymentAccount.name_bn || p.paymentAccount.name_en} (${p.paymentAccount.number})`;
+        } else if (p.bankName) {
+          channelKey = `BANK_${p.bankName}`;
+          channelName = p.bankName;
+        }
+
+        if (!channelMap.has(channelKey)) {
+          channelMap.set(channelKey, {
+            channelKey,
+            channelName,
+            method: p.method,
+            totalAmount: 0,
+            count: 0,
+            payments: [],
+          });
+        }
+
+        const ch = channelMap.get(channelKey);
+        ch.totalAmount += p.amount;
+        ch.count += 1;
+        ch.payments.push({
+          id: p.id,
+          paidOn: p.paidOn,
+          shopNumber: p.bill.shop.shopNumber,
+          tenantName: p.bill.tenant.name,
+          amount: p.amount,
+          method: p.method,
+          transactionRef: p.transactionRef,
+          senderNumber: p.senderNumber,
+          receivedBy: p.receivedByUser?.name || p.receivedBy,
+        });
+      }
+
+      const rows = Array.from(channelMap.values()).map((ch) => ({
+        ...ch,
+        percentage: totalCollected > 0 ? (ch.totalAmount / totalCollected) * 100 : 0,
+      }));
+
+      rows.sort((a, b) => b.totalAmount - a.totalAmount);
+      return NextResponse.json({ reportType, totalCollected, rows });
+    }
+
     // 4. Tenant Ledger
     if (reportType === "tenant_ledger") {
       if (!tenantId) {

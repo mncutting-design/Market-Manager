@@ -431,17 +431,43 @@ export function MoneyReceiptModal() {
           </div>
         </div>
 
-        {/* BOTTOM SIGNATURES & NOTICE */}
-        <div className="pt-4 sm:pt-6 pb-0 mt-auto">
+        {/* BOTTOM SIGNATURES, CHANNEL DETAILS & NOTICE */}
+        <div className="pt-3 sm:pt-4 pb-0 mt-auto space-y-1.5">
+          {/* Channel Details Row */}
+          <div className="bg-slate-50 border border-black/40 px-2 py-1 rounded text-[9px] sm:text-[10px] text-black font-medium flex flex-wrap items-center justify-between gap-1">
+            <div className="flex flex-wrap items-center gap-1.5 font-mono">
+              <span className="font-bold uppercase tracking-wider">{activeReceipt.paymentMethod}</span>
+              {activeReceipt.paymentAccount && (
+                <span>
+                  • {isBn ? activeReceipt.paymentAccount.name_bn : activeReceipt.paymentAccount.name_en} ({activeReceipt.paymentAccount.number})
+                </span>
+              )}
+              {activeReceipt.bankName && <span>• {activeReceipt.bankName}</span>}
+              {activeReceipt.transactionRef && <span>• Trx: {activeReceipt.transactionRef}</span>}
+              {activeReceipt.senderNumber && <span>• From: {activeReceipt.senderNumber}</span>}
+            </div>
+            <div className="text-[9px] text-black/70">
+              {formatDate(activeReceipt.date, receiptLang)}
+            </div>
+          </div>
+
+          {/* Collector & Entered By Signature Row */}
           <div className="border-t border-black pt-1 flex items-center justify-between text-[10px] sm:text-[11px]">
-            <span className="font-extrabold text-black">{signatureText}</span>
-            <span className="text-[9px] sm:text-[10px] text-black font-mono">
-              {activeReceipt.paymentMethod} • {formatDate(activeReceipt.date, receiptLang)}
-            </span>
+            <div>
+              <span className="font-extrabold text-black">{signatureText}</span>
+              <p className="text-[9px] text-black/70">
+                {isBn ? "গ্রহীতা / আদায়কারী:" : "Received by:"} <strong className="text-black">{activeReceipt.receivedBy || "Staff"}</strong>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[9px] text-black/70 font-mono">
+                {isBn ? "এন্ট্রি করেছেন:" : "Entered by:"} <strong className="text-black">{activeReceipt.enteredBy || "System"}</strong>
+              </p>
+            </div>
           </div>
 
           {!isOwner && (
-            <p className="text-[8px] sm:text-[9px] text-black/80 mt-1 italic text-right">
+            <p className="text-[8px] sm:text-[9px] text-black/80 mt-0.5 italic text-right">
               {isBn
                 ? "* পানি, বিদ্যুৎ ও গ্যাস অপচয় রোধে সহায়তা করুন।"
                 : "* Please conserve water, electricity and gas."}

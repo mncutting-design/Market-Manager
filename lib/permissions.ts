@@ -1,4 +1,4 @@
-export type UserRole = "ADMIN" | "MANAGER" | "OPERATOR" | "VIEWER";
+export type UserRole = "ADMIN" | "MANAGER" | "COLLECTOR" | "OPERATOR" | "VIEWER";
 
 export interface RoleDefinition {
   role: UserRole;
@@ -71,6 +71,29 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     canDownloadBackup: false,
     canViewReports: true,
   },
+  COLLECTOR: {
+    role: "COLLECTOR",
+    label_bn: "কালেকশন স্টাফ",
+    label_en: "Collection Staff",
+    description_bn: "শুধু কালেকশন: ভাড়া আদায় এন্ট্রি ও রিসিট প্রিন্ট (টপ-আপের আবেদন সুবিধা)",
+    description_en: "Collections & Receipts: Record payments, print receipts (can request advance top-up)",
+    badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
+    canEditDirectly: false,
+    canSubmitEditRequests: false,
+    canCreateMarkets: false,
+    canManageMarkets: false,
+    canCreateShops: false,
+    canEditShopsDirectly: false,
+    canDeleteShops: false,
+    canApproveChanges: false,
+    canGenerateBills: false,
+    canCollectRent: true,
+    canAddExpenses: false,
+    canManageUsers: false,
+    canChangeAnyPassword: false,
+    canDownloadBackup: false,
+    canViewReports: false,
+  },
   OPERATOR: {
     role: "OPERATOR",
     label_bn: "কালেকশন স্টাফ",
@@ -120,7 +143,8 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
 };
 
 export function getRoleDefinition(role: string): RoleDefinition {
-  const normalized = (role || "").toUpperCase() as UserRole;
+  let normalized = (role || "").toUpperCase() as UserRole;
+  if (normalized === "OPERATOR") normalized = "COLLECTOR";
   return ROLE_DEFINITIONS[normalized] || ROLE_DEFINITIONS.ADMIN;
 }
 

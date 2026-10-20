@@ -38,6 +38,7 @@ interface UserItem {
   id: string;
   name: string;
   email: string;
+  phone?: string | null;
   role: UserRole;
   isActive: boolean;
   isOnline?: boolean;
@@ -66,6 +67,7 @@ export function UsersView() {
 
   // Add User Form State (Strictly username + password + role, NO email!)
   const [newUserName, setNewUserName] = useState("");
+  const [newUserPhone, setNewUserPhone] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState<UserRole>("MANAGER");
   const [newUserActive, setNewUserActive] = useState(true);
@@ -130,6 +132,7 @@ export function UsersView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           username: newUserName.trim(),
+          phone: newUserPhone.trim() || undefined,
           password: newUserPassword,
           role: newUserRole,
           isActive: newUserActive,
@@ -148,6 +151,7 @@ export function UsersView() {
           : `User '${data.user?.name}' created successfully!`
       );
       setNewUserName("");
+      setNewUserPhone("");
       setNewUserPassword("");
       setNewUserRole("MANAGER");
       setNewUserActive(true);
@@ -905,6 +909,18 @@ export function UsersView() {
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              {locale === "bn" ? "মোবাইল নম্বর (Phone)" : "Phone Number"}
+            </label>
+            <Input
+              value={newUserPhone}
+              onChange={(e) => setNewUserPhone(e.target.value)}
+              placeholder="017XXXXXXXX"
+              className="font-mono"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
               {locale === "bn" ? "লগইন পাসওয়ার্ড" : "Login Password"}
             </label>
             <div className="relative">
@@ -936,6 +952,7 @@ export function UsersView() {
             >
               <option value="ADMIN">ADMIN (সুপার এডমিন - পূর্ণ ক্ষমতা)</option>
               <option value="MANAGER">MANAGER (ম্যানেজার - কালেকশন ও হিসাব)</option>
+              <option value="COLLECTOR">COLLECTOR (কালেকশন স্টাফ - শুধু এন্ট্রি ও রিসিট)</option>
               <option value="OPERATOR">OPERATOR (কালেকশন স্টাফ - শুধু এন্ট্রি)</option>
               <option value="VIEWER">VIEWER (দর্শক - শুধু দেখার অনুমতি)</option>
             </Select>

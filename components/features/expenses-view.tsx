@@ -22,6 +22,7 @@ import {
   Droplets,
   Building2,
   Users,
+  AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useRealtimeData } from "@/lib/realtime-sync";
@@ -205,6 +206,28 @@ export function ExpensesView() {
         </div>
       </div>
 
+      {/* Filter Notice Banner when Active Filter matches zero records */}
+      {selectedCategory !== "ALL" && expenses.length === 0 && !isLoading && (
+        <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200 shadow-xs">
+          <div className="flex items-center gap-2 font-medium">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              {locale === "bn"
+                ? "রেকর্ড সংরক্ষিত রয়েছে, কিন্তু বর্তমান ক্যাটাগরি ফিল্টারের কারণে প্রদর্শিত হচ্ছে না।"
+                : "Saved, but hidden by current category filter."}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setSelectedCategory("ALL")}
+            className="h-7 text-xs bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-700"
+          >
+            {locale === "bn" ? "ফিল্টার মুছুন" : "Clear filter"}
+          </Button>
+        </div>
+      )}
+
       {/* Expenses List */}
       {isLoading ? (
         <TableSkeleton rows={6} />
@@ -249,10 +272,20 @@ export function ExpensesView() {
                   {e.description || "রক্ষণাবেক্ষণ ব্যয়"}
                 </p>
 
-                <p className="text-xs text-slate-400 mt-1">
-                  {formatDate(e.date, locale)} • {t("expenses.paymentMethod")}: {e.paymentMethod}
-                  {e.attachmentUrl && ` • Voucher: ${e.attachmentUrl}`}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap mt-1.5">
+                  <p className="text-xs text-slate-400">
+                    {formatDate(e.date, locale)} • {t("expenses.paymentMethod")}: {e.paymentMethod}
+                    {e.attachmentUrl && ` • Voucher: ${e.attachmentUrl}`}
+                  </p>
+                  {(e.enteredByUser?.name || e.createdByName) && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                      <Users className="w-3 h-3 text-slate-400" />
+                      <span>
+                        {locale === "bn" ? "এন্ট্রি করেছেন" : "Entered by"}: {e.enteredByUser?.name || e.createdByName}
+                      </span>
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex items-center justify-between md:justify-end gap-4 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
