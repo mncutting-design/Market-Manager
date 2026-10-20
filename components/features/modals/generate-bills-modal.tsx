@@ -151,11 +151,20 @@ export function GenerateBillsModal() {
           <p className="text-xs text-slate-500 mt-1">{t("settings.billDueDayDesc")}</p>
         </div>
 
-        {/* Info card */}
-        <div className="p-3.5 rounded-xl bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-xs text-teal-800 dark:text-teal-200 space-y-1">
-          <p className="font-semibold">✓ স্বয়ংক্রিয় ইউটিলিটি চার্জ / Automated Charges:</p>
-          <p className="opacity-90">
-            মাসিক পানির বিল, সার্ভিস চার্জ এবং জেনারেটর ব্যাকআপ স্বয়ংক্রিয়ভাবে প্রতিটি দোকানের বিলে যোগ হবে।
+        {/* Info card - Strictly manual additional charges */}
+        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
+          <p className="font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+            <span>
+              {locale === "bn"
+                ? "শুধুমাত্র নির্ধারিত ভাড়া বিল তৈরি হবে (ম্যানুয়াল চার্জ ব্যবস্থা)"
+                : "Base Rent Only (Manual Charges System)"}
+            </span>
+          </p>
+          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+            {locale === "bn"
+              ? "কোনো অতিরিক্ত চার্জ স্বয়ংক্রিয়ভাবে যোগ হবে না। প্রতিটি দোকানের কেবল চুক্তি অনুযায়ী নির্ধারিত মূল ভাড়া বিল তৈরি হবে। অতিরিক্ত যে কোনো খরচ (যেমন: বিদ্যুৎ, পানি, সার্ভিস, জেনারেটর ইত্যাদি) আপনি প্রয়োজন অনুযায়ী 'অতিরিক্ত খরচ' বাটনে চাপ দিয়ে সম্পূর্ণ ম্যানুয়ালি যোগ করতে পারবেন।"
+              : "No charges will be added automatically. Bills will only include the agreed base rent. Any extra costs (e.g. electricity, water, service, generator) can be added manually as needed via the 'Extra Costs' button on each bill."}
           </p>
         </div>
 

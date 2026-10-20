@@ -17,6 +17,15 @@ interface ManageBillChargesModalProps {
   onUpdated?: () => void;
 }
 
+const PRESET_CHARGES = [
+  { bn: "বিদ্যুৎ বিল", en: "Electricity Bill", icon: "⚡" },
+  { bn: "পানির বিল", en: "Water Bill", icon: "💧" },
+  { bn: "সার্ভিস চার্জ", en: "Service Charge", icon: "🛠️" },
+  { bn: "জেনারেটর বিল", en: "Generator Bill", icon: "🔌" },
+  { bn: "পরিচ্ছন্নতা ফি", en: "Cleaning Fee", icon: "🧹" },
+  { bn: "অন্যান্য খরচ", en: "Other Cost", icon: "📝" },
+];
+
 export function ManageBillChargesModal({
   isOpen,
   onClose,
@@ -179,20 +188,53 @@ export function ManageBillChargesModal({
 
         {/* Add New Cost Form */}
         <form onSubmit={handleAddCharge} className="p-3.5 rounded-xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/20 space-y-3">
-          <h4 className="text-xs font-bold text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
-            <Plus className="w-3.5 h-3.5" />
-            <span>{locale === "bn" ? "নতুন অতিরিক্ত খরচ যোগ করুন (ম্যানুয়াল)" : "Add New Additional Cost (Manual)"}</span>
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-bold text-teal-800 dark:text-teal-300 flex items-center gap-1.5">
+              <Plus className="w-3.5 h-3.5" />
+              <span>{locale === "bn" ? "নতুন খরচ যোগ করুন (ম্যানুয়াল)" : "Add Manual Charge"}</span>
+            </h4>
+            <span className="text-[10px] text-teal-600 dark:text-teal-400 font-medium">
+              {locale === "bn" ? "১০০% ম্যানুয়াল নিয়ন্ত্রণ" : "100% Manual Control"}
+            </span>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {/* Quick preset chips */}
+          <div>
+            <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+              {locale === "bn" ? "দ্রুত বাছাই করুন (ক্লিক করুন):" : "Quick Select Presets:"}
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {PRESET_CHARGES.map((preset) => {
+                const label = locale === "bn" ? preset.bn : preset.en;
+                const isSelected = description === label;
+                return (
+                  <button
+                    key={preset.bn}
+                    type="button"
+                    onClick={() => setDescription(label)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-teal-600 text-white shadow-2xs scale-102"
+                        : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:border-teal-400 dark:hover:border-teal-600 hover:bg-teal-50/50"
+                    }`}
+                  >
+                    <span>{preset.icon}</span>
+                    <span>{label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
             <div>
               <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                {locale === "bn" ? "খরচের বিবরণ (যেমন: বিদ্যুৎ / সার্ভিস)" : "Description (e.g. Electricity / Service)"}
+                {locale === "bn" ? "খরচের বিবরণ" : "Charge Description"}
               </label>
               <Input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder={locale === "bn" ? "যেমন: বিদ্যুৎ বিল" : "e.g. Electricity"}
+                placeholder={locale === "bn" ? "যেমন: বিদ্যুৎ বিল" : "e.g. Electricity Bill"}
                 required
               />
             </div>
