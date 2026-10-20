@@ -12,6 +12,7 @@ import {
   ChevronDown,
   Calendar,
   Settings,
+  Database,
   LogOut,
   ShieldCheck,
   FolderArchive,
@@ -375,6 +376,17 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                   >
                     <KeyRound className="w-4 h-4 text-amber-500" />
                     <span>{locale === "bn" ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      setActiveTab("backup");
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left cursor-pointer min-h-[44px]"
+                  >
+                    <Database className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <span>{t("nav.backup")}</span>
                   </button>
 
                   <button

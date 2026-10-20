@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
-import { Settings, Shield, KeyRound, Download, Languages, CheckCircle2, FolderArchive, ShieldAlert } from "lucide-react";
+import { Settings, Shield, KeyRound, Download, Languages, CheckCircle2, FolderArchive, ShieldAlert, Database, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { TenantPolicyCard } from "./settings/tenant-policy-card";
 import { AuditLogsCard } from "./settings/audit-logs-card";
@@ -17,7 +17,7 @@ import { ClearDataCard } from "./settings/clear-data-card";
 
 export function SettingsView() {
   const { t, locale, setLocale } = useTranslation();
-  const { triggerRefresh, currentUser } = useApp();
+  const { triggerRefresh, currentUser, setActiveTab } = useApp();
 
   // Profile Form
   const [adminName, setAdminName] = useState(currentUser?.name || "NAZRUL");
@@ -241,7 +241,11 @@ export function SettingsView() {
             {t("settings.backupDesc")}
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-0 pt-4 flex justify-end">
+        <CardContent className="p-0 pt-4 flex flex-wrap items-center justify-end gap-2.5">
+          <Button variant="outline" onClick={() => setActiveTab("backup")}>
+            <Database className="w-4 h-4 mr-1.5 text-teal-600 dark:text-teal-400" />
+            {locale === "bn" ? "ব্যাকআপ ও রিস্টোর পেজে যান" : "Go to Backup & Restore Page"}
+          </Button>
           <Button variant="accent" onClick={handleDownloadBackup}>
             <Download className="w-4 h-4 mr-1.5" />
             {t("settings.exportAllData")}

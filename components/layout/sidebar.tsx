@@ -14,6 +14,7 @@ import {
   FileSpreadsheet,
   Users,
   Settings,
+  Database,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
@@ -34,6 +35,7 @@ export function Sidebar() {
     { id: "expenses", labelKey: "nav.expenses", icon: Wrench },
     { id: "reports", labelKey: "nav.reports", icon: FileSpreadsheet },
     { id: "users", labelKey: "nav.users", icon: Users },
+    { id: "backup", labelKey: "nav.backup", icon: Database },
     { id: "settings", labelKey: "nav.settings", icon: Settings },
   ];
 

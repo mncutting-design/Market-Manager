@@ -26,6 +26,7 @@ import { ExpensesView } from "@/components/features/expenses-view";
 import { ReportsView } from "@/components/features/reports-view";
 import { UsersView } from "@/components/features/users-view";
 import { SettingsView } from "@/components/features/settings-view";
+import { BackupView } from "@/components/features/backup-view";
 import { PremiumLoader } from "@/components/ui/premium-loader";
 
 function MainApp() {
@@ -81,6 +82,9 @@ function MainApp() {
         </div>
         <div className={activeTab === "users" ? "block" : "hidden"}>
           {visitedTabs.has("users") && <UsersView />}
+        </div>
+        <div className={activeTab === "backup" ? "block" : "hidden"}>
+          {visitedTabs.has("backup") && <BackupView />}
         </div>
         <div className={activeTab === "settings" ? "block" : "hidden"}>
           {visitedTabs.has("settings") && <SettingsView />}

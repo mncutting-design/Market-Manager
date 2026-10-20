@@ -14,6 +14,7 @@ import {
   Receipt,
   AlertCircle,
   Users,
+  Database,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ export function BottomNav() {
     { id: "billing", labelKey: "nav.billing", icon: Receipt },
     { id: "dues", labelKey: "nav.dues", icon: AlertCircle, badgeColor: "text-red-500" },
     { id: "users", labelKey: "nav.users", icon: Users },
+    { id: "backup", labelKey: "nav.backup", icon: Database },
     { id: "settings", labelKey: "nav.settings", icon: Settings },
   ];
 
