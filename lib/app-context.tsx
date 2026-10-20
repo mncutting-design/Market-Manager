@@ -72,9 +72,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // User & Approvals State
   const [currentUser, setCurrentUser] = useState<{ id: string; name: string; email: string; role: string; locale: string } | null>({
-    id: "admin-default-cuid-2026",
-    name: "প্রশাসক (Admin)",
-    email: "admin@marketmanager.com",
+    id: "user-nazrul-admin-2026",
+    name: "NAZRUL",
+    email: "nazrul@rentpro.internal",
     role: "ADMIN",
     locale: "bn",
   });

@@ -12,6 +12,12 @@ export async function GET() {
 
   try {
     const users = await prisma.user.findMany({
+      where: {
+        NOT: [
+          { email: "admin@marketmanager.com" },
+          { name: "প্রশাসক (Admin)" },
+        ],
+      },
       select: {
         id: true,
         name: true,
@@ -23,22 +29,14 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    // If database is empty, return default NAZRUL & Admin
+    // If database has no users, return default NAZRUL Admin
     if (users.length === 0) {
       return NextResponse.json({
         users: [
           {
             id: "user-nazrul-admin-2026",
             name: "NAZRUL",
-            email: "nazrul@marketmanager.com",
-            role: "ADMIN",
-            locale: "bn",
-            createdAt: new Date().toISOString(),
-          },
-          {
-            id: "admin-default-cuid-2026",
-            name: "প্রশাসক (Admin)",
-            email: "admin@marketmanager.com",
+            email: "nazrul",
             role: "ADMIN",
             locale: "bn",
             createdAt: new Date().toISOString(),
@@ -55,7 +53,7 @@ export async function GET() {
         {
           id: "user-nazrul-admin-2026",
           name: "NAZRUL",
-          email: "nazrul@marketmanager.com",
+          email: "nazrul",
           role: "ADMIN",
           locale: "bn",
           createdAt: new Date().toISOString(),
@@ -80,28 +78,43 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { name, email, password, role } = await req.json();
+    const body = await req.json();
+    const rawUsername = (body.username || body.name || "").trim();
+    const password = body.password;
+    const role = body.role;
 
-    if (!name || !email || !password) {
+    if (!rawUsername || !password) {
       return NextResponse.json(
-        { error: "Name, email/username, and password are required" },
+        { error: "Username and password are required" },
         { status: 400 }
       );
     }
 
-    const cleanEmail = email.toLowerCase().trim();
+    if (password.length < 4) {
+      return NextResponse.json(
+        { error: "Password must be at least 4 characters long" },
+        { status: 400 }
+      );
+    }
+
+    // Generate internal email identifier if no email was entered
+    const sanitizedName = rawUsername.toLowerCase().replace(/[^a-z0-9_-]/g, "_");
+    const internalEmail = body.email
+      ? body.email.toLowerCase().trim()
+      : `${sanitizedName}@rentpro.internal`;
+
     const existing = await prisma.user.findFirst({
       where: {
         OR: [
-          { email: cleanEmail },
-          { name: name.trim() },
+          { name: { equals: rawUsername, mode: "insensitive" } },
+          { email: { equals: internalEmail, mode: "insensitive" } },
         ],
       },
     });
 
     if (existing) {
       return NextResponse.json(
-        { error: "A user with this username or email already exists" },
+        { error: "এই ইউজারনেমটি ইতিমধ্যে ব্যবহৃত হয়েছে (Username is already registered)" },
         { status: 409 }
       );
     }
@@ -113,8 +126,8 @@ export async function POST(req: Request) {
 
     const newUser = await prisma.user.create({
       data: {
-        name: name.trim(),
-        email: cleanEmail,
+        name: rawUsername,
+        email: internalEmail,
         passwordHash,
         role: validRole,
         locale: "bn",

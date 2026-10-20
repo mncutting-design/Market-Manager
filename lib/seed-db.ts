@@ -10,33 +10,33 @@ export async function seedDatabase() {
 
     console.log("🌱 Auto-seeding Market Manager database...");
 
-    // 1a. Create or ensure NAZRUL Admin User
+    // 1. Create or ensure NAZRUL Super Admin User
     const nazrulHash = await bcrypt.hash("NAZRUL", 10);
     await prisma.user.upsert({
-      where: { email: "nazrul@marketmanager.com" },
+      where: { email: "nazrul@rentpro.internal" },
       update: {},
       create: {
         name: "NAZRUL",
-        email: "nazrul@marketmanager.com",
+        email: "nazrul@rentpro.internal",
         passwordHash: nazrulHash,
         role: "ADMIN",
         locale: "bn",
       },
     });
 
-    // 1b. Create or ensure Admin User
-    const passwordHash = await bcrypt.hash("admin123", 10);
-    await prisma.user.upsert({
-      where: { email: "admin@marketmanager.com" },
-      update: { passwordHash },
-      create: {
-        name: "প্রশাসক (Admin)",
-        email: "admin@marketmanager.com",
-        passwordHash,
-        role: "ADMIN",
-        locale: "bn",
-      },
-    });
+    // Clean up default demo admin from DB if present
+    try {
+      await prisma.user.deleteMany({
+        where: {
+          OR: [
+            { email: "admin@marketmanager.com" },
+            { name: "প্রশাসক (Admin)" },
+          ],
+        },
+      });
+    } catch (cleanErr) {
+      // Ignore if table doesn't exist yet
+    }
 
     // 2. Charge Types
     const chargeTypesData = [

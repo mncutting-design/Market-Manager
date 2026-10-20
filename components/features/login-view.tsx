@@ -2,38 +2,30 @@
 
 import React, { useState } from "react";
 import { useTranslation } from "@/lib/i18n";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Building2,
   KeyRound,
   User,
-  Sparkles,
   Languages,
   ArrowRight,
-  ShieldCheck,
   Eye,
   EyeOff,
   Cpu,
   Lock,
-  Layers,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ROLE_DEFINITIONS } from "@/lib/permissions";
 
 export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const { t, locale, toggleLocale } = useTranslation();
-  const [identifier, setIdentifier] = useState("NAZRUL");
-  const [password, setPassword] = useState("NAZRUL");
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [showRoleMatrix, setShowRoleMatrix] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!identifier || !password) {
+    if (!identifier.trim() || !password) {
       toast.error(
         locale === "bn"
           ? "ইউজারনেম এবং পাসওয়ার্ড উভয়ই আবশ্যক"
@@ -48,7 +40,7 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          username: identifier,
+          username: identifier.trim(),
           password: password,
         }),
       });
@@ -56,15 +48,15 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
       const data = await res.json();
       if (!res.ok) {
         toast.error(
-          data.error || (locale === "bn" ? "লগইন ব্যর্থ হয়েছে" : "Login failed")
+          data.error || (locale === "bn" ? "ভুল ইউজারনেম বা পাসওয়ার্ড" : "Invalid username or password")
         );
         return;
       }
 
       toast.success(
         locale === "bn"
-          ? `স্বাগতম ${data.user?.name || "NAZRUL"}! সিস্টেম আনলক হয়েছে।`
-          : `Welcome ${data.user?.name || "NAZRUL"}! Access authorized.`
+          ? `স্বাগতম ${data.user?.name || identifier}! সিস্টেম আনলক হয়েছে।`
+          : `Welcome ${data.user?.name || identifier}! Access authorized.`
       );
       onLoginSuccess();
     } catch (e) {
@@ -72,14 +64,6 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = (uname: string, pass: string) => {
-    setIdentifier(uname);
-    setPassword(pass);
-    setTimeout(() => {
-      handleSubmit();
-    }, 100);
   };
 
   return (
@@ -143,7 +127,7 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
           <span className="absolute -bottom-1 -right-1 w-3 h-3 border-b-2 border-r-2 border-emerald-400" />
 
           {/* Card Body with Glassmorphism */}
-          <div className="rounded-[22px] bg-[#0c1222]/90 backdrop-blur-2xl p-5 sm:p-8 space-y-6">
+          <div className="rounded-[22px] bg-[#0c1222]/90 backdrop-blur-2xl p-6 sm:p-8 space-y-6">
             {/* Holographic Reactor Brand */}
             <div className="text-center space-y-2">
               <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
@@ -173,13 +157,12 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
               </div>
             </div>
 
-            {/* Login Form */}
+            {/* Secure Login Form */}
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Username Input */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-cyan-300/80 flex items-center justify-between">
-                  <span>{locale === "bn" ? "ব্যবহারকারীর নাম / ইউজারনেম" : "Username / Identity"}</span>
-                  <span className="text-[10px] text-emerald-400 font-bold">DEFAULT: NAZRUL</span>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-cyan-300/80">
+                  {locale === "bn" ? "ব্যবহারকারীর নাম / ইউজারনেম" : "Username / Identity"}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-cyan-400">
@@ -189,8 +172,9 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
                     type="text"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="NAZRUL"
+                    placeholder={locale === "bn" ? "ইউজারনেম লিখুন..." : "Enter username..."}
                     required
+                    autoComplete="username"
                     className="pl-9 pr-3 h-11 bg-slate-900/80 border-slate-700 focus:border-cyan-400 focus:ring-cyan-400/20 text-white font-mono text-sm placeholder:text-slate-500 rounded-xl"
                   />
                 </div>
@@ -198,9 +182,8 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
               {/* Password Input */}
               <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-cyan-300/80 flex items-center justify-between">
-                  <span>{locale === "bn" ? "সিকিউরিটি পাসওয়ার্ড" : "Security Password"}</span>
-                  <span className="text-[10px] text-emerald-400 font-bold">DEFAULT: NAZRUL</span>
+                <label className="block text-[11px] font-mono uppercase tracking-wider text-cyan-300/80">
+                  {locale === "bn" ? "সিকিউরিটি পাসওয়ার্ড" : "Security Password"}
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-cyan-400">
@@ -210,8 +193,9 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
                     type={showPassword ? "text" : "password"}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="••••••••"
+                    placeholder={locale === "bn" ? "পাসওয়ার্ড লিখুন..." : "Enter password..."}
                     required
+                    autoComplete="current-password"
                     className="pl-9 pr-10 h-11 bg-slate-900/80 border-slate-700 focus:border-cyan-400 focus:ring-cyan-400/20 text-white font-mono text-sm placeholder:text-slate-500 rounded-xl"
                   />
                   <button
@@ -228,7 +212,7 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-11 mt-2 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer border border-cyan-300/50"
+                className="w-full h-11 mt-3 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer border border-cyan-300/50"
               >
                 {isLoading ? (
                   <div className="flex items-center gap-2">
@@ -245,100 +229,12 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
               </button>
             </form>
 
-            {/* Quick 1-Click Access Badges */}
-            <div className="pt-3 border-t border-slate-800 space-y-2">
-              <p className="text-[10px] font-mono text-center text-slate-400 uppercase tracking-widest">
-                {locale === "bn" ? "ইনস্ট্যান্ট অ্যাক্সেস প্রি-সেট:" : "Instant 1-Click Credentials:"}
-              </p>
-
-              <div className="grid grid-cols-1 gap-2">
-                {/* 1. NAZRUL ADMIN ACCESS */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin("NAZRUL", "NAZRUL")}
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-cyan-950/60 to-slate-900 border border-cyan-500/40 hover:border-cyan-400 hover:bg-cyan-950/80 transition-all cursor-pointer group text-left"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-lg bg-cyan-500/20 text-cyan-300 flex items-center justify-center font-black text-xs border border-cyan-500/40">
-                      ⚡
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-cyan-200 group-hover:text-white transition-colors">
-                        NAZRUL (Super Admin)
-                      </p>
-                      <p className="text-[10px] font-mono text-cyan-400/80">User: NAZRUL • Pass: NAZRUL</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">
-                    Full Admin
-                  </span>
-                </button>
-
-                {/* 2. DEMO MANAGER ACCESS */}
-                <button
-                  type="button"
-                  onClick={() => handleQuickLogin("admin@marketmanager.com", "admin123")}
-                  disabled={isLoading}
-                  className="w-full flex items-center justify-between p-2 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-all cursor-pointer text-left opacity-80 hover:opacity-100"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-lg bg-teal-500/20 text-teal-300 flex items-center justify-center font-bold text-xs">
-                      👤
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-slate-300">Default Admin</p>
-                      <p className="text-[9px] font-mono text-slate-500">admin@marketmanager.com</p>
-                    </div>
-                  </div>
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400">
-                    admin123
-                  </span>
-                </button>
+            {/* Bottom Security Assurance Tag */}
+            <div className="pt-2 text-center">
+              <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-slate-500">
+                <Lock className="w-3 h-3 text-cyan-500" />
+                <span>RESTRICTED ACCESS • SECURED WITH ROLE-BASED ACCESS CONTROL</span>
               </div>
-            </div>
-
-            {/* Role Permissions Preview Accordion */}
-            <div className="pt-2 border-t border-slate-800/80">
-              <button
-                type="button"
-                onClick={() => setShowRoleMatrix(!showRoleMatrix)}
-                className="w-full flex items-center justify-between py-1 text-[11px] font-mono text-cyan-400 hover:text-cyan-300 cursor-pointer"
-              >
-                <span className="flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5" />
-                  {locale === "bn"
-                    ? "রোল পারমিশন ম্যাট্রিক্স (RBAC Architecture)"
-                    : "Role Permission Matrix (RBAC System)"}
-                </span>
-                {showRoleMatrix ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-              </button>
-
-              {showRoleMatrix && (
-                <div className="mt-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-[10px] space-y-2 animate-in fade-in duration-150">
-                  {Object.values(ROLE_DEFINITIONS).map((r) => (
-                    <div
-                      key={r.role}
-                      className="p-1.5 rounded-lg bg-slate-900/60 border border-slate-800/80 flex items-start justify-between gap-2"
-                    >
-                      <div>
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-bold text-white">{r.role}</span>
-                          <span className="text-[9px] text-slate-400">
-                            ({locale === "bn" ? r.label_bn : r.label_en})
-                          </span>
-                        </div>
-                        <p className="text-[9px] text-slate-500 mt-0.5">
-                          {locale === "bn" ? r.description_bn : r.description_en}
-                        </p>
-                      </div>
-                      <span className={`px-1.5 py-0.5 rounded text-[9px] font-bold uppercase shrink-0 border ${r.badgeColor}`}>
-                        {r.role === "ADMIN" ? "Full Access" : r.role === "MANAGER" ? "Operations" : r.role === "OPERATOR" ? "Collect" : "View"}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -346,3 +242,4 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     </div>
   );
 }
+

@@ -277,7 +277,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                     {currentUser?.name || "NAZRUL"}
                   </p>
                   <p className="text-xs text-slate-600 dark:text-white/80 truncate font-mono">
-                    {currentUser?.email || "nazrul@marketmanager.com"}
+                    @{currentUser?.name || "NAZRUL"}
                   </p>
                   <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/80 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-700 w-fit">
                     <ShieldCheck className="w-3.5 h-3.5 text-teal-500" />

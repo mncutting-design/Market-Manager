@@ -37,7 +37,6 @@ export function UsersRolesCard() {
 
   // Form State
   const [newUserName, setNewUserName] = useState("");
-  const [newUserEmail, setNewUserEmail] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState<UserRole>("MANAGER");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +47,12 @@ export function UsersRolesCard() {
       const res = await fetch("/api/users");
       if (res.ok) {
         const data = await res.json();
-        setUsers(data.users || []);
+        const cleanList = (data.users || []).filter(
+          (u: UserItem) =>
+            u.email !== "admin@marketmanager.com" &&
+            u.name !== "প্রশাসক (Admin)"
+        );
+        setUsers(cleanList);
       }
     } catch (err) {
       console.error("Failed to load users:", err);
@@ -63,9 +67,9 @@ export function UsersRolesCard() {
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUserName || !newUserEmail || !newUserPassword) {
+    if (!newUserName.trim() || !newUserPassword) {
       toast.error(
-        locale === "bn" ? "সকল তথ্য সঠিকভাবে পূরণ করুন" : "Please fill all required fields"
+        locale === "bn" ? "ইউজারনেম এবং পাসওয়ার্ড উভয়ই আবশ্যক" : "Username and password are required"
       );
       return;
     }
@@ -76,8 +80,7 @@ export function UsersRolesCard() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: newUserName,
-          email: newUserEmail,
+          username: newUserName.trim(),
           password: newUserPassword,
           role: newUserRole,
         }),
@@ -95,7 +98,6 @@ export function UsersRolesCard() {
           : `User '${data.user?.name}' created successfully!`
       );
       setNewUserName("");
-      setNewUserEmail("");
       setNewUserPassword("");
       setNewUserRole("MANAGER");
       setIsAddUserOpen(false);
@@ -159,27 +161,15 @@ export function UsersRolesCard() {
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  {locale === "bn" ? "ব্যবহারকারীর নাম" : "User Name"}
+                  {locale === "bn" ? "ব্যবহারকারীর ইউজারনেম" : "Username"}
                 </label>
                 <Input
                   value={newUserName}
                   onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder="e.g. KAMAL HOSSAIN"
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
-                  {locale === "bn" ? "ইউজারনেম / ইমেইল" : "Username / Email"}
-                </label>
-                <Input
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="kamal@marketmanager.com"
+                  placeholder="e.g. KAMAL"
                   required
                 />
               </div>
@@ -262,12 +252,12 @@ export function UsersRolesCard() {
                           <span>{u.name}</span>
                           {isNazrul && (
                             <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/30">
-                              Primary Admin
+                              Super Admin
                             </span>
                           )}
                         </p>
                         <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
-                          {u.email}
+                          ইউজারনেম: {u.name}
                         </p>
                       </div>
                     </div>

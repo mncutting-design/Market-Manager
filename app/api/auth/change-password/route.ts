@@ -41,20 +41,18 @@ export async function POST(req: Request) {
     }
 
     const isNazrulInitial =
-      (session.name === "NAZRUL" || session.email === "nazrul@marketmanager.com") &&
+      (session.name === "NAZRUL" || session.email?.includes("nazrul")) &&
       currentPassword === "NAZRUL";
-    const isDemoAdminInitial =
-      session.email === "admin@marketmanager.com" && currentPassword === "admin123";
 
     if (!user) {
       // If user was using initial session, create record with new password
-      if (isNazrulInitial || isDemoAdminInitial) {
+      if (isNazrulInitial) {
         const newHash = await bcrypt.hash(newPassword, 10);
         try {
           user = await prisma.user.create({
             data: {
               name: session.name || "NAZRUL",
-              email: session.email || "nazrul@marketmanager.com",
+              email: "nazrul@rentpro.internal",
               passwordHash: newHash,
               role: session.role || "ADMIN",
               locale: session.locale || "bn",
@@ -73,7 +71,7 @@ export async function POST(req: Request) {
 
     // Verify current password
     const isHashMatch = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!isHashMatch && !isNazrulInitial && !isDemoAdminInitial) {
+    if (!isHashMatch && !isNazrulInitial) {
       return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
     }
 

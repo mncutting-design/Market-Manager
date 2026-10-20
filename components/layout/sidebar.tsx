@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const { activeTab, setActiveTab } = useApp();
+  const { activeTab, setActiveTab, currentUser } = useApp();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const navItems = [
@@ -91,15 +91,15 @@ export function Sidebar() {
           )}
         >
           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-teal-500 to-emerald-500 text-slate-950 flex items-center justify-center font-extrabold text-xs shrink-0 shadow-xs">
-            MM
+            {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "NZ"}
           </div>
           {!isCollapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
-                {t("nav.admin")}
+                {currentUser?.name || "NAZRUL"}
               </p>
-              <p className="text-[11px] text-teal-600 dark:text-teal-300 font-medium truncate">
-                admin@marketmanager.com
+              <p className="text-[11px] text-teal-600 dark:text-teal-300 font-medium truncate font-mono">
+                {currentUser?.role || "ADMIN"}
               </p>
             </div>
           )}

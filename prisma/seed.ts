@@ -13,28 +13,23 @@ async function main() {
     update: {},
     create: {
       name: "NAZRUL",
-      email: "nazrul@marketmanager.com",
+      email: "nazrul@rentpro.internal",
       passwordHash: nazrulHash,
       role: "ADMIN",
       locale: "bn",
     },
   });
-  console.log("✅ Primary Admin user ready:", nazrulUser.name, nazrulUser.email);
+  console.log("✅ Super Admin user ready:", nazrulUser.name);
 
-  // 1b. Create Demo Admin User
-  const passwordHash = await bcrypt.hash("admin123", 10);
-  const user = await prisma.user.upsert({
-    where: { email: "admin@marketmanager.com" },
-    update: {},
-    create: {
-      name: "প্রশাসক (Admin)",
-      email: "admin@marketmanager.com",
-      passwordHash,
-      role: "ADMIN",
-      locale: "bn",
+  // Clean up demo admin if exists
+  await prisma.user.deleteMany({
+    where: {
+      OR: [
+        { email: "admin@marketmanager.com" },
+        { name: "প্রশাসক (Admin)" },
+      ],
     },
   });
-  console.log("✅ Admin user ready:", user.email);
 
   // 2. Create Charge Types
   const chargeTypesData = [

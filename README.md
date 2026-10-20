@@ -74,10 +74,10 @@ npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Demo Admin Credentials
-- **Email**: `admin@marketmanager.com`
-- **Password**: `admin123`
-*(A quick one-click autofill button is also provided on the login page)*
+### 5. Super Admin Credentials
+- **Username**: `NAZRUL`
+- **Password**: `NAZRUL`
+*(Password can be updated anytime from the profile avatar or settings menu)*
 
 ---
 

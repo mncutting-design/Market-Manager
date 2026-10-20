@@ -37,18 +37,10 @@ function parseToken(token: string): SessionUser | null {
   }
 }
 
-const DEFAULT_DEMO_ADMIN: SessionUser = {
-  id: "admin-default-cuid-2026",
-  name: "প্রশাসক (Admin)",
-  email: "admin@marketmanager.com",
-  role: "ADMIN",
-  locale: "bn",
-};
-
 const DEFAULT_NAZRUL_ADMIN: SessionUser = {
   id: "user-nazrul-admin-2026",
   name: "NAZRUL",
-  email: "nazrul@marketmanager.com",
+  email: "nazrul@rentpro.internal",
   role: "ADMIN",
   locale: "bn",
 };
@@ -59,8 +51,7 @@ export async function login(
 ): Promise<{ success: boolean; error?: string; user?: SessionUser }> {
   const clean = (identifier || "").trim();
   const cleanLower = clean.toLowerCase();
-  const isNazrulInitial = (cleanLower === "nazrul" || cleanLower === "nazrul@marketmanager.com") && password === "NAZRUL";
-  const isDemoAdmin = cleanLower === "admin@marketmanager.com" && password === "admin123";
+  const isNazrulInitial = cleanLower === "nazrul" && password === "NAZRUL";
 
   try {
     let user = null;
@@ -68,9 +59,10 @@ export async function login(
       user = await prisma.user.findFirst({
         where: {
           OR: [
-            { email: { equals: cleanLower, mode: "insensitive" } },
             { name: { equals: clean, mode: "insensitive" } },
-            ...(cleanLower === "nazrul" ? [{ email: "nazrul@marketmanager.com" }] : []),
+            { email: { equals: cleanLower, mode: "insensitive" } },
+            { email: { equals: `${cleanLower}@rentpro.internal`, mode: "insensitive" } },
+            { email: { equals: `${cleanLower}@marketmanager.com`, mode: "insensitive" } },
           ],
         },
       });
@@ -78,16 +70,16 @@ export async function login(
       console.warn("Prisma user lookup warning (likely unseeded DB):", dbErr);
     }
 
-    // Auto-create/upsert NAZRUL admin if not yet in database
+    // Auto-create/seed NAZRUL admin if not yet in database
     if (!user && (cleanLower === "nazrul" || cleanLower === "nazrul@marketmanager.com")) {
       try {
         const passwordHash = await bcrypt.hash("NAZRUL", 10);
         user = await prisma.user.upsert({
-          where: { email: "nazrul@marketmanager.com" },
+          where: { email: "nazrul@rentpro.internal" },
           update: {},
           create: {
             name: "NAZRUL",
-            email: "nazrul@marketmanager.com",
+            email: "nazrul@rentpro.internal",
             passwordHash,
             role: "ADMIN",
             locale: "bn",
@@ -98,27 +90,7 @@ export async function login(
       }
     }
 
-    // Auto-create/upsert default admin if not yet in database
-    if (!user && isDemoAdmin) {
-      try {
-        const passwordHash = await bcrypt.hash("admin123", 10);
-        user = await prisma.user.upsert({
-          where: { email: "admin@marketmanager.com" },
-          update: { passwordHash },
-          create: {
-            name: "প্রশাসক (Admin)",
-            email: "admin@marketmanager.com",
-            passwordHash,
-            role: "ADMIN",
-            locale: "bn",
-          },
-        });
-      } catch (upsertErr) {
-        console.warn("Could not upsert default admin to DB (using in-memory fallback):", upsertErr);
-      }
-    }
-
-    // If still no user in DB, but it matches initial credentials, provide instant session
+    // If still no user in DB, but matches initial NAZRUL credentials, provide session
     if (!user) {
       if (isNazrulInitial) {
         const token = createToken(DEFAULT_NAZRUL_ADMIN);
@@ -132,28 +104,13 @@ export async function login(
         });
         return { success: true, user: DEFAULT_NAZRUL_ADMIN };
       }
-
-      if (isDemoAdmin) {
-        const token = createToken(DEFAULT_DEMO_ADMIN);
-        const cookieStore = await cookies();
-        cookieStore.set(SESSION_COOKIE_NAME, token, {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
-          maxAge: 7 * 24 * 60 * 60,
-          path: "/",
-        });
-        return { success: true, user: DEFAULT_DEMO_ADMIN };
-      }
       return { success: false, error: "Invalid username or password" };
     }
 
-    // Verify password for users:
+    // Verify password hash against database
     const isPasswordHashValid = await bcrypt.compare(password, user.passwordHash);
-    const isNazrulBypass = (user.name === "NAZRUL" || user.email === "nazrul@marketmanager.com") && password === "NAZRUL";
-    const isDemoBypass = user.email === "admin@marketmanager.com" && password === "admin123";
 
-    if (!isPasswordHashValid && !isNazrulBypass && !isDemoBypass) {
+    if (!isPasswordHashValid) {
       return { success: false, error: "Invalid username or password" };
     }
 
@@ -190,19 +147,6 @@ export async function login(
         path: "/",
       });
       return { success: true, user: DEFAULT_NAZRUL_ADMIN };
-    }
-
-    if (isDemoAdmin) {
-      const token = createToken(DEFAULT_DEMO_ADMIN);
-      const cookieStore = await cookies();
-      cookieStore.set(SESSION_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60,
-        path: "/",
-      });
-      return { success: true, user: DEFAULT_DEMO_ADMIN };
     }
 
     return { success: false, error: "Authentication failed" };
