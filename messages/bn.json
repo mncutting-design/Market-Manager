@@ -181,6 +181,8 @@
     "profileDetails": "প্রোফাইল বিবরণ",
     "advanceLedger": "জামানত খতিয়ান",
     "editProfile": "তথ্য সম্পাদনা",
+    "assignAction": "ভাড়াটিয়া যুক্ত করুন",
+    "referenceInfo": "রেফারেন্স ব্যক্তির তথ্য (Reference Person)",
     "tenantAssigned": "ভাড়াটিয়া সফলভাবে যুক্ত করা হয়েছে",
     "tenantUpdated": "ভাড়াটিয়ার তথ্য হালনাগাদ হয়েছে"
   },

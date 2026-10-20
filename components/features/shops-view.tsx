@@ -42,6 +42,8 @@ import {
   UserCheck,
   ArrowUpDown,
   Sparkles,
+  MapPin,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { TenantProfileModal } from "./modals/tenant-profile-modal";
@@ -227,9 +229,25 @@ export function ShopsView() {
   const [tenantName, setTenantName] = useState("");
   const [tenantPhone, setTenantPhone] = useState("");
   const [tenantNid, setTenantNid] = useState("");
-  const [advanceDepositBDT, setAdvanceDepositBDT] = useState<number>(60000);
+  const [permanentAddress, setPermanentAddress] = useState("");
+  const [referenceName, setReferenceName] = useState("");
+  const [referencePhone, setReferencePhone] = useState("");
+  const [referenceRelation, setReferenceRelation] = useState("");
+  const [advanceDepositBDT, setAdvanceDepositBDT] = useState<number>(0);
   const [agreedRentBDT, setAgreedRentBDT] = useState<number>(20000);
   const [isSubmittingTenant, setIsSubmittingTenant] = useState(false);
+
+  const resetAssignTenantForm = () => {
+    setTenantName("");
+    setTenantPhone("");
+    setTenantNid("");
+    setPermanentAddress("");
+    setReferenceName("");
+    setReferencePhone("");
+    setReferenceRelation("");
+    setAdvanceDepositBDT(0);
+    setAgreedRentBDT(0);
+  };
 
   // 3. Update Rent Form
   const [newRentBDT, setNewRentBDT] = useState<number>(0);
@@ -300,9 +318,13 @@ export function ShopsView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           shopId: selectedShop.id,
-          name: tenantName,
-          phone: tenantPhone,
-          nid: tenantNid,
+          name: tenantName.trim(),
+          phone: tenantPhone.trim(),
+          nid: tenantNid.trim() || undefined,
+          permanentAddress: permanentAddress.trim() || undefined,
+          referenceName: referenceName.trim() || undefined,
+          referencePhone: referencePhone.trim() || undefined,
+          referenceRelation: referenceRelation.trim() || undefined,
           advanceDeposit: Math.round(advanceDepositBDT * 100),
           rentAmount: Math.round(agreedRentBDT * 100),
         }),
@@ -317,8 +339,7 @@ export function ShopsView() {
       toast.success(t("tenants.tenantAssigned"));
       triggerRefresh();
       setIsAssignTenantOpen(false);
-      setTenantName("");
-      setTenantPhone("");
+      resetAssignTenantForm();
     } catch (e) {
       toast.error("Failed to assign tenant");
     } finally {
@@ -753,6 +774,7 @@ export function ShopsView() {
                       setAgreedRentBDT(Math.round(shop.defaultRent / 100));
                       // Advance deposit is negotiated individually renter-wise, not fixed 3x multiplier
                       setAdvanceDepositBDT(0);
+                      resetAssignTenantForm();
                       setIsAssignTenantOpen(true);
                     }}
                   >
@@ -945,76 +967,136 @@ export function ShopsView() {
           maxWidth="2xl"
         >
           <form onSubmit={handleAssignTenant} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                {t("tenants.tenantName")}
-              </label>
-              <Input
-                value={tenantName}
-                onChange={(e) => setTenantName(e.target.value)}
-                placeholder="e.g. মোঃ রফিকুল ইসলাম"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {/* Primary Tenant Details */}
+            <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                  {t("tenants.phone")}
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  {t("tenants.tenantName")} <span className="text-rose-500">*</span>
                 </label>
                 <Input
-                  value={tenantPhone}
-                  onChange={(e) => setTenantPhone(e.target.value)}
-                  placeholder="01712345678"
+                  value={tenantName}
+                  onChange={(e) => setTenantName(e.target.value)}
+                  placeholder="e.g. মোঃ রফিকুল ইসলাম"
                   required
                 />
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    {t("tenants.phone")} <span className="text-rose-500">*</span>
+                  </label>
+                  <Input
+                    value={tenantPhone}
+                    onChange={(e) => setTenantPhone(e.target.value)}
+                    placeholder="01712345678"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    {t("tenants.nid")}
+                  </label>
+                  <Input
+                    value={tenantNid}
+                    onChange={(e) => setTenantNid(e.target.value)}
+                    placeholder="1990..."
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                  {t("tenants.nid")}
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{t("tenants.permanentAddress")}</span>
                 </label>
                 <Input
-                  value={tenantNid}
-                  onChange={(e) => setTenantNid(e.target.value)}
-                  placeholder="1990..."
+                  value={permanentAddress}
+                  onChange={(e) => setPermanentAddress(e.target.value)}
+                  placeholder={locale === "bn" ? "গ্রাম/রোড, ডাকঘর, থানা, জেলা (স্থায়ী বা বর্তমান ঠিকানা)" : "Village/Road, Post Office, Thana, District"}
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
-                  {t("tenants.rentAmount")} (৳)
-                </label>
-                <NumberInput
-                  value={agreedRentBDT}
-                  onChange={(val) => setAgreedRentBDT(val)}
-                  prefix="৳"
-                />
+            {/* Reference Person Details */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+                <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <span>{t("tenants.referenceInfo")}</span>
               </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    {t("tenants.referenceName")}
+                  </label>
+                  <Input
+                    value={referenceName}
+                    onChange={(e) => setReferenceName(e.target.value)}
+                    placeholder={locale === "bn" ? "রেফারেন্স ব্যক্তির নাম" : "Reference Person Name"}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    {t("tenants.referencePhone")}
+                  </label>
+                  <Input
+                    value={referencePhone}
+                    onChange={(e) => setReferencePhone(e.target.value)}
+                    placeholder="01811-XXXXXX"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5 flex items-center justify-between">
-                  <span>{t("tenants.advanceDeposit")} (৳)</span>
-                  <span className="text-[10px] font-normal text-teal-600 dark:text-teal-400">
-                    {locale === "bn" ? "ভাড়াটিয়া ভিত্তিক চুক্তি" : "Renter-specific"}
-                  </span>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  {t("tenants.referenceRelation")}
                 </label>
-                <NumberInput
-                  value={advanceDepositBDT}
-                  onChange={(val) => setAdvanceDepositBDT(val)}
-                  prefix="৳"
-                  placeholder="0"
+                <Input
+                  value={referenceRelation}
+                  onChange={(e) => setReferenceRelation(e.target.value)}
+                  placeholder={locale === "bn" ? "e.g. ভাই / পিতা / ব্যবসায়িক অংশীদার" : "e.g. Brother / Father / Partner"}
                 />
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end gap-2">
+            {/* Lease & Financial Terms */}
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                    {t("tenants.rentAmount")} (৳)
+                  </label>
+                  <NumberInput
+                    value={agreedRentBDT}
+                    onChange={(val) => setAgreedRentBDT(val)}
+                    prefix="৳"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center justify-between">
+                    <span>{t("tenants.advanceDeposit")} (৳)</span>
+                    <span className="text-[10px] font-normal text-teal-600 dark:text-teal-400">
+                      {locale === "bn" ? "ভাড়াটিয়া ভিত্তিক চুক্তি" : "Renter-specific"}
+                    </span>
+                  </label>
+                  <NumberInput
+                    value={advanceDepositBDT}
+                    onChange={(val) => setAdvanceDepositBDT(val)}
+                    prefix="৳"
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
               <Button type="button" variant="outline" onClick={() => setIsAssignTenantOpen(false)}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmittingTenant}>
                 <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                {t("tenants.tenantAssigned")}
+                {t("tenants.assignAction")}
               </Button>
             </div>
           </form>

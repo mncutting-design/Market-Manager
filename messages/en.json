@@ -181,6 +181,8 @@
     "profileDetails": "Profile Details",
     "advanceLedger": "Advance Ledger",
     "editProfile": "Edit Tenant",
+    "assignAction": "Assign Tenant",
+    "referenceInfo": "Reference Person Information",
     "tenantAssigned": "Tenant assigned successfully",
     "tenantUpdated": "Tenant details updated"
   },

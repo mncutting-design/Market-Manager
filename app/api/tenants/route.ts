@@ -4,7 +4,21 @@ import prisma from "@/lib/prisma";
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { action, shopId, tenantId, name, phone, nid, advanceDeposit, rentAmount, startDate } = body;
+    const {
+      action,
+      shopId,
+      tenantId,
+      name,
+      phone,
+      nid,
+      permanentAddress,
+      referenceName,
+      referencePhone,
+      referenceRelation,
+      advanceDeposit,
+      rentAmount,
+      startDate,
+    } = body;
 
     // Handle Vacate Action
     if (action === "vacate") {
@@ -60,6 +74,10 @@ export async function POST(req: Request) {
           name: name.trim(),
           phone: phone.trim(),
           nid: nid?.trim() || null,
+          permanentAddress: permanentAddress?.trim() || null,
+          referenceName: referenceName?.trim() || null,
+          referencePhone: referencePhone?.trim() || null,
+          referenceRelation: referenceRelation?.trim() || null,
           advanceDeposit: advancePaisa,
           rentAmount: agreedRentPaisa,
           startDate: startDate ? new Date(startDate) : new Date(),
@@ -109,7 +127,20 @@ export async function POST(req: Request) {
 export async function PUT(req: Request) {
   try {
     const body = await req.json();
-    const { id, name, phone, nid, advanceDeposit, rentAmount, startDate, endDate } = body;
+    const {
+      id,
+      name,
+      phone,
+      nid,
+      permanentAddress,
+      referenceName,
+      referencePhone,
+      referenceRelation,
+      advanceDeposit,
+      rentAmount,
+      startDate,
+      endDate,
+    } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Tenant ID is required" }, { status: 400 });
@@ -121,6 +152,10 @@ export async function PUT(req: Request) {
         ...(name && { name: name.trim() }),
         ...(phone && { phone: phone.trim() }),
         ...(nid !== undefined && { nid: nid?.trim() || null }),
+        ...(permanentAddress !== undefined && { permanentAddress: permanentAddress?.trim() || null }),
+        ...(referenceName !== undefined && { referenceName: referenceName?.trim() || null }),
+        ...(referencePhone !== undefined && { referencePhone: referencePhone?.trim() || null }),
+        ...(referenceRelation !== undefined && { referenceRelation: referenceRelation?.trim() || null }),
         ...(advanceDeposit !== undefined && { advanceDeposit: Math.round(Number(advanceDeposit)) }),
         ...(rentAmount !== undefined && { rentAmount: Math.round(Number(rentAmount)) }),
         ...(startDate && { startDate: new Date(startDate) }),
