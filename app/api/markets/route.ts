@@ -72,9 +72,9 @@ import { logAudit } from "@/lib/audit";
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "MANAGER")) {
       return NextResponse.json(
-        { error: "Only administrators can create new markets" },
+        { error: "Only administrators and managers can create new markets" },
         { status: 403 }
       );
     }
@@ -97,7 +97,7 @@ export async function POST(req: Request) {
 
     await logAudit({
       userId: session.id,
-      userName: session.name || "Admin",
+      userName: session.name || (session.role === "MANAGER" ? "Manager" : "Admin"),
       action: "MARKET_CREATED",
       entityType: "Market",
       entityId: market.id,

@@ -29,9 +29,11 @@ export function MarketsView() {
   const [isSaving, setIsSaving] = useState(false);
   const [showDiffPreview, setShowDiffPreview] = useState(false);
 
+  const canCreateMarket = isAdmin || currentUser?.role === "MANAGER";
+
   const openAdd = () => {
-    if (!isAdmin) {
-      toast.error(locale === "bn" ? "শুধুমাত্র অ্যাডমিন নতুন মার্কেট তৈরি করতে পারবেন।" : "Only administrators can create new markets.");
+    if (!canCreateMarket) {
+      toast.error(locale === "bn" ? "শুধুমাত্র অ্যাডমিন ও ম্যানেজার নতুন মার্কেট তৈরি করতে পারবেন।" : "Only administrators and managers can create new markets.");
       return;
     }
     setEditingMarket(null);
@@ -153,10 +155,12 @@ export function MarketsView() {
           </p>
         </div>
 
-        <Button onClick={openAdd} className="shadow-xs">
-          <Plus className="w-4 h-4 mr-1.5" />
-          {t("markets.addMarket")}
-        </Button>
+        {canCreateMarket && (
+          <Button onClick={openAdd} className="shadow-xs">
+            <Plus className="w-4 h-4 mr-1.5" />
+            {t("markets.addMarket")}
+          </Button>
+        )}
       </div>
 
       {/* Markets Cards Grid */}

@@ -9,6 +9,7 @@ export interface RoleDefinition {
   badgeColor: string;
   canEditDirectly: boolean;
   canSubmitEditRequests: boolean;
+  canCreateMarkets: boolean;
   canManageMarkets: boolean;
   canCreateShops: boolean;
   canEditShopsDirectly: boolean;
@@ -33,6 +34,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     badgeColor: "bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/30",
     canEditDirectly: true,
     canSubmitEditRequests: false,
+    canCreateMarkets: true,
     canManageMarkets: true,
     canCreateShops: true,
     canEditShopsDirectly: true,
@@ -50,12 +52,13 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     role: "MANAGER",
     label_bn: "মার্কেট ম্যানেজার",
     label_en: "Market Manager",
-    description_bn: "দৈনন্দিন হিসাব: ভাড়া আদায়, বিল তৈরি, খরচ এন্ট্রি ও অনুমোদনের আবেদন",
-    description_en: "Daily Operations: Collect rent, generate bills, log expenses, submit edit requests",
+    description_bn: "মার্কেট ও দোকান তৈরি, ভাড়া আদায়, বিল তৈরি, খরচ এন্ট্রি এবং অনুমোদনের আবেদন",
+    description_en: "Create markets & shops, collect rent, generate bills, log expenses, submit edit requests",
     badgeColor: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30",
     canEditDirectly: false,
     canSubmitEditRequests: true, // Requires admin approval for any changes
-    canManageMarkets: false,
+    canCreateMarkets: true,
+    canManageMarkets: true,
     canCreateShops: true,
     canEditShopsDirectly: false, // Must submit for admin approval
     canDeleteShops: false,
@@ -77,6 +80,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     badgeColor: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30",
     canEditDirectly: false,
     canSubmitEditRequests: false, // OPERATOR ONLY OPERATES, NO EDIT REQUESTS
+    canCreateMarkets: false,
     canManageMarkets: false,
     canCreateShops: false,
     canEditShopsDirectly: false,
@@ -99,6 +103,7 @@ export const ROLE_DEFINITIONS: Record<UserRole, RoleDefinition> = {
     badgeColor: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/30",
     canEditDirectly: false,
     canSubmitEditRequests: false,
+    canCreateMarkets: false,
     canManageMarkets: false,
     canCreateShops: false,
     canEditShopsDirectly: false,

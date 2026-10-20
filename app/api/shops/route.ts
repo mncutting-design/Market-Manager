@@ -82,9 +82,9 @@ import { logAudit } from "@/lib/audit";
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session || session.role !== "ADMIN") {
+    if (!session || (session.role !== "ADMIN" && session.role !== "MANAGER")) {
       return NextResponse.json(
-        { error: "Only administrators can create new shops" },
+        { error: "Only administrators and managers can create new shops" },
         { status: 403 }
       );
     }
@@ -129,7 +129,7 @@ export async function POST(req: Request) {
 
     await logAudit({
       userId: session.id,
-      userName: session.name || "Admin",
+      userName: session.name || (session.role === "MANAGER" ? "Manager" : "Admin"),
       action: "SHOP_CREATED",
       entityType: "Shop",
       entityId: shop.id,
