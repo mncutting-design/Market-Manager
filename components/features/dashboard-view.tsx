@@ -211,27 +211,27 @@ export function DashboardView() {
         </div>
       )}
 
-      {/* 7 Key Performance Indicators (KPI Cards) */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 md:gap-3.5">
+      {/* 7 Key Performance Indicators (KPI Cards) - 100% Mobile Responsive */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2.5 sm:gap-3.5">
         {/* 1. Expected Rent */}
         <Card
           onClick={() => setActiveTab("billing")}
           className="hover:border-teal-500/60 dark:hover:border-teal-500/60 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
               {t("dashboard.expectedRent")}
             </CardDescription>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-slate-900 dark:text-white truncate" title={formatCurrency(kpis.expectedRent, locale)}>
               {formatCurrency(kpis.expectedRent, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-slate-700 dark:text-white flex items-center justify-between font-medium">
-            <span>
+          <CardContent className="p-3 sm:p-4 pt-0 text-[10px] sm:text-xs text-slate-700 dark:text-white flex items-center justify-between font-medium">
+            <span className="truncate">
               {locale === "bn" ? toBanglaDigits(kpis.totalBillsCount) : kpis.totalBillsCount}{" "}
               {t("reports.shopCount")}
             </span>
-            <Building2 className="w-4 h-4 text-slate-500 dark:text-teal-400" />
+            <Building2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-500 dark:text-teal-400 shrink-0" />
           </CardContent>
         </Card>
 
@@ -240,19 +240,19 @@ export function DashboardView() {
           onClick={() => setActiveTab("billing")}
           className="border-emerald-200/80 dark:border-emerald-800/60 bg-emerald-50/30 dark:bg-emerald-950/20 hover:border-emerald-400 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 truncate">
               {t("dashboard.collectedRent")}
             </CardDescription>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-emerald-600 dark:text-emerald-400">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-emerald-600 dark:text-emerald-400 truncate" title={formatCurrency(kpis.collectedRent, locale)}>
               {formatCurrency(kpis.collectedRent, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between font-medium">
-            <span>
+          <CardContent className="p-3 sm:p-4 pt-0 text-[10px] sm:text-xs text-emerald-700 dark:text-emerald-300 flex items-center justify-between font-medium">
+            <span className="truncate">
               {locale === "bn" ? toBanglaDigits(kpis.paidShopsCount) : kpis.paidShopsCount} {t("status.paid")}
             </span>
-            <CheckCircle className="w-4 h-4 text-emerald-400" />
+            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-400 shrink-0" />
           </CardContent>
         </Card>
 
@@ -261,22 +261,22 @@ export function DashboardView() {
           onClick={() => setActiveTab("dues")}
           className="border-red-200/80 dark:border-red-800/60 bg-red-50/30 dark:bg-red-950/20 hover:border-red-400 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-red-600 dark:text-red-400 truncate">
               {t("dashboard.totalDue")}
             </CardDescription>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-red-600 dark:text-red-400">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-red-600 dark:text-red-400 truncate" title={formatCurrency(kpis.totalDue, locale)}>
               {formatCurrency(kpis.totalDue, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-red-600 dark:text-red-300 flex items-center justify-between font-medium">
-            <span>
+          <CardContent className="p-3 sm:p-4 pt-0 text-[10px] sm:text-xs text-red-600 dark:text-red-300 flex items-center justify-between font-medium">
+            <span className="truncate">
               {locale === "bn"
                 ? toBanglaDigits(kpis.dueShopsCount + kpis.partialShopsCount)
                 : kpis.dueShopsCount + kpis.partialShopsCount}{" "}
               {t("status.due")}
             </span>
-            <AlertCircle className="w-4 h-4 text-red-400" />
+            <AlertCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-red-400 shrink-0" />
           </CardContent>
         </Card>
 
@@ -285,17 +285,17 @@ export function DashboardView() {
           onClick={() => setActiveTab("expenses")}
           className="hover:border-amber-400/80 dark:hover:border-amber-400/80 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 truncate">
               {t("dashboard.totalExpense")}
             </CardDescription>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-amber-600 dark:text-amber-400">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-amber-600 dark:text-amber-400 truncate" title={formatCurrency(kpis.totalExpense, locale)}>
               {formatCurrency(kpis.totalExpense, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-slate-700 dark:text-white flex items-center justify-between font-medium">
-            <span>{t("nav.expenses")}</span>
-            <TrendingDown className="w-4 h-4 text-amber-400" />
+          <CardContent className="p-3 sm:p-4 pt-0 text-[10px] sm:text-xs text-slate-700 dark:text-white flex items-center justify-between font-medium">
+            <span className="truncate">{t("nav.expenses")}</span>
+            <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400 shrink-0" />
           </CardContent>
         </Card>
 
@@ -304,17 +304,17 @@ export function DashboardView() {
           onClick={() => setActiveTab("reports")}
           className="border-teal-200/80 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/30 hover:border-teal-400 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-300 truncate">
               {t("dashboard.netProfit")}
             </CardDescription>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-teal-700 dark:text-teal-300">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-teal-700 dark:text-teal-300 truncate" title={formatCurrency(kpis.netProfit, locale)}>
               {formatCurrency(kpis.netProfit, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-teal-700 dark:text-teal-200 flex items-center justify-between font-medium">
-            <span>{t("reports.netIncome")}</span>
-            <TrendingUp className="w-4 h-4 text-teal-400" />
+          <CardContent className="p-3 sm:p-4 pt-0 text-[10px] sm:text-xs text-teal-700 dark:text-teal-200 flex items-center justify-between font-medium">
+            <span className="truncate">{t("reports.netIncome")}</span>
+            <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-400 shrink-0" />
           </CardContent>
         </Card>
 
@@ -323,15 +323,15 @@ export function DashboardView() {
           onClick={() => setActiveTab("dues")}
           className="hover:border-slate-300 dark:hover:border-slate-600 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
-            <CardDescription className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
+            <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate">
               {t("dashboard.collectionRate")}
             </CardDescription>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-slate-900 dark:text-white">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-slate-900 dark:text-white truncate">
               {formatPercent(kpis.collectionRate, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0">
+          <CardContent className="p-3 sm:p-4 pt-0">
             <div className="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-teal-500 h-full rounded-full transition-all duration-500"
@@ -341,27 +341,27 @@ export function DashboardView() {
           </CardContent>
         </Card>
 
-        {/* 7. Total Advance Held (Liability) */}
+        {/* 7. Total Advance Held (Liability) - Full width on 2-col mobile */}
         <Card
           onClick={() => setActiveTab("shops")}
-          className="hover:border-teal-400 border-teal-200/80 dark:border-teal-800/60 bg-teal-50/20 dark:bg-teal-950/20 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
+          className="col-span-2 sm:col-span-1 lg:col-span-1 hover:border-teal-400 border-teal-200/80 dark:border-teal-800/60 bg-teal-50/20 dark:bg-teal-950/20 transition-all cursor-pointer hover:shadow-md hover:scale-[1.02] active:scale-[0.99] group"
         >
-          <CardHeader className="p-4 pb-2">
+          <CardHeader className="p-3 sm:p-4 pb-1 sm:pb-2">
             <div className="flex items-center justify-between">
-              <CardDescription className="text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400">
+              <CardDescription className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-teal-700 dark:text-teal-400 truncate">
                 {t("advance.advanceHeld")}
               </CardDescription>
               <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
                 Liability
               </span>
             </div>
-            <CardTitle className="text-lg md:text-xl font-extrabold text-teal-600 dark:text-teal-300">
+            <CardTitle className="text-sm sm:text-base md:text-xl font-extrabold text-teal-600 dark:text-teal-300 truncate" title={formatCurrency(kpis.totalAdvanceHeld || 0, locale)}>
               {formatCurrency(kpis.totalAdvanceHeld || 0, locale)}
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-4 pt-0 text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between font-medium">
+          <CardContent className="p-3 sm:p-4 pt-0 text-[10px] sm:text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between font-medium">
             <span className="truncate">{t("advance.title")}</span>
-            <Wallet className="w-4 h-4 text-teal-500" />
+            <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-500 shrink-0" />
           </CardContent>
         </Card>
       </div>

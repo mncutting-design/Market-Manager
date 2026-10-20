@@ -161,13 +161,13 @@ export function BillingView() {
           />
         </div>
 
-        {/* Status filters */}
-        <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg shrink-0">
+        {/* Status filters - Scrollable on mobile */}
+        <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
           {["ALL", "DUE", "PARTIAL", "PAID"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                 statusFilter === status
                   ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -246,11 +246,11 @@ export function BillingView() {
                   )}
                 </div>
 
-                {/* Amount breakdown and Action Buttons */}
-                <div className="flex flex-wrap items-center justify-between lg:justify-end gap-4 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
-                  <div className="text-left lg:text-right">
+                {/* Amount breakdown and Action Buttons - 100% Mobile Responsive */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
+                  <div className="text-left sm:text-right">
                     <p className="text-xs text-slate-400">{t("billing.totalBill")}</p>
-                    <p className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    <p className="text-base font-extrabold text-slate-900 dark:text-slate-100">
                       {formatCurrency(bill.totalAmount, locale)}
                     </p>
                     {bill.dueAmount > 0 ? (
@@ -270,7 +270,7 @@ export function BillingView() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-xs h-9 px-2.5"
+                        className="text-xs h-9 px-2.5 flex-1 sm:flex-initial"
                         onClick={() => {
                           setActiveBill(bill);
                           setIsAddChargeOpen(true);
@@ -287,7 +287,7 @@ export function BillingView() {
                       <Button
                         size="sm"
                         variant="primary"
-                        className="text-xs h-9 px-3"
+                        className="text-xs h-9 px-3 flex-1 sm:flex-initial"
                         onClick={() =>
                           openQuickCollect({
                             marketId: bill.shop.marketId,

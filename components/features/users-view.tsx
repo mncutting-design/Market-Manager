@@ -476,56 +476,56 @@ export function UsersView() {
         </div>
       </div>
 
-      {/* 2. Key Telemetry & Statistics */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      {/* 2. Key Telemetry & Statistics - 100% Mobile Responsive */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-4">
+        <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">
             {locale === "bn" ? "মোট ব্যবহারকারী" : "Total Users"}
           </p>
-          <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
+          <p className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white mt-1">
             {totalCount}
           </p>
         </div>
 
         {/* Live Online Telemetry */}
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-500/30 dark:border-emerald-500/20 shadow-xs relative overflow-hidden">
+        <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-500/30 dark:border-emerald-500/20 shadow-xs relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider truncate">
               {locale === "bn" ? "অনলাইন ব্যবহারকারী" : "Online Users"}
             </p>
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
           </div>
-          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5">
+          <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5 truncate">
             <span>{onlineCount}</span>
             <span className="text-xs font-normal text-emerald-500">
-              {locale === "bn" ? "সক্রিয় রয়েছেন" : "active now"}
+              {locale === "bn" ? "সক্রিয়" : "active"}
             </span>
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+        <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider truncate">
             {locale === "bn" ? "সুপার এডমিন" : "Super Admins"}
           </p>
-          <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">
+          <p className="text-xl sm:text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">
             {adminCount}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+        <div className="p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider truncate">
             {locale === "bn" ? "ম্যানেজার ও স্টাফ" : "Staff & Ops"}
           </p>
-          <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
+          <p className="text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
             {managerCount}
           </p>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider">
+        <div className="col-span-2 sm:col-span-1 p-3 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+          <p className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider truncate">
             {locale === "bn" ? "নিষ্ক্রিয় (Inactive)" : "Inactive Users"}
           </p>
-          <p className="text-2xl font-black text-red-500 dark:text-red-400 mt-1">
+          <p className="text-xl sm:text-2xl font-black text-red-500 dark:text-red-400 mt-1">
             {inactiveCount}
           </p>
         </div>

@@ -401,13 +401,13 @@ export function ShopsView() {
           />
         </div>
 
-        {/* Status filter tabs */}
-        <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-lg shrink-0">
+        {/* Status filter tabs - Scrollable on mobile */}
+        <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
           {["ALL", "OCCUPIED", "VACANT"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                 statusFilter === status
                   ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
@@ -531,12 +531,12 @@ export function ShopsView() {
                 </div>
               </div>
 
-              {/* Actions Footer */}
-              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2">
+              {/* Actions Footer - 100% Mobile Responsive */}
+              <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="text-xs h-8 px-2"
+                  className="text-xs h-8 px-2 flex-1 sm:flex-initial"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedShop(shop);
@@ -553,7 +553,7 @@ export function ShopsView() {
                   <Button
                     size="sm"
                     variant="primary"
-                    className="text-xs h-8 px-2.5"
+                    className="text-xs h-8 px-2.5 flex-1 sm:flex-initial"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedShop(shop);
@@ -567,12 +567,12 @@ export function ShopsView() {
                     {t("shops.assignTenant")}
                   </Button>
                 ) : (
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
                     {/* Advance Ledger Button */}
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-8 px-2 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300"
+                      className="text-xs h-8 px-2 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 flex-1 sm:flex-initial"
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveProfileTenantId(shop.tenant.id);
@@ -587,7 +587,7 @@ export function ShopsView() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="text-xs h-8 px-2"
+                      className="text-xs h-8 px-2 flex-1 sm:flex-initial"
                       onClick={(e) => {
                         e.stopPropagation();
                         setActiveSettlementTenantId(shop.tenant.id);
@@ -1011,7 +1011,7 @@ export function ShopsView() {
                       defaultRent: Math.round(editDefaultRentBDT * 100),
                     }}
                     title={locale === "bn" ? "দোকানের পরিবর্তনের পার্থক্য" : "Shop Changes"}
-                    hideUnchanged={false}
+                    hideUnchanged={true}
                   />
                 </div>
               )}

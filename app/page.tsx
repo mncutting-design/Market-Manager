@@ -11,6 +11,7 @@ import { MoneyReceiptModal } from "@/components/features/modals/money-receipt-mo
 import { GenerateBillsModal } from "@/components/features/modals/generate-bills-modal";
 import { AddExpenseModal } from "@/components/features/modals/add-expense-modal";
 import { ApprovalsModal } from "@/components/features/modals/approvals-modal";
+import { UrgentApprovalModal } from "@/components/features/modals/urgent-approval-modal";
 import { ChangePasswordModal } from "@/components/features/modals/change-password-modal";
 import { LoginView } from "@/components/features/login-view";
 
@@ -52,8 +53,8 @@ function MainApp() {
       {/* Desktop Sidebar */}
       <Sidebar />
 
-      {/* Main Content Area — Instantaneous Tab Switching */}
-      <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 pb-24 md:pb-8 max-w-7xl mx-auto w-full">
+      {/* Main Content Area — 100% Mobile Responsive with Safe Bottom Spacing */}
+      <main className="flex-1 overflow-y-auto px-2.5 sm:px-4 md:px-8 py-3.5 sm:py-6 pb-28 md:pb-8 max-w-7xl mx-auto w-full">
         <div className={activeTab === "dashboard" ? "block" : "hidden"}>
           {visitedTabs.has("dashboard") && <DashboardView />}
         </div>
@@ -98,6 +99,7 @@ function MainApp() {
       <GenerateBillsModal />
       <AddExpenseModal />
       <ApprovalsModal />
+      <UrgentApprovalModal />
       <ChangePasswordModal
         isOpen={isChangePasswordOpen}
         onClose={() => setIsChangePasswordOpen(false)}

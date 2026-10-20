@@ -65,28 +65,28 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white dark:bg-slate-900 rounded-xl sm:rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-slate-800 transition-all animate-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[90vh] flex flex-col my-auto",
+          "relative z-50 w-full bg-white dark:bg-[#182234] rounded-2xl p-3.5 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-[#2d3b52] transition-all animate-in zoom-in-95 duration-150 max-h-[92vh] sm:max-h-[90vh] flex flex-col my-auto",
           maxWidths[maxWidth] || maxWidths.lg
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-slate-800 gap-2 shrink-0 no-print">
+          <div className="flex items-start justify-between pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-[#2d3b52] gap-2 shrink-0 no-print">
             <div className="flex-1 min-w-0 pr-1">
               {title && (
-                <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-white leading-snug">
                   {title}
                 </div>
               )}
               {description && (
-                <div className="text-[11px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                <div className="text-[11px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-300 mt-0.5 line-clamp-2">
                   {description}
                 </div>
               )}
             </div>
             <button
               onClick={onClose}
-              className="p-1 sm:p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+              className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer active:scale-95"
               aria-label="Close"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5" />

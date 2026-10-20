@@ -7,7 +7,7 @@ import { formatDate, toBanglaDigits } from "@/lib/format";
 import { Dialog } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DiffViewer } from "@/components/ui/diff-viewer";
+import { DiffViewer, getChangePurposeSummary } from "@/components/ui/diff-viewer";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -20,6 +20,9 @@ import {
   FileText,
   AlertCircle,
   MessageSquare,
+  Target,
+  Sparkles,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -163,20 +166,20 @@ export function ApprovalsModal() {
       onClose={() => setIsApprovalsOpen(false)}
       title={
         <div className="flex items-center gap-2">
-          <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
-          <span>{locale === "bn" ? "অ্যাডমিন অনুমোদন কেন্দ্র" : "Admin Approvals Center"}</span>
+          <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
+          <span className="text-base sm:text-lg">{locale === "bn" ? "অ্যাডমিন অনুমোদন কেন্দ্র" : "Admin Approvals Center"}</span>
         </div>
       }
       description={
         locale === "bn"
-          ? "যেকোনো পরিবর্তনের বর্তমান ও নতুন প্রস্তাবিত পার্থক্য যাচাই করে অনুমোদন করুন।"
-          : "Review What Have vs What Will Have differences before approving."
+          ? "ম্যানেজার কর্তৃক প্রস্তাবিত পরিবর্তনের উদ্দেশ্য ও কেবল পরিবর্তিত ফিল্ডগুলো যাচাই করে অনুমোদন করুন।"
+          : "Review purpose of changes and strictly modified fields before approving."
       }
-      maxWidth="lg"
+      maxWidth="xl"
     >
-      <div className="space-y-4">
-        {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg">
+      <div className="space-y-4 w-full">
+        {/* Status Filter Tabs - Scrollable on mobile */}
+        <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl overflow-x-auto no-scrollbar">
           {[
             { id: "PENDING", label: locale === "bn" ? "অপেক্ষমান (Pending)" : "Pending" },
             { id: "APPROVED", label: locale === "bn" ? "অনুমোদিত (Approved)" : "Approved" },
@@ -186,7 +189,7 @@ export function ApprovalsModal() {
             <button
               key={tab.id}
               onClick={() => setStatusFilter(tab.id)}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all cursor-pointer ${
+              className={`flex-1 py-1.5 px-2.5 text-xs font-bold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                 statusFilter === tab.id
                   ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
@@ -217,135 +220,174 @@ export function ApprovalsModal() {
             </p>
           </div>
         ) : (
-          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-            {requests.map((cr) => (
-              <div
-                key={cr.id}
-                className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/60 space-y-3"
-              >
-                {/* Header Info */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-lg bg-white dark:bg-slate-800 shadow-2xs border border-slate-200 dark:border-slate-700">
-                      {getEntityIcon(cr.entityType)}
+          <div className="space-y-4 max-h-[62vh] sm:max-h-[65vh] overflow-y-auto pr-1">
+            {requests.map((cr) => {
+              // Calculate human-readable change purpose
+              const purpose = getChangePurposeSummary({
+                entityType: cr.entityType,
+                entityTitle: cr.entityTitle,
+                actionType: cr.actionType,
+                requestedBy: cr.requestedBy,
+                currentData: cr.currentDataParsed,
+                proposedData: cr.proposedDataParsed,
+                locale: locale as "bn" | "en",
+              });
+
+              return (
+                <div
+                  key={cr.id}
+                  className="p-3.5 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/80 space-y-3 shadow-xs"
+                >
+                  {/* 1. Header Info */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-800">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="p-2 rounded-xl bg-white dark:bg-slate-800 shadow-2xs border border-slate-200 dark:border-slate-700 shrink-0">
+                        {getEntityIcon(cr.entityType)}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <h4 className="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+                            {cr.entityTitle || `${cr.entityType} ${cr.entityId}`}
+                          </h4>
+                          {getActionBadge(cr.actionType)}
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                          {locale === "bn"
+                            ? `প্রস্তাবক: ${cr.requestedBy} • ${formatDate(cr.createdAt, locale)}`
+                            : `Requested by: ${cr.requestedBy} • ${formatDate(cr.createdAt, locale)}`}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                        <span>{cr.entityTitle || `${cr.entityType} ${cr.entityId}`}</span>
-                        {getActionBadge(cr.actionType)}
-                      </h4>
-                      <p className="text-[11px] text-slate-500 mt-0.5">
+
+                    <div className="flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+                      {cr.status === "PENDING" && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-200 dark:border-amber-900/40">
+                          <Clock className="w-3 h-3" />
+                          <span>{locale === "bn" ? "অনুমোদনের অপেক্ষায়" : "Awaiting Approval"}</span>
+                        </span>
+                      )}
+                      {cr.status === "APPROVED" && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-900/40">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>{locale === "bn" ? "অনুমোদিত" : "Approved"}</span>
+                        </span>
+                      )}
+                      {cr.status === "REJECTED" && (
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-full border border-rose-200 dark:border-rose-900/40">
+                          <XCircle className="w-3 h-3" />
+                          <span>{locale === "bn" ? "প্রত্যাখ্যাত" : "Rejected"}</span>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 2. CRYSTAL-CLEAR PURPOSE & WHAT WILL CHANGE BANNER */}
+                  <div className="p-3 rounded-xl bg-gradient-to-r from-teal-500/10 via-emerald-500/10 to-teal-500/5 border border-teal-500/30 text-xs space-y-1.5">
+                    <div className="flex items-center gap-1.5 font-bold text-teal-800 dark:text-teal-300">
+                      <Target className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+                      <span>{locale === "bn" ? "পরিবর্তনের উদ্দেশ্য ও সারসংক্ষেপ:" : "Purpose of Change:"}</span>
+                    </div>
+                    {purpose.bullets.length > 0 ? (
+                      <ul className="space-y-1 pl-5 list-disc text-slate-800 dark:text-slate-200 font-medium">
+                        {purpose.bullets.map((b, idx) => (
+                          <li key={idx} className="leading-snug">
+                            {b}
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-slate-600 dark:text-slate-300 font-medium">
                         {locale === "bn"
-                          ? `প্রস্তাবক: ${cr.requestedBy} • ${formatDate(cr.createdAt, locale)}`
-                          : `Requested by: ${cr.requestedBy} • ${formatDate(cr.createdAt, locale)}`}
+                          ? "ম্যানেজার কর্তৃক রেকর্ডের তথ্য সংশোধনের আবেদন।"
+                          : "Manager requested update for this record."}
                       </p>
+                    )}
+                  </div>
+
+                  {/* 3. VISUAL DIFFERENCE VIEWER: ONLY MODIFIED FIELDS */}
+                  <DiffViewer
+                    currentData={cr.currentDataParsed}
+                    proposedData={cr.proposedDataParsed}
+                    title={locale === "bn" ? "পার্থক্য প্রিভিউ (What have ➔ What will have)" : "Diff Preview"}
+                    hideUnchanged={true}
+                  />
+
+                  {/* Review note if present */}
+                  {cr.reviewNote && (
+                    <div className="p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/40 text-xs text-amber-900 dark:text-amber-300 flex items-start gap-1.5">
+                      <MessageSquare className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="font-bold">{locale === "bn" ? "অ্যাডমিন মন্তব্য: " : "Admin Note: "}</span>
+                        <span>{cr.reviewNote}</span>
+                      </div>
                     </div>
-                  </div>
+                  )}
 
-                  <div className="flex items-center gap-1.5 self-end sm:self-auto">
-                    {cr.status === "PENDING" && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded border border-amber-200 dark:border-amber-900/40">
-                        <Clock className="w-3 h-3" />
-                        <span>{locale === "bn" ? "অনুমোদনের অপেক্ষায়" : "Awaiting Approval"}</span>
-                      </span>
-                    )}
-                    {cr.status === "APPROVED" && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-900/40">
-                        <CheckCircle2 className="w-3 h-3" />
-                        <span>{locale === "bn" ? "অনুমোদিত" : "Approved"}</span>
-                      </span>
-                    )}
-                    {cr.status === "REJECTED" && (
-                      <span className="flex items-center gap-1 text-[11px] font-bold text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded border border-rose-200 dark:border-rose-900/40">
-                        <XCircle className="w-3 h-3" />
-                        <span>{locale === "bn" ? "প্রত্যাখ্যাত" : "Rejected"}</span>
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Visual Difference Viewer */}
-                <DiffViewer
-                  currentData={cr.currentDataParsed}
-                  proposedData={cr.proposedDataParsed}
-                  title={locale === "bn" ? "পার্থক্য প্রিভিউ (What have ➔ What will have)" : "Diff Preview"}
-                />
-
-                {/* Review note if present */}
-                {cr.reviewNote && (
-                  <div className="p-2.5 rounded-lg bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs text-amber-900 dark:text-amber-300 flex items-start gap-1.5">
-                    <MessageSquare className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
-                    <div>
-                      <span className="font-bold">{locale === "bn" ? "অ্যাডমিন মন্তব্য: " : "Admin Note: "}</span>
-                      <span>{cr.reviewNote}</span>
+                  {/* Reject Input box if actively rejecting */}
+                  {rejectingId === cr.id && (
+                    <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-2">
+                      <label className="block text-xs font-bold text-rose-800 dark:text-rose-300">
+                        {locale === "bn" ? "বাতিল করার কারণ (ঐচ্ছিক):" : "Rejection Reason (Optional):"}
+                      </label>
+                      <Input
+                        value={rejectNote}
+                        onChange={(e) => setRejectNote(e.target.value)}
+                        placeholder={locale === "bn" ? "বাতিলের কারণ লিখুন..." : "Enter reason..."}
+                        autoFocus
+                      />
+                      <div className="flex justify-end gap-2 pt-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setRejectingId(null);
+                            setRejectNote("");
+                          }}
+                        >
+                          {t("common.cancel")}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          isLoading={processingId === cr.id}
+                          onClick={() => handleReject(cr.id)}
+                        >
+                          {locale === "bn" ? "নিশ্চিত বাতিল করুন" : "Confirm Reject"}
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Reject Input box if actively rejecting */}
-                {rejectingId === cr.id && (
-                  <div className="p-3 rounded-lg bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 space-y-2">
-                    <label className="block text-xs font-bold text-rose-800 dark:text-rose-300">
-                      {locale === "bn" ? "বাতিল করার কারণ (ঐচ্ছিক):" : "Rejection Reason (Optional):"}
-                    </label>
-                    <Input
-                      value={rejectNote}
-                      onChange={(e) => setRejectNote(e.target.value)}
-                      placeholder={locale === "bn" ? "বাতিলের কারণ লিখুন..." : "Enter reason..."}
-                      autoFocus
-                    />
-                    <div className="flex justify-end gap-2 pt-1">
+                  {/* Admin Actions */}
+                  {cr.status === "PENDING" && rejectingId !== cr.id && (
+                    <div className="pt-2 flex flex-wrap items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
                       <Button
                         size="sm"
                         variant="outline"
+                        className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900 flex-1 sm:flex-initial min-h-[40px] text-xs font-bold"
                         onClick={() => {
-                          setRejectingId(null);
+                          setRejectingId(cr.id);
                           setRejectNote("");
                         }}
+                        disabled={!!processingId}
                       >
-                        {t("common.cancel")}
+                        <XCircle className="w-4 h-4 mr-1" />
+                        {locale === "bn" ? "বাতিল করুন" : "Reject"}
                       </Button>
                       <Button
                         size="sm"
-                        variant="destructive"
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-md flex-1 sm:flex-initial min-h-[40px] text-xs"
                         isLoading={processingId === cr.id}
-                        onClick={() => handleReject(cr.id)}
+                        onClick={() => handleApprove(cr.id)}
                       >
-                        {locale === "bn" ? "নিশ্চিত বাতিল করুন" : "Confirm Reject"}
+                        <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                        {locale === "bn" ? "অনুমোদন ও কার্যকর করুন" : "Approve & Apply"}
                       </Button>
                     </div>
-                  </div>
-                )}
-
-                {/* Admin Actions */}
-                {cr.status === "PENDING" && rejectingId !== cr.id && (
-                  <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900"
-                      onClick={() => {
-                        setRejectingId(cr.id);
-                        setRejectNote("");
-                      }}
-                      disabled={!!processingId}
-                    >
-                      <XCircle className="w-3.5 h-3.5 mr-1" />
-                      {locale === "bn" ? "বাতিল করুন" : "Reject"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
-                      isLoading={processingId === cr.id}
-                      onClick={() => handleApprove(cr.id)}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5 mr-1.5" />
-                      {locale === "bn" ? "অনুমোদন ও কার্যকর করুন" : "Approve & Apply"}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

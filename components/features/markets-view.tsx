@@ -410,7 +410,7 @@ export function MarketsView() {
                       totalFloors,
                     }}
                     title={locale === "bn" ? "পরিবর্তনের পার্থক্য" : "Differences"}
-                    hideUnchanged={false}
+                    hideUnchanged={true}
                   />
                 </div>
               )}

@@ -94,19 +94,20 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const years = [2025, 2026, 2027];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#101726] border-b border-slate-200 dark:border-[#2d3b52] px-3 sm:px-4 md:px-6 h-16 transition-colors flex items-center shadow-xs dark:shadow-lg">
-      <div className="w-full flex items-center justify-between gap-2 md:gap-4">
-        {/* 1. LEFT CORNER: Web App Logo & Brand */}
-        <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-teal-500/20 shrink-0">
-            <Building2 className="w-5 h-5" />
+    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#101726] border-b border-slate-200 dark:border-[#2d3b52] transition-colors shadow-xs dark:shadow-lg">
+      {/* 1. TOP MAIN ROW (Always fits cleanly on any mobile, tablet, and desktop) */}
+      <div className="h-14 md:h-16 px-2.5 sm:px-4 md:px-6 flex items-center justify-between gap-2 md:gap-4">
+        {/* LEFT CORNER: Web App Logo & Brand */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-teal-500/20 shrink-0">
+            <Building2 className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="text-sm sm:text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+              <span className="text-xs sm:text-base md:text-lg font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
                 {t("common.appName")}
               </span>
-              <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/30 shrink-0">
+              <span className="text-[9px] sm:text-[10px] font-bold uppercase px-1.5 py-0.2 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/30 shrink-0">
                 PRO
               </span>
             </div>
@@ -116,10 +117,10 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           </div>
         </div>
 
-        {/* 2. CENTER POSITION: Market, Month & Year Selectors */}
-        <div className="flex items-center justify-center gap-1.5 sm:gap-2 md:gap-3 flex-1 px-1 sm:px-2 max-w-2xl mx-auto">
+        {/* DESKTOP CENTER POSITION: Market, Month & Year Selectors (Hidden on Mobile < md) */}
+        <div className="hidden md:flex items-center justify-center gap-2 md:gap-3 flex-1 px-2 max-w-2xl mx-auto">
           {/* Market selector */}
-          <div className="flex-1 max-w-[130px] sm:max-w-[190px] md:max-w-[230px]">
+          <div className="flex-1 max-w-[220px]">
             <SearchableSelect
               value={selectedMarketId}
               onChange={(val) => setSelectedMarketId(val || "ALL")}
@@ -138,7 +139,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           </div>
 
           {/* Month selector */}
-          <div className="relative w-[95px] sm:w-[125px] md:w-[140px]">
+          <div className="relative w-[135px]">
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -151,17 +152,17 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                 </option>
               ))}
             </select>
-            <Calendar className="w-4 h-4 text-slate-500 dark:text-teal-400 absolute left-1.5 md:left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-white absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <Calendar className="w-4 h-4 text-slate-500 dark:text-teal-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
           {/* Year selector */}
-          <div className="relative w-[75px] sm:w-[85px] md:w-[100px]">
+          <div className="relative w-[95px]">
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               aria-label={t("dashboard.selectYear")}
-              className="w-full h-10 pl-2.5 md:pl-3 pr-5 md:pr-6 text-xs md:text-sm font-semibold bg-slate-100 dark:bg-[#182234] border border-slate-300 dark:border-[#2d3b52] rounded-xl text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer shadow-xs"
+              className="w-full h-10 pl-3 pr-6 text-xs md:text-sm font-semibold bg-slate-100 dark:bg-[#182234] border border-slate-300 dark:border-[#2d3b52] rounded-xl text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer shadow-xs"
             >
               {years.map((y) => (
                 <option key={y} value={y}>
@@ -169,12 +170,12 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-white absolute right-1.5 md:right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-slate-500 dark:text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
         </div>
 
-        {/* 3. RIGHT CORNER: Realtime Sync, Language Switcher, Theme Toggle & Profile */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 justify-end">
+        {/* RIGHT CORNER: Realtime Sync, Language Switcher, Theme Toggle & Profile */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 justify-end">
           {/* Realtime Live Sync Indicator & Quick Sync Trigger */}
           <button
             onClick={() => {
@@ -186,7 +187,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               );
             }}
             type="button"
-            className="flex items-center gap-1.5 px-2.5 h-10 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all cursor-pointer text-xs font-bold shadow-xs active:scale-95"
+            className="flex items-center justify-center gap-1.5 px-2 sm:px-2.5 h-9 sm:h-10 rounded-xl border border-emerald-300 dark:border-emerald-500/40 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all cursor-pointer text-xs font-bold shadow-xs active:scale-95"
             title={locale === "bn" ? "রিয়েলটাইম সিঙ্ক সক্রিয় (ক্লিক করে এখনই রিফ্রেশ করুন)" : "Realtime Sync Active (Click to sync now)"}
           >
             <span className="relative flex h-2 w-2">
@@ -202,19 +203,21 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           <button
             onClick={toggleLocale}
             type="button"
-            className="flex items-center gap-1.5 px-3 h-10 rounded-xl border border-teal-300 dark:border-teal-500/50 bg-teal-50 dark:bg-teal-950/80 text-teal-900 dark:text-white hover:bg-teal-100 dark:hover:bg-teal-900 font-bold text-xs md:text-sm cursor-pointer shadow-xs active:scale-95 transition-all"
+            className="flex items-center justify-center gap-1 px-2 sm:px-3 h-9 sm:h-10 rounded-xl border border-teal-300 dark:border-teal-500/50 bg-teal-50 dark:bg-teal-950/80 text-teal-900 dark:text-white hover:bg-teal-100 dark:hover:bg-teal-900 font-bold text-xs sm:text-sm cursor-pointer shadow-xs active:scale-95 transition-all"
             title="Switch Language / ভাষা পরিবর্তন"
             aria-label="Toggle language between English and Bangla"
           >
-            <Languages className="w-4 h-4 text-teal-600 dark:text-teal-300 shrink-0" />
-            <span>{locale === "bn" ? "English" : "বাংলা"}</span>
+            <Languages className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-600 dark:text-teal-300 shrink-0" />
+            <span className="text-[11px] sm:text-xs md:text-sm font-bold">
+              {locale === "bn" ? "EN" : "বাং"}
+            </span>
           </button>
 
           {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             type="button"
-            className="w-10 h-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-[#2d3b52] bg-white dark:bg-[#182234] text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs active:scale-95"
+            className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-[#2d3b52] bg-white dark:bg-[#182234] text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs active:scale-95"
             title={isDark ? t("common.lightMode") : t("common.darkMode")}
             aria-label="Toggle dark/light theme"
           >
@@ -225,7 +228,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           <button
             onClick={openApprovals}
             type="button"
-            className="relative w-10 h-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-[#2d3b52] bg-white dark:bg-[#182234] text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs active:scale-95"
+            className="relative w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl border border-slate-300 dark:border-[#2d3b52] bg-white dark:bg-[#182234] text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer shadow-xs active:scale-95"
             title={locale === "bn" ? "অ্যাডমিন অনুমোদন কেন্দ্র (Approvals)" : "Admin Approvals"}
             aria-label="Admin Approvals"
           >
@@ -242,15 +245,15 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               type="button"
-              className="flex items-center gap-2 p-1 sm:px-2.5 sm:py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-300 dark:hover:border-[#2d3b52] cursor-pointer active:scale-95"
+              className="flex items-center gap-1.5 p-0.5 sm:px-2 sm:py-1 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-all border border-transparent hover:border-slate-300 dark:hover:border-[#2d3b52] cursor-pointer active:scale-95"
               aria-label="User Profile"
               aria-expanded={isProfileOpen}
             >
               <div className="relative">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-tr from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 font-black text-xs flex items-center justify-center shadow-md">
                   {(currentUser?.name || "NAZRUL").slice(0, 2).toUpperCase()}
                 </div>
-                <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 border-2 border-white dark:border-[#101726] rounded-full" />
+                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-emerald-400 border-2 border-white dark:border-[#101726] rounded-full" />
               </div>
               <div className="hidden lg:flex flex-col text-left">
                 <span className="text-xs font-bold text-slate-900 dark:text-white leading-tight">
@@ -336,6 +339,63 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* 2. MOBILE DEDICATED SUB-BAR: Market, Month & Year Selectors (Visible ONLY on Mobile < md) */}
+      <div className="md:hidden border-t border-slate-200/90 dark:border-[#2d3b52] bg-slate-50/95 dark:bg-[#0c1322]/95 backdrop-blur-md px-2 py-1.5 flex items-center gap-1.5 shadow-2xs">
+        {/* Market selector (takes maximum available space) */}
+        <div className="flex-1 min-w-0">
+          <SearchableSelect
+            value={selectedMarketId}
+            onChange={(val) => setSelectedMarketId(val || "ALL")}
+            options={[
+              { value: "ALL", label: t("common.allMarkets") },
+              ...markets.map((m) => ({
+                value: m.id,
+                label: m.name,
+                sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
+              })),
+            ]}
+            placeholder={t("dashboard.selectMarket")}
+            searchPlaceholder={locale === "bn" ? "মার্কেট..." : "Search..."}
+            buttonClassName="h-9 text-xs font-bold rounded-lg bg-white dark:bg-[#182234] border-slate-300 dark:border-[#2d3b52] shadow-2xs"
+          />
+        </div>
+
+        {/* Month selector */}
+        <div className="relative w-[102px] shrink-0">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(Number(e.target.value))}
+            aria-label={t("dashboard.selectMonth")}
+            className="w-full h-9 pl-5 pr-5 text-[11px] font-bold bg-white dark:bg-[#182234] border border-slate-300 dark:border-[#2d3b52] rounded-lg text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer shadow-2xs"
+          >
+            {months.map((m) => (
+              <option key={m.value} value={m.value}>
+                {m.label}
+              </option>
+            ))}
+          </select>
+          <Calendar className="w-3.5 h-3.5 text-slate-500 dark:text-teal-400 absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-white absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+
+        {/* Year selector */}
+        <div className="relative w-[72px] shrink-0">
+          <select
+            value={selectedYear}
+            onChange={(e) => setSelectedYear(Number(e.target.value))}
+            aria-label={t("dashboard.selectYear")}
+            className="w-full h-9 pl-2 pr-4 text-[11px] font-bold bg-white dark:bg-[#182234] border border-slate-300 dark:border-[#2d3b52] rounded-lg text-slate-900 dark:text-white appearance-none focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer shadow-2xs"
+          >
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {locale === "bn" ? toBanglaDigits(y) : y}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="w-3.5 h-3.5 text-slate-500 dark:text-white absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none" />
         </div>
       </div>
     </header>

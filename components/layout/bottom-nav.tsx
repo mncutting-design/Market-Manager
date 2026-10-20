@@ -47,8 +47,8 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg px-2 pb-safe">
-        <div className="flex items-center justify-around h-16">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#101726]/95 backdrop-blur-md border-t border-slate-200 dark:border-[#2d3b52] shadow-lg px-2 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
+        <div className="flex items-center justify-around h-15 sm:h-16">
           {mainTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
