@@ -120,7 +120,7 @@ export function ReportsView() {
         });
       }
     } else if (reportType === "market_pnl" && data.rows) {
-      fileName = `market-profit-loss-${reportYear}`;
+      fileName = `market-profit-loss-${reportMonth > 0 ? reportMonth + "-" : ""}${reportYear}`;
       sheetData = data.rows.map((r: any) => ({
         [t("markets.marketName")]: r.marketName,
         [t("markets.totalShops")]: r.totalShops,
@@ -130,14 +130,14 @@ export function ReportsView() {
         [t("reports.collectionEfficiency")]: Math.round(r.collectionRate),
       }));
     } else if (reportType === "expense_by_category" && data.rows) {
-      fileName = `expense-by-category-${reportYear}`;
+      fileName = `expense-by-category-${reportMonth > 0 ? reportMonth + "-" : ""}${reportYear}`;
       sheetData = data.rows.map((r: any) => ({
         [t("expenses.category")]: locale === "bn" ? r.name_bn || r.name_en : r.name_en || r.name_bn,
         [t("expenses.amount")]: Math.round(r.totalAmount / 100),
         "Percentage (%)": Math.round(r.percentage),
       }));
     } else if (reportType === "settlements" && data.rows) {
-      fileName = `settlements-report-${reportYear}`;
+      fileName = `settlements-report-${reportMonth > 0 ? reportMonth + "-" : ""}${reportYear}`;
       sheetData = data.rows.map((s: any) => ({
         [t("common.date")]: formatDate(s.settledAt, locale),
         [t("markets.marketName")]: s.marketName,
@@ -152,7 +152,7 @@ export function ReportsView() {
         "Confirmed By": s.confirmedBy,
       }));
     } else if (reportType === "unrecovered_receivables" && data.rows) {
-      fileName = `unrecovered-receivables-${reportYear}`;
+      fileName = `unrecovered-receivables-${reportMonth > 0 ? reportMonth + "-" : ""}${reportYear}`;
       sheetData = data.rows.map((u: any) => ({
         [t("markets.marketName")]: u.marketName,
         [t("shops.shopNumber")]: u.shopNumber,
@@ -251,9 +251,9 @@ export function ReportsView() {
         ))}
       </div>
 
-      {/* Filter Bar (Conditional on report type) */}
+      {/* Filter Bar (Consistent 3-Column Across ALL Report Types: [Market / Tenant] [Month] [Year]) */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 no-print">
-        {reportType !== "tenant_ledger" && (
+        {reportType !== "tenant_ledger" ? (
           <SearchableSelect
             label={t("collections.selectMarket")}
             value={marketFilter}
@@ -269,26 +269,7 @@ export function ReportsView() {
             placeholder="Select market..."
             searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search market..."}
           />
-        )}
-
-        {(reportType === "monthly_collection" || reportType === "collector_summary" || reportType === "channel_summary") && (
-          <Select
-            label={t("dashboard.selectMonth")}
-            value={reportMonth}
-            onChange={(e) => setReportMonth(Number(e.target.value))}
-          >
-            {Array.from({ length: 12 }, (_, i) => ({
-              val: i + 1,
-              name: formatMonth(i + 1, locale),
-            })).map((m) => (
-              <option key={m.val} value={m.val}>
-                {m.name}
-              </option>
-            ))}
-          </Select>
-        )}
-
-        {reportType === "tenant_ledger" && (
+        ) : (
           <SearchableSelect
             label={t("tenants.tenantName")}
             value={tenantId}
@@ -303,12 +284,32 @@ export function ReportsView() {
           />
         )}
 
+        {/* Month Dropdown Filtering - Displayed on EVERY page of reports */}
+        <Select
+          label={t("dashboard.selectMonth")}
+          value={reportMonth}
+          onChange={(e) => setReportMonth(Number(e.target.value))}
+        >
+          <option value={0}>
+            {locale === "bn" ? "সকল মাস (পুরো বছর)" : "All Months (Whole Year)"}
+          </option>
+          {Array.from({ length: 12 }, (_, i) => ({
+            val: i + 1,
+            name: formatMonth(i + 1, locale),
+          })).map((m) => (
+            <option key={m.val} value={m.val}>
+              {m.name}
+            </option>
+          ))}
+        </Select>
+
+        {/* Year Dropdown */}
         <Select
           label={t("dashboard.selectYear")}
           value={reportYear}
           onChange={(e) => setReportYear(Number(e.target.value))}
         >
-          {[2025, 2026, 2027].map((y) => (
+          {[2024, 2025, 2026, 2027, 2028].map((y) => (
             <option key={y} value={y}>
               {locale === "bn" ? toBanglaDigits(y) : y}
             </option>
@@ -457,56 +458,74 @@ export function ReportsView() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                      {data.rows.map((row: any) => (
-                        <tr
-                          key={row.month}
-                          className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
-                        >
-                          <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300 font-semibold text-[11px] flex items-center justify-center shrink-0">
-                              {locale === "bn" ? toBanglaDigits(row.month) : row.month}
-                            </span>
-                            <span>{formatMonth(row.month, locale, reportYear)}</span>
-                          </td>
-                          <td className="p-3.5 text-right font-semibold text-slate-900 dark:text-slate-100">
-                            {formatCurrency(row.totalBilled, locale)}
-                          </td>
-                          <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
-                            {formatCurrency(row.totalCollected, locale)}
-                          </td>
-                          <td className="p-3.5 text-right font-bold text-red-600 dark:text-red-400">
-                            {row.totalDue > 0 ? formatCurrency(row.totalDue, locale) : "—"}
-                          </td>
-                          <td className="p-3.5 text-right font-semibold text-amber-600 dark:text-amber-400">
-                            {formatCurrency(row.totalExpense, locale)}
-                          </td>
-                          <td className={`p-3.5 text-right font-bold ${row.netProfit >= 0 ? "text-teal-700 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}>
-                            {formatCurrency(row.netProfit, locale)}
-                          </td>
-                          <td className="p-3.5 text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className="font-semibold text-xs">
-                                {formatPercent(row.collectionRate, locale)}
+                      {data.rows.map((row: any) => {
+                        const isSelectedMonth = reportMonth > 0 && row.month === reportMonth;
+                        return (
+                          <tr
+                            key={row.month}
+                            className={`transition-colors ${
+                              isSelectedMonth
+                                ? "bg-teal-50/80 dark:bg-teal-950/40 ring-1 ring-inset ring-teal-500/40 font-medium"
+                                : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                            }`}
+                          >
+                            <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                              <span
+                                className={`w-6 h-6 rounded-full font-semibold text-[11px] flex items-center justify-center shrink-0 ${
+                                  isSelectedMonth
+                                    ? "bg-teal-600 text-white shadow-xs"
+                                    : "bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300"
+                                }`}
+                              >
+                                {locale === "bn" ? toBanglaDigits(row.month) : row.month}
                               </span>
-                              <div className="w-12 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden hidden sm:block">
-                                <div
-                                  className="h-full bg-teal-500 rounded-full"
-                                  style={{ width: `${Math.min(100, Math.round(row.collectionRate))}%` }}
-                                />
+                              <span>{formatMonth(row.month, locale, reportYear)}</span>
+                              {isSelectedMonth && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-600 text-white font-bold ml-1">
+                                  {locale === "bn" ? "নির্বাচিত" : "Selected"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="p-3.5 text-right font-semibold text-slate-900 dark:text-slate-100">
+                              {formatCurrency(row.totalBilled, locale)}
+                            </td>
+                            <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                              {formatCurrency(row.totalCollected, locale)}
+                            </td>
+                            <td className="p-3.5 text-right font-bold text-red-600 dark:text-red-400">
+                              {row.totalDue > 0 ? formatCurrency(row.totalDue, locale) : "—"}
+                            </td>
+                            <td className="p-3.5 text-right font-semibold text-amber-600 dark:text-amber-400">
+                              {formatCurrency(row.totalExpense, locale)}
+                            </td>
+                            <td className={`p-3.5 text-right font-bold ${row.netProfit >= 0 ? "text-teal-700 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}>
+                              {formatCurrency(row.netProfit, locale)}
+                            </td>
+                            <td className="p-3.5 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <span className="font-semibold text-xs">
+                                  {formatPercent(row.collectionRate, locale)}
+                                </span>
+                                <div className="w-12 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                  <div
+                                    className="h-full bg-teal-500 rounded-full"
+                                    style={{ width: `${Math.min(100, Math.round(row.collectionRate))}%` }}
+                                  />
+                                </div>
                               </div>
-                            </div>
-                          </td>
-                          <td className="p-3.5 text-center text-xs">
-                            <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
-                              {locale === "bn" ? toBanglaDigits(row.paidCount) : row.paidCount}
-                            </span>
-                            <span className="text-slate-400 mx-1">/</span>
-                            <span className="inline-flex items-center gap-1 font-semibold text-red-500">
-                              {locale === "bn" ? toBanglaDigits(row.dueCount + row.partialCount) : row.dueCount + row.partialCount}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="p-3.5 text-center text-xs">
+                              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
+                                {locale === "bn" ? toBanglaDigits(row.paidCount) : row.paidCount}
+                              </span>
+                              <span className="text-slate-400 mx-1">/</span>
+                              <span className="inline-flex items-center gap-1 font-semibold text-red-500">
+                                {locale === "bn" ? toBanglaDigits(row.dueCount + row.partialCount) : row.dueCount + row.partialCount}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                     {data.summary && (
                       <tfoot>
@@ -547,6 +566,19 @@ export function ReportsView() {
           {/* 2. Market Profit & Loss Statement */}
           {reportType === "market_pnl" && data.rows && (
             <Card className="overflow-hidden">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4 text-teal-600" />
+                  <span>
+                    {reportMonth > 0
+                      ? `${formatMonth(reportMonth, locale, reportYear)} — ${t("reports.marketProfitLoss")}`
+                      : `${reportYear} — ${t("reports.marketProfitLoss")} (${locale === "bn" ? "পুরো বছর" : "Full Year"})`}
+                  </span>
+                </span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300">
+                  {reportMonth > 0 ? formatMonth(reportMonth, locale) : (locale === "bn" ? "১২ মাস" : "12 Months")}
+                </span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
@@ -591,6 +623,17 @@ export function ReportsView() {
           {/* 3. Expense Breakdown by Category */}
           {reportType === "expense_by_category" && data.rows && (
             <Card className="overflow-hidden">
+              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  {reportMonth > 0
+                    ? `${formatMonth(reportMonth, locale, reportYear)} — ${t("reports.expenseByCategory")}`
+                    : `${reportYear} — ${t("reports.expenseByCategory")} (${locale === "bn" ? "পুরো বছর" : "Full Year"})`}
+                </span>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                  {locale === "bn" ? "মোট খরচ: " : "Total: "}
+                  {formatCurrency(data.totalAllExpenses || 0, locale)}
+                </span>
+              </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>

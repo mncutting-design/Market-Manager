@@ -13,7 +13,10 @@ export async function GET(req: Request) {
 
     // 1. Monthly Collection Report
     if (reportType === "monthly_collection") {
-      const where: any = { month, year };
+      const where: any = { year };
+      if (month && month > 0 && month <= 12) {
+        where.month = month;
+      }
       if (marketId !== "ALL") {
         where.shop = { marketId, isActive: true };
       } else {
@@ -139,6 +142,22 @@ export async function GET(req: Request) {
 
     // 2. Market Profit & Loss Statement
     if (reportType === "market_pnl") {
+      const billWhere: any = { year };
+      const expWhere: any = {
+        date: {
+          gte: new Date(year, 0, 1),
+          lte: new Date(year, 11, 31, 23, 59, 59),
+        },
+      };
+
+      if (month && month > 0 && month <= 12) {
+        billWhere.month = month;
+        expWhere.date = {
+          gte: new Date(year, month - 1, 1),
+          lte: new Date(year, month, 0, 23, 59, 59),
+        };
+      }
+
       const markets = await prisma.market.findMany({
         where: marketId !== "ALL" ? { id: marketId, isActive: true } : { isActive: true },
         include: {
@@ -146,7 +165,7 @@ export async function GET(req: Request) {
             where: { isActive: true },
             include: {
               bills: {
-                where: { year },
+                where: billWhere,
               },
               tenants: {
                 where: { isActive: true },
@@ -155,12 +174,7 @@ export async function GET(req: Request) {
             },
           },
           expenses: {
-            where: {
-              date: {
-                gte: new Date(year, 0, 1),
-                lte: new Date(year, 11, 31, 23, 59, 59),
-              },
-            },
+            where: expWhere,
           },
         },
       });
@@ -210,6 +224,9 @@ export async function GET(req: Request) {
       if (marketId !== "ALL") {
         settlementWhere.shop = { marketId };
       }
+      const startDate = month && month > 0 && month <= 12 ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+      const endDate = month && month > 0 && month <= 12 ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
+      settlementWhere.settledAt = { gte: startDate, lte: endDate };
 
       const settlements = await prisma.settlement.findMany({
         where: settlementWhere,
@@ -257,6 +274,9 @@ export async function GET(req: Request) {
       if (marketId !== "ALL") {
         settlementWhere.shop = { marketId };
       }
+      const startDate = month && month > 0 && month <= 12 ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+      const endDate = month && month > 0 && month <= 12 ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
+      settlementWhere.settledAt = { gte: startDate, lte: endDate };
 
       const settlements = await prisma.settlement.findMany({
         where: settlementWhere,
@@ -294,8 +314,8 @@ export async function GET(req: Request) {
 
     // 3. Category-wise Expense Report
     if (reportType === "expense_by_category") {
-      const startDate = new Date(year, 0, 1);
-      const endDate = new Date(year, 11, 31, 23, 59, 59);
+      const startDate = month && month > 0 && month <= 12 ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+      const endDate = month && month > 0 && month <= 12 ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
 
       const expenses = await prisma.expense.findMany({
         where: {
@@ -349,8 +369,8 @@ export async function GET(req: Request) {
 
     // 5. Collector & Staff Summary Report
     if (reportType === "collector_summary") {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59);
+      const startDate = month && month > 0 && month <= 12 ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+      const endDate = month && month > 0 && month <= 12 ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
 
       const where: any = {
         paidOn: { gte: startDate, lte: endDate },
@@ -425,8 +445,8 @@ export async function GET(req: Request) {
 
     // 6. Payment Channel & Account Breakdown
     if (reportType === "channel_summary") {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0, 23, 59, 59);
+      const startDate = month && month > 0 && month <= 12 ? new Date(year, month - 1, 1) : new Date(year, 0, 1);
+      const endDate = month && month > 0 && month <= 12 ? new Date(year, month, 0, 23, 59, 59) : new Date(year, 11, 31, 23, 59, 59);
 
       const where: any = {
         paidOn: { gte: startDate, lte: endDate },
@@ -573,6 +593,15 @@ export async function GET(req: Request) {
         }
       }
 
+      // Filter transactions if specific month selected
+      const filteredTransactions = transactions.filter((tx) => {
+        if (!tx.period) return true;
+        const [m, y] = tx.period.split("/").map(Number);
+        if (year && y !== year) return false;
+        if (month && month > 0 && m !== month) return false;
+        return true;
+      });
+
       return NextResponse.json({
         reportType,
         tenant: {
@@ -585,7 +614,7 @@ export async function GET(req: Request) {
           shopNumber: tenant.shop.shopNumber,
           marketName: tenant.shop.market.name,
         },
-        transactions,
+        transactions: (month > 0) ? filteredTransactions : transactions,
         totalBilled: tenant.bills.reduce((sum, b) => sum + b.totalAmount, 0),
         totalPaid: tenant.bills.reduce((sum, b) => sum + b.paidAmount, 0),
         currentOutstandingDue: runningBalance,
