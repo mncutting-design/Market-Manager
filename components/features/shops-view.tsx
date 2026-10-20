@@ -41,9 +41,11 @@ import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function ShopsView() {
   const { t, locale } = useTranslation();
-  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh, isAdmin, refreshApprovals } = useApp();
+  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh, isAdmin, refreshApprovals, currentUser } = useApp();
+  const isOperator = currentUser?.role === "OPERATOR";
 
   const [search, setSearch] = useState("");
+
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const queryParams = new URLSearchParams();
@@ -379,10 +381,12 @@ export function ShopsView() {
           </p>
         </div>
 
-        <Button onClick={() => setIsAddShopOpen(true)}>
-          <Plus className="w-4 h-4 mr-1.5" />
-          {t("shops.addShop")}
-        </Button>
+        {!isOperator && (
+          <Button onClick={() => setIsAddShopOpen(true)}>
+            <Plus className="w-4 h-4 mr-1.5" />
+            {t("shops.addShop")}
+          </Button>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -460,7 +464,7 @@ export function ShopsView() {
                   </div>
                   <div className="flex items-center gap-1">
                     <StatusBadge status={shop.status} />
-                    {isAdmin && (
+                    {(isAdmin || currentUser?.role === "MANAGER") && (
                       <>
                         <button
                           type="button"

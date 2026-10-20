@@ -140,6 +140,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     fetchApprovals();
   }, [refreshKey]);
 
+  // Periodic heartbeat telemetry: tracks online presence and immediately detects if admin deactivated account
+  useEffect(() => {
+    const sendHeartbeat = async () => {
+      try {
+        const res = await fetch("/api/auth/heartbeat", { method: "POST" });
+        if (res.status === 401) {
+          window.location.reload();
+        }
+      } catch {}
+    };
+
+    sendHeartbeat();
+    const heartbeatInterval = setInterval(sendHeartbeat, 45000);
+    return () => clearInterval(heartbeatInterval);
+  }, []);
+
+
   const triggerRefresh = (tag: string = "ALL") => {
     setRefreshKey((prev) => prev + 1);
     broadcastMutation(tag);

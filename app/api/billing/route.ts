@@ -206,11 +206,21 @@ export async function POST(req: Request) {
   }
 }
 
+import { getSession } from "@/lib/auth";
+
 // Add or edit manual charge item on an existing bill
 export async function PUT(req: Request) {
   try {
+    const session = await getSession();
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো বিল বা চার্জ পরিবর্তন বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
-    const { billId, itemId, chargeTypeId, description, amount } = body;
+    const { billId, itemId, chargeTypeId, description, amount, submitForApproval } = body;
 
     if (!billId || amount === undefined) {
       return NextResponse.json({ error: "Bill ID and Amount are required" }, { status: 400 });
@@ -218,7 +228,7 @@ export async function PUT(req: Request) {
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
-      include: { billItems: true },
+      include: { billItems: true, shop: { include: { market: true } } },
     });
 
     if (!bill) {
@@ -226,7 +236,33 @@ export async function PUT(req: Request) {
     }
 
     const chargePaisa = Math.round(Number(amount));
+    const isAdmin = session?.role === "ADMIN";
 
+    // If manager, generate change request for admin approval
+    if (!isAdmin || submitForApproval) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "BILL",
+          entityId: billId,
+          entityTitle: `বিল চার্জ (${bill.shop.shopNumber} - ${bill.shop.market.name})`,
+          actionType: itemId ? "EDIT_ITEM" : "ADD_ITEM",
+          status: "PENDING",
+          currentData: JSON.stringify({ billId, itemId }),
+          proposedData: JSON.stringify({ itemId, chargeTypeId, description, amount: chargePaisa }),
+          requestedBy: session?.name || "Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "বিলের চার্জ পরিবর্তনের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin update
     await prisma.$transaction(async (tx) => {
       if (itemId) {
         // Edit existing item
@@ -285,6 +321,14 @@ export async function PUT(req: Request) {
 // Delete a manual charge item from a bill
 export async function DELETE(req: Request) {
   try {
+    const session = await getSession();
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো বিল বা চার্জ পরিবর্তন বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const billId = searchParams.get("billId");
     const itemId = searchParams.get("itemId");
@@ -295,13 +339,38 @@ export async function DELETE(req: Request) {
 
     const bill = await prisma.bill.findUnique({
       where: { id: billId },
-      include: { billItems: true },
+      include: { billItems: true, shop: { include: { market: true } } },
     });
 
     if (!bill) {
       return NextResponse.json({ error: "Bill not found" }, { status: 404 });
     }
 
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "BILL",
+          entityId: billId,
+          entityTitle: `বিল চার্জ মুছে ফেলা (${bill.shop.shopNumber} - ${bill.shop.market.name})`,
+          actionType: "DELETE_ITEM",
+          status: "PENDING",
+          currentData: JSON.stringify({ billId, itemId }),
+          proposedData: JSON.stringify({ itemId }),
+          requestedBy: session?.name || "Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "বিল চার্জ অপসারণের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin execution
     await prisma.$transaction(async (tx) => {
       await tx.billItem.delete({
         where: { id: itemId },
@@ -338,3 +407,4 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Failed to delete bill item" }, { status: 500 });
   }
 }
+

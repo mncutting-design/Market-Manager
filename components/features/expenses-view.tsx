@@ -28,8 +28,10 @@ import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function ExpensesView() {
   const { t, locale } = useTranslation();
-  const { selectedMarketId, selectedMonth, selectedYear, refreshKey, triggerRefresh, openAddExpense } =
+  const { selectedMarketId, selectedMonth, selectedYear, refreshKey, triggerRefresh, openAddExpense, currentUser, isAdmin } =
     useApp();
+  const isOperator = currentUser?.role === "OPERATOR";
+
 
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
@@ -139,17 +141,21 @@ export function ExpensesView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsCategoryModalOpen(true)}>
-            <Plus className="w-4 h-4 mr-1.5" />
-            {t("expenses.addCategory")}
-          </Button>
+        {!isOperator && (
+          <div className="flex items-center gap-2">
+            {isAdmin && (
+              <Button variant="outline" onClick={() => setIsCategoryModalOpen(true)}>
+                <Plus className="w-4 h-4 mr-1.5" />
+                {t("expenses.addCategory")}
+              </Button>
+            )}
 
-          <Button onClick={() => openAddExpense()}>
-            <Plus className="w-4 h-4 mr-1.5" />
-            {t("expenses.addExpense")}
-          </Button>
-        </div>
+            <Button onClick={() => openAddExpense()}>
+              <Plus className="w-4 h-4 mr-1.5" />
+              {t("expenses.addExpense")}
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Summary KPI & Category Filter bar */}
@@ -254,13 +260,15 @@ export function ExpensesView() {
                   {formatCurrency(e.amount, locale)}
                 </span>
 
-                <button
-                  onClick={() => handleDeleteExpense(e.id)}
-                  className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                  title={t("common.delete")}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {!isOperator && (
+                  <button
+                    onClick={() => handleDeleteExpense(e.id)}
+                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                    title={t("common.delete")}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </Card>
           ))}

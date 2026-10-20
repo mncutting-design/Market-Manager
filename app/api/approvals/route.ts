@@ -83,6 +83,14 @@ export async function POST(req: Request) {
     const requester = requestedBy || session?.name || "Staff / Manager";
     const requesterRole = session?.role || "MANAGER";
 
+    // REQUIREMENT: OPERATOR ONLY OPERATE TASK NOT ANY EDIT REQUEST
+    if (requesterRole === "OPERATOR" || requesterRole === "VIEWER") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ সম্পাদন করতে পারবেন, কোনো পরিবর্তন বা এডিট রিকোয়েস্ট করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     const changeRequest = await prisma.changeRequest.create({
       data: {
         entityType,
@@ -267,6 +275,87 @@ export async function PUT(req: Request) {
             ...(proposed.advanceDeposit !== undefined && { advanceDeposit: Math.round(Number(proposed.advanceDeposit)) }),
           },
         });
+      } else if (cr.entityType === "BILL") {
+        if (cr.actionType === "DELETE_ITEM" && proposed.itemId) {
+          await tx.billItem.delete({ where: { id: proposed.itemId } });
+        } else if (cr.actionType === "ADD_ITEM") {
+          await tx.billItem.create({
+            data: {
+              billId: cr.entityId,
+              description: proposed.description?.trim() || "ম্যানুয়াল চার্জ",
+              amount: Math.round(Number(proposed.amount)),
+            },
+          });
+        } else {
+          await tx.bill.update({
+            where: { id: cr.entityId },
+            data: {
+              ...(proposed.rentAmount !== undefined && { rentAmount: Math.round(Number(proposed.rentAmount)) }),
+              ...(proposed.totalAmount !== undefined && { totalAmount: Math.round(Number(proposed.totalAmount)) }),
+              ...(proposed.dueAmount !== undefined && { dueAmount: Math.round(Number(proposed.dueAmount)) }),
+              ...(proposed.status !== undefined && { status: proposed.status }),
+            },
+          });
+        }
+      } else if (cr.entityType === "TRANSACTION" || cr.entityType === "PAYMENT") {
+        const pmt = await tx.payment.findUnique({
+          where: { id: cr.entityId },
+          include: { bill: true },
+        });
+
+        if (pmt) {
+          if (cr.actionType === "DELETE") {
+            await tx.payment.delete({ where: { id: cr.entityId } });
+            const newPaid = Math.max(0, pmt.bill.paidAmount - pmt.amount);
+            const newDue = Math.max(0, pmt.bill.totalAmount - newPaid);
+            await tx.bill.update({
+              where: { id: pmt.billId },
+              data: {
+                paidAmount: newPaid,
+                dueAmount: newDue,
+                status: newDue <= 0 ? "PAID" : newPaid > 0 ? "PARTIAL" : "DUE",
+              },
+            });
+          } else {
+            const newAmt = proposed.amount !== undefined ? Math.round(Number(proposed.amount)) : pmt.amount;
+            await tx.payment.update({
+              where: { id: cr.entityId },
+              data: {
+                amount: newAmt,
+                ...(proposed.method && { method: proposed.method }),
+                ...(proposed.reference !== undefined && { reference: proposed.reference?.trim() || null }),
+                ...(proposed.note !== undefined && { note: proposed.note?.trim() || null }),
+              },
+            });
+
+            // Recalculate bill
+            const remainingPayments = await tx.payment.findMany({ where: { billId: pmt.billId } });
+            const recalculatedPaid = remainingPayments.reduce((acc, p) => (p.id === cr.entityId ? acc + newAmt : acc + p.amount), 0);
+            const recalculatedDue = Math.max(0, pmt.bill.totalAmount - recalculatedPaid);
+            await tx.bill.update({
+              where: { id: pmt.billId },
+              data: {
+                paidAmount: recalculatedPaid,
+                dueAmount: recalculatedDue,
+                status: recalculatedDue <= 0 ? "PAID" : recalculatedPaid > 0 ? "PARTIAL" : "DUE",
+              },
+            });
+          }
+        }
+      } else if (cr.entityType === "EXPENSE") {
+        if (cr.actionType === "DELETE") {
+          await tx.expense.delete({ where: { id: cr.entityId } });
+        } else {
+          await tx.expense.update({
+            where: { id: cr.entityId },
+            data: {
+              ...(proposed.amount !== undefined && { amount: Math.round(Number(proposed.amount)) }),
+              ...(proposed.categoryId && { categoryId: proposed.categoryId }),
+              ...(proposed.description !== undefined && { description: proposed.description?.trim() || null }),
+              ...(proposed.paymentMethod && { paymentMethod: proposed.paymentMethod }),
+            },
+          });
+        }
       }
 
       // Mark ChangeRequest as APPROVED
@@ -280,6 +369,7 @@ export async function PUT(req: Request) {
         },
       });
     });
+
 
     await logAudit({
       userId: session.id,

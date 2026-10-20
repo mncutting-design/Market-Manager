@@ -190,6 +190,13 @@ export async function PUT(req: Request) {
     };
 
     const isAdmin = session?.role === "ADMIN";
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো দোকান পরিবর্তন বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     if (!isAdmin || submitForApproval) {
       const cr = await prisma.changeRequest.create({
         data: {
@@ -288,6 +295,13 @@ export async function DELETE(req: Request) {
 
     if (!shop) {
       return NextResponse.json({ error: "Shop not found" }, { status: 404 });
+    }
+
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো দোকান ডিলিট বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
     }
 
     const isAdmin = session?.role === "ADMIN";

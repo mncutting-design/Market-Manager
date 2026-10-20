@@ -164,3 +164,201 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Failed to record payment" }, { status: 500 });
   }
 }
+
+import { getSession } from "@/lib/auth";
+
+// Edit payment / transaction amount or details
+export async function PUT(req: Request) {
+  try {
+    const session = await getSession();
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো ট্রানজেকশন পরিবর্তন বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
+    const body = await req.json();
+    const { id, amount, method, reference, note, submitForApproval } = body;
+
+    if (!id) {
+      return NextResponse.json({ error: "Payment ID is required" }, { status: 400 });
+    }
+
+    const payment = await prisma.payment.findUnique({
+      where: { id },
+      include: {
+        bill: {
+          include: {
+            shop: { include: { market: true } },
+            tenant: true,
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
+    }
+
+    const newAmountPaisa = amount !== undefined ? Math.round(Number(amount)) : payment.amount;
+    const isAdmin = session?.role === "ADMIN";
+
+    // If manager, create change request for Admin approval
+    if (!isAdmin || submitForApproval) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "TRANSACTION",
+          entityId: id,
+          entityTitle: `ভাড়া আদায় (${payment.bill.shop.shopNumber} - ${payment.bill.tenant.name})`,
+          actionType: "EDIT",
+          status: "PENDING",
+          currentData: JSON.stringify({
+            amount: payment.amount,
+            method: payment.method,
+            reference: payment.reference,
+          }),
+          proposedData: JSON.stringify({
+            amount: newAmountPaisa,
+            method: method || payment.method,
+            reference: reference?.trim() || null,
+            note: note?.trim() || null,
+          }),
+          requestedBy: session?.name || "Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "ট্রানজেকশন পরিবর্তনের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin execution
+    const updatedPayment = await prisma.$transaction(async (tx) => {
+      const p = await tx.payment.update({
+        where: { id },
+        data: {
+          amount: newAmountPaisa,
+          ...(method && { method }),
+          ...(reference !== undefined && { reference: reference?.trim() || null }),
+          ...(note !== undefined && { note: note?.trim() || null }),
+        },
+      });
+
+      // Recalculate bill
+      const allPayments = await tx.payment.findMany({ where: { billId: payment.billId } });
+      const totalPaid = allPayments.reduce((sum, item) => sum + item.amount, 0);
+      const newDue = Math.max(0, payment.bill.totalAmount - totalPaid);
+      const newStatus = newDue <= 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "DUE";
+
+      await tx.bill.update({
+        where: { id: payment.billId },
+        data: {
+          paidAmount: totalPaid,
+          dueAmount: newDue,
+          status: newStatus,
+        },
+      });
+
+      return p;
+    });
+
+    return NextResponse.json({ success: true, payment: updatedPayment });
+  } catch (error) {
+    console.error("Failed to update payment:", error);
+    return NextResponse.json({ error: "Failed to update payment" }, { status: 500 });
+  }
+}
+
+// Void or delete payment / transaction
+export async function DELETE(req: Request) {
+  try {
+    const session = await getSession();
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো ট্রানজেকশন ডিলিট বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id");
+
+    if (!id) {
+      return NextResponse.json({ error: "Payment ID is required" }, { status: 400 });
+    }
+
+    const payment = await prisma.payment.findUnique({
+      where: { id },
+      include: {
+        bill: {
+          include: {
+            shop: { include: { market: true } },
+            tenant: true,
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
+    }
+
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "TRANSACTION",
+          entityId: id,
+          entityTitle: `ভাড়া আদায় বাতিল (${payment.bill.shop.shopNumber} - ${payment.bill.tenant.name})`,
+          actionType: "DELETE",
+          status: "PENDING",
+          currentData: JSON.stringify({
+            amount: payment.amount,
+            method: payment.method,
+            paidOn: payment.paidOn,
+          }),
+          proposedData: JSON.stringify({ action: "DELETE" }),
+          requestedBy: session?.name || "Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "ট্রানজেকশন বাতিলের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
+        changeRequest: cr,
+      });
+    }
+
+    // Direct Admin execution
+    await prisma.$transaction(async (tx) => {
+      await tx.payment.delete({ where: { id } });
+
+      const allPayments = await tx.payment.findMany({ where: { billId: payment.billId } });
+      const totalPaid = allPayments.reduce((sum, item) => sum + item.amount, 0);
+      const newDue = Math.max(0, payment.bill.totalAmount - totalPaid);
+      const newStatus = newDue <= 0 ? "PAID" : totalPaid > 0 ? "PARTIAL" : "DUE";
+
+      await tx.bill.update({
+        where: { id: payment.billId },
+        data: {
+          paidAmount: totalPaid,
+          dueAmount: newDue,
+          status: newStatus,
+        },
+      });
+    });
+
+    return NextResponse.json({ success: true, message: "Payment voided successfully" });
+  } catch (error) {
+    console.error("Failed to delete payment:", error);
+    return NextResponse.json({ error: "Failed to delete payment" }, { status: 500 });
+  }
+}
+

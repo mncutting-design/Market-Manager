@@ -102,13 +102,67 @@ export async function POST(req: Request) {
   }
 }
 
+import { getSession } from "@/lib/auth";
+
 export async function PUT(req: Request) {
   try {
+    const session = await getSession();
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো খরচ পরিবর্তন বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
-    const { id, marketId, categoryId, amount, date, description, attachmentUrl, paymentMethod } = body;
+    const { id, marketId, categoryId, amount, date, description, attachmentUrl, paymentMethod, submitForApproval } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Expense ID is required" }, { status: 400 });
+    }
+
+    const currentExpense = await prisma.expense.findUnique({
+      where: { id },
+      include: { market: true, category: true },
+    });
+
+    if (!currentExpense) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    const isAdmin = session?.role === "ADMIN";
+    const expensePaisa = amount !== undefined ? Math.round(Number(amount)) : currentExpense.amount;
+
+    if (!isAdmin || submitForApproval) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "EXPENSE",
+          entityId: id,
+          entityTitle: `খরচ (${currentExpense.category.name_bn || currentExpense.category.name_en} - ${currentExpense.market.name})`,
+          actionType: "EDIT",
+          status: "PENDING",
+          currentData: JSON.stringify({
+            amount: currentExpense.amount,
+            description: currentExpense.description,
+            categoryId: currentExpense.categoryId,
+          }),
+          proposedData: JSON.stringify({
+            amount: expensePaisa,
+            categoryId: categoryId || currentExpense.categoryId,
+            description: description?.trim() || null,
+            paymentMethod: paymentMethod || currentExpense.paymentMethod,
+          }),
+          requestedBy: session?.name || "Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "খরচ পরিবর্তনের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
+        changeRequest: cr,
+      });
     }
 
     const updated = await prisma.expense.update({
@@ -116,7 +170,7 @@ export async function PUT(req: Request) {
       data: {
         ...(marketId && { marketId }),
         ...(categoryId && { categoryId }),
-        ...(amount !== undefined && { amount: Math.round(Number(amount)) }),
+        ...(amount !== undefined && { amount: expensePaisa }),
         ...(date && { date: new Date(date) }),
         ...(description !== undefined && { description: description?.trim() || null }),
         ...(attachmentUrl !== undefined && { attachmentUrl: attachmentUrl?.trim() || null }),
@@ -137,16 +191,61 @@ export async function PUT(req: Request) {
 
 export async function DELETE(req: Request) {
   try {
+    const session = await getSession();
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো খরচ ডিলিট বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get("id");
     if (!id) return NextResponse.json({ error: "Expense ID required" }, { status: 400 });
+
+    const currentExpense = await prisma.expense.findUnique({
+      where: { id },
+      include: { market: true, category: true },
+    });
+
+    if (!currentExpense) {
+      return NextResponse.json({ error: "Expense not found" }, { status: 404 });
+    }
+
+    const isAdmin = session?.role === "ADMIN";
+    if (!isAdmin) {
+      const cr = await prisma.changeRequest.create({
+        data: {
+          entityType: "EXPENSE",
+          entityId: id,
+          entityTitle: `খরচ অপসারণ (${currentExpense.category.name_bn || currentExpense.category.name_en} - ${currentExpense.market.name})`,
+          actionType: "DELETE",
+          status: "PENDING",
+          currentData: JSON.stringify({
+            amount: currentExpense.amount,
+            description: currentExpense.description,
+          }),
+          proposedData: JSON.stringify({ action: "DELETE" }),
+          requestedBy: session?.name || "Manager",
+          requesterRole: session?.role || "MANAGER",
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        requiresApproval: true,
+        message: "খরচ অপসারণের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
+        changeRequest: cr,
+      });
+    }
 
     await prisma.expense.delete({
       where: { id },
     });
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "Expense deleted successfully" });
   } catch (error) {
     return NextResponse.json({ error: "Failed to delete expense" }, { status: 500 });
   }
 }
+

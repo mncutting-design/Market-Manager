@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { recordUserActivity } from "@/lib/user-tracker";
 
 const SESSION_COOKIE_NAME = "mm_session";
 
@@ -83,6 +84,7 @@ export async function login(
             passwordHash,
             role: "ADMIN",
             locale: "bn",
+            isActive: true,
           },
         });
       } catch (upsertErr) {
@@ -93,6 +95,7 @@ export async function login(
     // If still no user in DB, but matches initial NAZRUL credentials, provide session
     if (!user) {
       if (isNazrulInitial) {
+        recordUserActivity(DEFAULT_NAZRUL_ADMIN.name);
         const token = createToken(DEFAULT_NAZRUL_ADMIN);
         const cookieStore = await cookies();
         cookieStore.set(SESSION_COOKIE_NAME, token, {
@@ -105,6 +108,14 @@ export async function login(
         return { success: true, user: DEFAULT_NAZRUL_ADMIN };
       }
       return { success: false, error: "Invalid username or password" };
+    }
+
+    // Check if account has been set to INACTIVE by admin
+    if (user.isActive === false) {
+      return {
+        success: false,
+        error: "আপনার অ্যাকাউন্টটি নিষ্ক্রিয় (Inactive) অবস্থায় রয়েছে। সিস্টেমে প্রবেশ করতে অ্যাডমিনের সাথে যোগাযোগ করুন। (Account is deactivated by Admin)",
+      };
     }
 
     // Verify password hash against database
@@ -122,6 +133,11 @@ export async function login(
       locale: user.locale,
     };
 
+    recordUserActivity(user.name);
+    if (user.id) {
+      recordUserActivity(user.id);
+    }
+
     const token = createToken(sessionUser);
     const cookieStore = await cookies();
     cookieStore.set(SESSION_COOKIE_NAME, token, {
@@ -137,6 +153,7 @@ export async function login(
     console.error("Login exception:", error);
 
     if (isNazrulInitial) {
+      recordUserActivity(DEFAULT_NAZRUL_ADMIN.name);
       const token = createToken(DEFAULT_NAZRUL_ADMIN);
       const cookieStore = await cookies();
       cookieStore.set(SESSION_COOKIE_NAME, token, {
@@ -163,8 +180,28 @@ export async function getSession(): Promise<SessionUser | null> {
     const cookieStore = await cookies();
     const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
     if (!token) return null;
-    return parseToken(token);
+    const parsed = parseToken(token);
+    if (!parsed) return null;
+
+    // Verify if active in DB (immediate kickout if admin deactivated user)
+    try {
+      const dbUser = await prisma.user.findUnique({
+        where: { id: parsed.id },
+        select: { isActive: true },
+      });
+      if (dbUser && dbUser.isActive === false) {
+        return null;
+      }
+    } catch {
+      // transient DB error, proceed with token
+    }
+
+    // Refresh activity tracker
+    recordUserActivity(parsed.name);
+
+    return parsed;
   } catch {
     return null;
   }
 }
+

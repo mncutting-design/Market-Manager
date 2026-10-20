@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { hasPermission } from "@/lib/permissions";
+import { getUserActivity } from "@/lib/user-tracker";
 
 export async function GET() {
   const session = await getSession();
@@ -10,7 +11,59 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const isAdmin = session.role === "ADMIN";
+
   try {
+    // REQUIREMENT: WITHOUT ADMIN ALL USER ONLY SHOW THEIR OWN NAME IN USER PAGE
+    if (!isAdmin) {
+      let myUser = null;
+      try {
+        myUser = await prisma.user.findFirst({
+          where: {
+            OR: [
+              { id: session.id },
+              { name: { equals: session.name, mode: "insensitive" } },
+              { email: { equals: session.email, mode: "insensitive" } },
+            ],
+          },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            locale: true,
+            isActive: true,
+            createdAt: true,
+          },
+        });
+      } catch (err) {
+        console.warn("Could not find my user:", err);
+      }
+
+      const selfAccount = myUser || {
+        id: session.id,
+        name: session.name,
+        email: session.email,
+        role: session.role,
+        locale: session.locale,
+        isActive: true,
+        createdAt: new Date().toISOString(),
+      };
+
+      return NextResponse.json({
+        users: [
+          {
+            ...selfAccount,
+            isOnline: true,
+            lastActiveAgo_bn: "অনলাইন (সক্রিয়)",
+            lastActiveAgo_en: "Online Now",
+            lastActiveAt: new Date().toISOString(),
+          },
+        ],
+      });
+    }
+
+    // ADMIN: CAN SEE ALL USERS, WHO ARE ONLINE, AND LAST TIME AGO THEY USED THE SYSTEM
     const users = await prisma.user.findMany({
       where: {
         NOT: [
@@ -24,38 +77,62 @@ export async function GET() {
         email: true,
         role: true,
         locale: true,
+        isActive: true,
         createdAt: true,
       },
       orderBy: { createdAt: "desc" },
     });
 
-    // If database has no users, return default NAZRUL Admin
+    // Ensure NAZRUL is present if DB has no users
     if (users.length === 0) {
+      const act = getUserActivity("NAZRUL");
       return NextResponse.json({
         users: [
           {
             id: "user-nazrul-admin-2026",
             name: "NAZRUL",
-            email: "nazrul",
+            email: "nazrul@rentpro.internal",
             role: "ADMIN",
             locale: "bn",
+            isActive: true,
+            isOnline: true,
+            lastActiveAgo_bn: act.lastActiveAgo_bn,
+            lastActiveAgo_en: act.lastActiveAgo_en,
+            lastActiveAt: act.lastActiveAt,
             createdAt: new Date().toISOString(),
           },
         ],
       });
     }
 
-    return NextResponse.json({ users });
+    // Attach real-time online presence and relative last-active time
+    const enrichedUsers = users.map((u) => {
+      const activity = getUserActivity(u.name, u.createdAt);
+      return {
+        ...u,
+        isActive: u.isActive !== false,
+        isOnline: activity.isOnline,
+        lastActiveAgo_bn: activity.lastActiveAgo_bn,
+        lastActiveAgo_en: activity.lastActiveAgo_en,
+        lastActiveAt: activity.lastActiveAt,
+      };
+    });
+
+    return NextResponse.json({ users: enrichedUsers });
   } catch (error) {
     console.error("Fetch users error:", error);
     return NextResponse.json({
       users: [
         {
-          id: "user-nazrul-admin-2026",
-          name: "NAZRUL",
-          email: "nazrul",
-          role: "ADMIN",
+          id: session.id || "user-nazrul-admin-2026",
+          name: session.name || "NAZRUL",
+          email: session.email || "nazrul@rentpro.internal",
+          role: session.role || "ADMIN",
           locale: "bn",
+          isActive: true,
+          isOnline: true,
+          lastActiveAgo_bn: "অনলাইন (সক্রিয়)",
+          lastActiveAgo_en: "Online Now",
           createdAt: new Date().toISOString(),
         },
       ],
@@ -82,6 +159,7 @@ export async function POST(req: Request) {
     const rawUsername = (body.username || body.name || "").trim();
     const password = body.password;
     const role = body.role;
+    const isActive = body.isActive !== undefined ? Boolean(body.isActive) : true;
 
     if (!rawUsername || !password) {
       return NextResponse.json(
@@ -131,6 +209,7 @@ export async function POST(req: Request) {
         passwordHash,
         role: validRole,
         locale: "bn",
+        isActive,
       },
       select: {
         id: true,
@@ -138,6 +217,7 @@ export async function POST(req: Request) {
         email: true,
         role: true,
         locale: true,
+        isActive: true,
         createdAt: true,
       },
     });
@@ -163,18 +243,64 @@ export async function PUT(req: Request) {
   }
 
   try {
-    const { id, role, password, newPassword, name } = await req.json();
+    const body = await req.json();
+    const { id, role, password, newPassword, name, isActive } = body;
     if (!id) {
       return NextResponse.json({ error: "User ID is required" }, { status: 400 });
     }
 
+    const targetUser = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const isNazrul =
+      targetUser.name.toUpperCase() === "NAZRUL" ||
+      targetUser.email.toLowerCase().includes("nazrul");
+
     const updateData: any = {};
+
+    // 1. ACTIVE / INACTIVE STATUS TOGGLE
+    if (typeof isActive === "boolean") {
+      // Safeguard: Primary Super Admin NAZRUL can never be deactivated
+      if (isNazrul && isActive === false) {
+        return NextResponse.json(
+          { error: "মূল সুপার এডমিন (NAZRUL) নিষ্ক্রিয় করা যাবে না (Primary Super Admin cannot be deactivated)" },
+          { status: 400 }
+        );
+      }
+
+      // Safeguard: User cannot deactivate their own active account
+      if (session.id === id && isActive === false) {
+        return NextResponse.json(
+          { error: "নিজের অ্যাকাউন্ট নিষ্ক্রিয় করা যাবে না (Cannot deactivate your own account)" },
+          { status: 400 }
+        );
+      }
+
+      updateData.isActive = isActive;
+    }
+
+    // 2. Role update
     if (role && ["ADMIN", "MANAGER", "OPERATOR", "VIEWER"].includes(role)) {
+      if (isNazrul && role !== "ADMIN") {
+        return NextResponse.json(
+          { error: "মূল সুপার এডমিন (NAZRUL)-এর রোল পরিবর্তন করা যাবে না" },
+          { status: 400 }
+        );
+      }
       updateData.role = role;
     }
+
+    // 3. Name update
     if (name) {
       updateData.name = name.trim();
     }
+
+    // 4. Password update (Admin reset)
     const finalPassword = newPassword || password;
     if (finalPassword) {
       if (finalPassword.length < 4) {
@@ -195,6 +321,7 @@ export async function PUT(req: Request) {
         email: true,
         role: true,
         locale: true,
+        isActive: true,
         createdAt: true,
       },
     });
@@ -202,7 +329,14 @@ export async function PUT(req: Request) {
     return NextResponse.json({
       success: true,
       user: updated,
-      message: finalPassword ? "Password reset successfully!" : "User updated successfully",
+      message:
+        typeof isActive === "boolean"
+          ? isActive
+            ? "User activated successfully"
+            : "User deactivated successfully"
+          : finalPassword
+          ? "Password reset successfully!"
+          : "User updated successfully",
     });
   } catch (error) {
     console.error("Update user error:", error);
@@ -278,3 +412,4 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Failed to delete user" }, { status: 500 });
   }
 }
+

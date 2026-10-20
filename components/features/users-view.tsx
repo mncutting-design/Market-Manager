@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -18,14 +17,19 @@ import {
   Search,
   Check,
   AlertTriangle,
-  Lock,
   Eye,
   EyeOff,
   UserCheck,
+  UserX,
   Layers,
   ChevronDown,
   ChevronUp,
+  Radio,
+  Clock,
   Sparkles,
+  ShieldAlert,
+  Power,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ROLE_DEFINITIONS, UserRole } from "@/lib/permissions";
@@ -35,6 +39,11 @@ interface UserItem {
   name: string;
   email: string;
   role: UserRole;
+  isActive: boolean;
+  isOnline?: boolean;
+  lastActiveAgo_bn?: string;
+  lastActiveAgo_en?: string;
+  lastActiveAt?: string;
   createdAt?: string;
 }
 
@@ -46,17 +55,20 @@ export function UsersView() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [showMatrix, setShowMatrix] = useState(false);
 
   // Modals state
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [adminResetTargetUser, setAdminResetTargetUser] = useState<UserItem | null>(null);
   const [deleteTargetUser, setDeleteTargetUser] = useState<UserItem | null>(null);
+  const [statusToggleTarget, setStatusToggleTarget] = useState<UserItem | null>(null);
 
   // Add User Form State (Strictly username + password + role, NO email!)
   const [newUserName, setNewUserName] = useState("");
   const [newUserPassword, setNewUserPassword] = useState("");
   const [newUserRole, setNewUserRole] = useState<UserRole>("MANAGER");
+  const [newUserActive, setNewUserActive] = useState(true);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isSubmittingAdd, setIsSubmittingAdd] = useState(false);
 
@@ -68,6 +80,7 @@ export function UsersView() {
   // Role Edit Inline
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [editingRoleValue, setEditingRoleValue] = useState<UserRole>("MANAGER");
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   const isAdmin = currentUser?.role === "ADMIN";
 
@@ -93,6 +106,9 @@ export function UsersView() {
 
   useEffect(() => {
     fetchUsers();
+    // Refresh user list & online status every 30 seconds
+    const interval = setInterval(fetchUsers, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Handle Add New User
@@ -116,6 +132,7 @@ export function UsersView() {
           username: newUserName.trim(),
           password: newUserPassword,
           role: newUserRole,
+          isActive: newUserActive,
         }),
       });
 
@@ -133,6 +150,7 @@ export function UsersView() {
       setNewUserName("");
       setNewUserPassword("");
       setNewUserRole("MANAGER");
+      setNewUserActive(true);
       setIsAddUserOpen(false);
       fetchUsers();
     } catch (err) {
@@ -174,7 +192,7 @@ export function UsersView() {
 
       toast.success(
         locale === "bn"
-          ? `'${adminResetTargetUser.name}' এর পাসওয়ার্ড সফলভাবে পরিবর্তন করা হয়েছে!`
+          ? `'${adminResetTargetUser.name}' এর পাসওয়ার্ড সফলভাবে রিসেট করা হয়েছে!`
           : `Password for '${adminResetTargetUser.name}' updated successfully!`
       );
       setAdminResetTargetUser(null);
@@ -183,6 +201,43 @@ export function UsersView() {
       toast.error("Failed to reset password");
     } finally {
       setIsSubmittingReset(false);
+    }
+  };
+
+  // Handle Active / Inactive Status Toggle
+  const handleToggleStatus = async () => {
+    if (!statusToggleTarget) return;
+    const targetId = statusToggleTarget.id;
+    const newStatus = !statusToggleTarget.isActive;
+
+    try {
+      setIsUpdatingStatus(true);
+      const res = await fetch("/api/users", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: targetId,
+          isActive: newStatus,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to update status");
+        return;
+      }
+
+      toast.success(
+        locale === "bn"
+          ? `'${statusToggleTarget.name}' অ্যাকাউন্টটি এখন ${newStatus ? "সক্রিয় (Active)" : "নিষ্ক্রিয় (Inactive)"}!`
+          : `User '${statusToggleTarget.name}' is now ${newStatus ? "Active" : "Inactive"}!`
+      );
+      setStatusToggleTarget(null);
+      fetchUsers();
+    } catch (err) {
+      toast.error("Failed to update user status");
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -205,7 +260,7 @@ export function UsersView() {
       }
 
       toast.success(
-        locale === "bn" ? "ব্যবহারকারীর রোল আপডেট হয়েছে" : "Role updated successfully"
+        locale === "bn" ? "ব্যবহারকারীর রোল পরিবর্তন হয়েছে" : "Role updated successfully"
       );
       setEditingRoleId(null);
       fetchUsers();
@@ -247,14 +302,128 @@ export function UsersView() {
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.role.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
-    return matchesSearch && matchesRole;
+    const matchesStatus =
+      statusFilter === "ALL"
+        ? true
+        : statusFilter === "ACTIVE"
+        ? u.isActive !== false
+        : u.isActive === false;
+    return matchesSearch && matchesRole && matchesStatus;
   });
 
   const totalCount = users.length;
   const adminCount = users.filter((u) => u.role === "ADMIN").length;
   const managerCount = users.filter((u) => u.role === "MANAGER" || u.role === "OPERATOR").length;
-  const viewerCount = users.filter((u) => u.role === "VIEWER").length;
+  const onlineCount = users.filter((u) => u.isOnline).length;
+  const inactiveCount = users.filter((u) => u.isActive === false).length;
 
+  // -------------------------------------------------------------
+  // NON-ADMIN VIEW: ONLY SHOW THEIR OWN NAME & PROFILE
+  // (Requirement: WITHOUT ADMIN ALL USER ONLY SHOW THEIR OWN NAME IN USER PAGE)
+  // -------------------------------------------------------------
+  if (!isAdmin) {
+    const selfUser = users[0] || {
+      id: currentUser?.id || "my-id",
+      name: currentUser?.name || "User",
+      email: currentUser?.email || "user@internal",
+      role: (currentUser?.role as UserRole) || "MANAGER",
+      isActive: true,
+      isOnline: true,
+    };
+    const def = ROLE_DEFINITIONS[selfUser.role] || ROLE_DEFINITIONS.MANAGER;
+
+    return (
+      <div className="space-y-6 max-w-2xl mx-auto py-4 animate-in fade-in duration-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <Users className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+              <span>{locale === "bn" ? "আমার অ্যাকাউন্ট ও নিরাপত্তা" : "My Account & Profile"}</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+              {locale === "bn"
+                ? "আপনার ব্যক্তিগত অ্যাকাউন্ট বিবরণী এবং পাসওয়ার্ড পরিবর্তন সুবিধা।"
+                : "Your personal account profile details and security management."}
+            </p>
+          </div>
+
+          <Button
+            size="sm"
+            onClick={openChangePassword}
+            className="bg-amber-600 hover:bg-amber-700 text-white cursor-pointer shadow-sm"
+          >
+            <KeyRound className="w-4 h-4 mr-1.5" />
+            <span>{locale === "bn" ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}</span>
+          </Button>
+        </div>
+
+        {/* Profile Card */}
+        <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-500 text-white font-black text-2xl flex items-center justify-center shadow-lg shrink-0">
+              {selfUser.name.slice(0, 2).toUpperCase()}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-black text-slate-900 dark:text-white">
+                  {selfUser.name}
+                </h2>
+                <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/30">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  {locale === "bn" ? "অনলাইন" : "Online"}
+                </span>
+              </div>
+              <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                @{selfUser.name.toLowerCase().replace(/\s+/g, "")}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {locale === "bn" ? "আপনার রোল (Role)" : "Your Assigned Role"}
+              </p>
+              <div className="mt-1 flex items-center gap-2">
+                <span className={`px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider border ${def.badgeColor}`}>
+                  {selfUser.role}
+                </span>
+                <span className="text-xs text-slate-500 font-medium">
+                  {locale === "bn" ? def.label_bn : def.label_en}
+                </span>
+              </div>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                {locale === "bn" ? "লগইন স্ট্যাটাস" : "Account Status"}
+              </p>
+              <div className="mt-1 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                <ShieldCheck className="w-4 h-4" />
+                <span>{locale === "bn" ? "সক্রিয় (Active)" : "Active"}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-teal-50/70 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-900/40 text-xs text-teal-800 dark:text-teal-300 space-y-1">
+            <p className="font-bold flex items-center gap-1.5">
+              <ShieldCheck className="w-4 h-4 text-teal-600" />
+              <span>{locale === "bn" ? "নিরাপত্তা ও গোপনীয়তা বিজ্ঞপ্তি" : "Privacy & Security Notice"}</span>
+            </p>
+            <p className="text-[11px] leading-relaxed text-teal-700 dark:text-teal-400">
+              {locale === "bn"
+                ? "সিস্টেমের প্রাতিষ্ঠানিক গোপনীয়তা নীতি অনুযায়ী কেবল নিজের অ্যাকাউন্ট তথ্য দৃশ্যমান। অন্য ব্যবহারকারীদের তালিকা ও নিয়ন্ত্রণ কেবল সুপার অ্যাডমিন কর্তৃক নিয়ন্ত্রিত।"
+                : "In accordance with institutional security policies, non-administrator users only view their own account profile. Full user roster and system roles are administered exclusively by Super Admin."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // -------------------------------------------------------------
+  // ADMIN VIEW: FULL CONTROL, WHO IS ONLINE, LAST TIME AGO, ACTIVE/INACTIVE
+  // -------------------------------------------------------------
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* 1. Header & Overview Stats */}
@@ -268,12 +437,22 @@ export function UsersView() {
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
             {locale === "bn"
-              ? "সিস্টেম ইউজার তৈরি, পাসওয়ার্ড রিসেট, রোল নিয়ন্ত্রণ এবং নিরাপত্তা পরিচালনা।"
-              : "Provision accounts, reset forgotten passwords, and manage role-based system permissions."}
+              ? "সিস্টেম ইউজার তৈরি, একটিভ/নিষ্ক্রিয় নিয়ন্ত্রণ, অনলাইন উপস্থিতি ও পাসওয়ার্ড রিসেট।"
+              : "User provisioning, active/inactive login gating, online telemetry, and role architecture."}
           </p>
         </div>
 
         <div className="flex items-center gap-2.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchUsers}
+            className="cursor-pointer border-slate-200 dark:border-slate-800"
+            title="Refresh list"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-teal-600" : ""}`} />
+          </Button>
+
           {/* User can change own password anytime */}
           <Button
             variant="outline"
@@ -282,27 +461,25 @@ export function UsersView() {
             className="cursor-pointer border-amber-500/40 text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30"
           >
             <KeyRound className="w-4 h-4 mr-1.5 text-amber-500" />
-            <span>{locale === "bn" ? "আমার পাসওয়ার্ড পরিবর্তন" : "Change My Password"}</span>
+            <span>{locale === "bn" ? "আমার পাসওয়ার্ড" : "My Password"}</span>
           </Button>
 
           {/* Admin Add User */}
-          {isAdmin && (
-            <Button
-              size="sm"
-              onClick={() => setIsAddUserOpen(true)}
-              className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20 cursor-pointer"
-            >
-              <UserPlus className="w-4 h-4 mr-1.5" />
-              <span>{locale === "bn" ? "নতুন ইউজার যোগ করুন" : "Add New User"}</span>
-            </Button>
-          )}
+          <Button
+            size="sm"
+            onClick={() => setIsAddUserOpen(true)}
+            className="bg-teal-600 hover:bg-teal-700 text-white shadow-md shadow-teal-600/20 cursor-pointer"
+          >
+            <UserPlus className="w-4 h-4 mr-1.5" />
+            <span>{locale === "bn" ? "নতুন ইউজার যোগ করুন" : "Add User"}</span>
+          </Button>
         </div>
       </div>
 
-      {/* 2. Key Stats Summary */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+      {/* 2. Key Telemetry & Statistics */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4">
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+          <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
             {locale === "bn" ? "মোট ব্যবহারকারী" : "Total Users"}
           </p>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
@@ -310,8 +487,24 @@ export function UsersView() {
           </p>
         </div>
 
+        {/* Live Online Telemetry */}
+        <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-emerald-500/30 dark:border-emerald-500/20 shadow-xs relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+              {locale === "bn" ? "অনলাইন ব্যবহারকারী" : "Online Users"}
+            </p>
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+          </div>
+          <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1.5">
+            <span>{onlineCount}</span>
+            <span className="text-xs font-normal text-emerald-500">
+              {locale === "bn" ? "সক্রিয় রয়েছেন" : "active now"}
+            </span>
+          </p>
+        </div>
+
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
+          <p className="text-[10px] font-bold text-teal-600 dark:text-teal-400 uppercase tracking-wider">
             {locale === "bn" ? "সুপার এডমিন" : "Super Admins"}
           </p>
           <p className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-1">
@@ -320,8 +513,8 @@ export function UsersView() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-            {locale === "bn" ? "ম্যানেজার ও স্টাফ" : "Managers & Operators"}
+          <p className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+            {locale === "bn" ? "ম্যানেজার ও স্টাফ" : "Staff & Ops"}
           </p>
           <p className="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">
             {managerCount}
@@ -329,11 +522,11 @@ export function UsersView() {
         </div>
 
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-          <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
-            {locale === "bn" ? "দর্শক (ভিউয়ার)" : "Auditor / Viewers"}
+          <p className="text-[10px] font-bold text-red-500 dark:text-red-400 uppercase tracking-wider">
+            {locale === "bn" ? "নিষ্ক্রিয় (Inactive)" : "Inactive Users"}
           </p>
-          <p className="text-2xl font-black text-purple-600 dark:text-purple-400 mt-1">
-            {viewerCount}
+          <p className="text-2xl font-black text-red-500 dark:text-red-400 mt-1">
+            {inactiveCount}
           </p>
         </div>
       </div>
@@ -350,31 +543,53 @@ export function UsersView() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold text-slate-500">
-            {locale === "bn" ? "রোল ফিল্টার:" : "Filter Role:"}
-          </span>
-          <Select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-9 text-xs min-w-[120px]"
-          >
-            <option value="ALL">{locale === "bn" ? "সকল রোল (All)" : "All Roles"}</option>
-            <option value="ADMIN">ADMIN</option>
-            <option value="MANAGER">MANAGER</option>
-            <option value="OPERATOR">OPERATOR</option>
-            <option value="VIEWER">VIEWER</option>
-          </Select>
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-500">
+              {locale === "bn" ? "স্ট্যাটাস:" : "Status:"}
+            </span>
+            <Select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-9 text-xs min-w-[110px]"
+            >
+              <option value="ALL">{locale === "bn" ? "সব স্ট্যাটাস" : "All Status"}</option>
+              <option value="ACTIVE">{locale === "bn" ? "সক্রিয় (Active)" : "Active"}</option>
+              <option value="INACTIVE">{locale === "bn" ? "নিষ্ক্রিয় (Inactive)" : "Inactive"}</option>
+            </Select>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-semibold text-slate-500">
+              {locale === "bn" ? "রোল:" : "Role:"}
+            </span>
+            <Select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="h-9 text-xs min-w-[110px]"
+            >
+              <option value="ALL">{locale === "bn" ? "সব রোল" : "All Roles"}</option>
+              <option value="ADMIN">ADMIN</option>
+              <option value="MANAGER">MANAGER</option>
+              <option value="OPERATOR">OPERATOR</option>
+              <option value="VIEWER">VIEWER</option>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* 4. Active Users Grid */}
+      {/* 4. Active Users Grid with Telemetry & Active/Inactive Toggles */}
       <div className="space-y-3">
-        <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
-          {locale === "bn" ? "নিবন্ধিত অ্যাকাউন্ট তালিকা" : "Registered User Accounts"} ({filteredUsers.length})
-        </h2>
+        <div className="flex items-center justify-between px-1">
+          <h2 className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+            {locale === "bn" ? "নিবন্ধিত অ্যাকাউন্ট তালিকা" : "Registered User Accounts"} ({filteredUsers.length})
+          </h2>
+          <span className="text-[11px] text-slate-400">
+            {locale === "bn" ? "প্রতি ৩০ সেকেন্ডে স্বয়ংক্রিয় রিফ্রেশ হয়" : "Live updates every 30s"}
+          </span>
+        </div>
 
-        {isLoading ? (
+        {isLoading && users.length === 0 ? (
           <div className="p-8 text-center text-xs text-slate-400">Loading user roster...</div>
         ) : filteredUsers.length === 0 ? (
           <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
@@ -387,48 +602,97 @@ export function UsersView() {
               const isSelf = currentUser?.id === u.id || currentUser?.name === u.name;
               const def = ROLE_DEFINITIONS[u.role] || ROLE_DEFINITIONS.ADMIN;
               const isEditingRole = editingRoleId === u.id;
+              const isActive = u.isActive !== false;
 
               return (
                 <div
                   key={u.id}
-                  className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-teal-500/40 shadow-xs transition-all flex flex-col justify-between gap-4 group"
+                  className={`p-4 rounded-2xl bg-white dark:bg-slate-900 border shadow-xs transition-all flex flex-col justify-between gap-4 group ${
+                    !isActive
+                      ? "border-red-300 dark:border-red-950/60 bg-red-50/10"
+                      : u.isOnline
+                      ? "border-emerald-500/40"
+                      : "border-slate-200 dark:border-slate-800 hover:border-teal-500/40"
+                  }`}
                 >
-                  {/* Top: Avatar & Info */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-500 text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md">
-                        {u.name.slice(0, 2).toUpperCase()}
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
-                            {u.name}
-                          </p>
-                          {isNazrul && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/30">
-                              Primary Super Admin
-                            </span>
-                          )}
-                          {isSelf && (
-                            <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">
-                              You
-                            </span>
-                          )}
+                  {/* Top: Avatar, Info, and Live Online Pill */}
+                  <div className="space-y-2.5">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div
+                          className={`w-11 h-11 rounded-2xl text-white font-black text-sm flex items-center justify-center shrink-0 shadow-md ${
+                            !isActive
+                              ? "bg-slate-400 dark:bg-slate-700"
+                              : "bg-gradient-to-tr from-cyan-600 via-teal-600 to-emerald-500"
+                          }`}
+                        >
+                          {u.name.slice(0, 2).toUpperCase()}
                         </div>
-                        <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">
-                          ইউজারনেম: @{u.name.toLowerCase().replace(/\s+/g, "")}
-                        </p>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                              {u.name}
+                            </p>
+                            {isNazrul && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/30">
+                                Primary Admin
+                              </span>
+                            )}
+                            {isSelf && (
+                              <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">
+                                You
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-0.5">
+                            @{u.name.toLowerCase().replace(/\s+/g, "")}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Role & Status Badges */}
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        {!isEditingRole ? (
+                          <span
+                            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider border ${def.badgeColor}`}
+                          >
+                            {u.role}
+                          </span>
+                        ) : null}
+
+                        {/* Status Badge: Active vs Inactive */}
+                        {isActive ? (
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            {locale === "bn" ? "সক্রিয়" : "Active"}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 bg-red-500/10 px-1.5 py-0.5 rounded-md border border-red-500/30">
+                            <UserX className="w-2.5 h-2.5" />
+                            {locale === "bn" ? "নিষ্ক্রিয়" : "Inactive"}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Role Badge */}
-                    {!isEditingRole ? (
-                      <span
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider shrink-0 border ${def.badgeColor}`}
-                      >
-                        {u.role}
-                      </span>
-                    ) : null}
+                    {/* Online Status & Last Active Telemetry */}
+                    <div className="flex items-center gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                      {u.isOnline ? (
+                        <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-semibold bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                          <span>{locale === "bn" ? "অনলাইন (সিস্টেমে রয়েছেন)" : "Online now"}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-1.5 text-slate-500 dark:text-slate-400">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                          <span>
+                            {locale === "bn"
+                              ? `শেষ ব্যবহার: ${u.lastActiveAgo_bn || "এইমাত্র"}`
+                              : `Last active: ${u.lastActiveAgo_en || "Just now"}`}
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Inline Role Editor */}
@@ -463,33 +727,64 @@ export function UsersView() {
                   )}
 
                   {/* Card Actions Bottom Toolbar */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1">
-                    <div className="flex items-center gap-1">
-                      {/* Admin Reset Password Button (Admin can change their password if they forgot) */}
-                      {isAdmin && (
+                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between gap-1 flex-wrap">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      {/* Active / Inactive Toggle Button */}
+                      {!isNazrul && !isSelf && (
                         <button
                           type="button"
-                          onClick={() => {
-                            setAdminResetTargetUser(u);
-                            setResetNewPassword("");
-                          }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
-                          title="Admin Password Reset"
+                          onClick={() => setStatusToggleTarget(u)}
+                          className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                            isActive
+                              ? "text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+                              : "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 font-bold"
+                          }`}
+                          title={
+                            isActive
+                              ? locale === "bn"
+                                ? "ইউজার নিষ্ক্রিয় করুন"
+                                : "Deactivate User"
+                              : locale === "bn"
+                              ? "ইউজার সক্রিয় করুন"
+                              : "Activate User"
+                          }
                         >
-                          <KeyRound className="w-3.5 h-3.5 text-amber-500" />
-                          <span>{locale === "bn" ? "পাসওয়ার্ড রিসেট" : "Reset Pass"}</span>
+                          <Power className={`w-3.5 h-3.5 ${isActive ? "text-red-500" : "text-emerald-500"}`} />
+                          <span>
+                            {isActive
+                              ? locale === "bn"
+                                ? "নিষ্ক্রিয় করুন"
+                                : "Deactivate"
+                              : locale === "bn"
+                              ? "সক্রিয় করুন"
+                              : "Activate"}
+                          </span>
                         </button>
                       )}
 
+                      {/* Admin Reset Password Button */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAdminResetTargetUser(u);
+                          setResetNewPassword("");
+                        }}
+                        className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-amber-700 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/40 transition-colors cursor-pointer"
+                        title="Admin Password Reset"
+                      >
+                        <KeyRound className="w-3.5 h-3.5 text-amber-500" />
+                        <span>{locale === "bn" ? "পাসওয়ার্ড রিসেট" : "Reset"}</span>
+                      </button>
+
                       {/* Admin Role Edit */}
-                      {isAdmin && !isNazrul && !isEditingRole && (
+                      {!isNazrul && !isEditingRole && (
                         <button
                           type="button"
                           onClick={() => {
                             setEditingRoleId(u.id);
                             setEditingRoleValue(u.role);
                           }}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                          className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
                           title="Change Role"
                         >
                           <Edit3 className="w-3.5 h-3.5 text-slate-500" />
@@ -498,13 +793,13 @@ export function UsersView() {
                       )}
                     </div>
 
-                    {/* Delete User Button (Cannot delete NAZRUL or self) */}
-                    {isAdmin && !isNazrul && !isSelf && (
+                    {/* Delete User Button */}
+                    {!isNazrul && !isSelf && (
                       <button
                         type="button"
                         onClick={() => setDeleteTargetUser(u)}
-                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer"
-                        title={locale === "bn" ? "ব্যবহারকারী মুছুন" : "Delete User"}
+                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors cursor-pointer shrink-0"
+                        title={locale === "bn" ? "মুছে ফেলুন" : "Delete User"}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -550,28 +845,28 @@ export function UsersView() {
               <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80">
                 <tr>
                   <td className="p-3 font-medium">মার্কেট তৈরি, এডিট ও মুছা</td>
-                  <td className="p-3 text-center text-emerald-600">✓ পূর্ণ নিয়ন্ত্রণ</td>
-                  <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
+                  <td className="p-3 text-center text-emerald-600 font-bold">✓ সরাসরি নিয়ন্ত্রণ</td>
+                  <td className="p-3 text-center text-amber-600 font-medium">অনুমোদনের আবেদন</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                 </tr>
                 <tr>
                   <td className="p-3 font-medium">দোকান তথ্য ও ভাড়া পরিবর্তন</td>
-                  <td className="p-3 text-center text-emerald-600">✓ সরাসরি সেভ</td>
-                  <td className="p-3 text-center text-amber-600">অনুমোদনের আবেদন</td>
+                  <td className="p-3 text-center text-emerald-600 font-bold">✓ সরাসরি সেভ</td>
+                  <td className="p-3 text-center text-amber-600 font-medium">অনুমোদনের আবেদন</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                 </tr>
                 <tr>
                   <td className="p-3 font-medium">ভাড়া আদায় ও মানি রিসিট প্রিন্ট</td>
-                  <td className="p-3 text-center text-emerald-600">✓ অনুমোদিত</td>
-                  <td className="p-3 text-center text-emerald-600">✓ অনুমোদিত</td>
-                  <td className="p-3 text-center text-emerald-600">✓ অনুমোদিত</td>
+                  <td className="p-3 text-center text-emerald-600 font-bold">✓ অনুমোদিত</td>
+                  <td className="p-3 text-center text-emerald-600 font-bold">✓ অনুমোদিত</td>
+                  <td className="p-3 text-center text-emerald-600 font-bold">✓ শুধু আদায় ও রিসিট</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                 </tr>
                 <tr>
-                  <td className="p-3 font-medium">ইউজার তৈরি, ডিলিট ও পাসওয়ার্ড রিসেট</td>
-                  <td className="p-3 text-center text-emerald-600">✓ পূর্ণ নিয়ন্ত্রণ</td>
+                  <td className="p-3 font-medium">ইউজার তৈরি, ডিলিট, এক্টিভ/নিষ্ক্রিয়</td>
+                  <td className="p-3 text-center text-emerald-600 font-bold">✓ পূর্ণ নিয়ন্ত্রণ</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
                   <td className="p-3 text-center text-slate-400">✕ নিষেধ</td>
@@ -646,6 +941,19 @@ export function UsersView() {
             </Select>
           </div>
 
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              {locale === "bn" ? "প্রাথমিক লগইন স্ট্যাটাস" : "Initial Login Status"}
+            </label>
+            <Select
+              value={newUserActive ? "true" : "false"}
+              onChange={(e) => setNewUserActive(e.target.value === "true")}
+            >
+              <option value="true">সক্রিয় (Active - লগইন করতে পারবে)</option>
+              <option value="false">নিষ্ক্রিয় (Inactive - লগইন বন্ধ থাকবে)</option>
+            </Select>
+          </div>
+
           <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Button
               type="button"
@@ -668,7 +976,100 @@ export function UsersView() {
         </form>
       </Dialog>
 
-      {/* MODAL 2: ADMIN PASSWORD RESET MODAL (Admin resets any user's password) */}
+      {/* MODAL 2: STATUS TOGGLE CONFIRMATION (ACTIVE <-> INACTIVE) */}
+      <Dialog
+        isOpen={!!statusToggleTarget}
+        onClose={() => setStatusToggleTarget(null)}
+        maxWidth="md"
+        title={
+          <div className="flex items-center gap-2 text-base font-bold text-slate-900 dark:text-white">
+            <Power className="w-5 h-5 text-amber-500" />
+            <span>
+              {statusToggleTarget?.isActive
+                ? locale === "bn"
+                  ? "অ্যাকাউন্ট নিষ্ক্রিয় করার নিশ্চিতকরণ"
+                  : "Confirm Account Deactivation"
+                : locale === "bn"
+                ? "অ্যাকাউন্ট পুনরায় সক্রিয়করণ"
+                : "Confirm Account Activation"}
+            </span>
+          </div>
+        }
+      >
+        <div className="space-y-3 py-1 text-xs text-slate-600 dark:text-slate-300">
+          <p>
+            {statusToggleTarget?.isActive ? (
+              locale === "bn" ? (
+                <>
+                  আপনি কি নিশ্চিত যে <strong>&apos;{statusToggleTarget?.name}&apos;</strong> অ্যাকাউন্টটি
+                  <strong> নিষ্ক্রিয় (Inactive)</strong> করতে চান?
+                </>
+              ) : (
+                <>
+                  Are you sure you want to <strong>deactivate</strong> user <strong>&apos;{statusToggleTarget?.name}&apos;</strong>?
+                </>
+              )
+            ) : locale === "bn" ? (
+              <>
+                আপনি কি নিশ্চিত যে <strong>&apos;{statusToggleTarget?.name}&apos;</strong> অ্যাকাউন্টটি পুনরায়
+                <strong> সক্রিয় (Active)</strong> করতে চান?
+              </>
+            ) : (
+              <>
+                Are you sure you want to <strong>activate</strong> user <strong>&apos;{statusToggleTarget?.name}&apos;</strong>?
+              </>
+            )}
+          </p>
+
+          <div
+            className={`p-3 rounded-xl border text-xs ${
+              statusToggleTarget?.isActive
+                ? "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/40 text-red-700 dark:text-red-300"
+                : "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/40 text-emerald-700 dark:text-emerald-300"
+            }`}
+          >
+            {statusToggleTarget?.isActive
+              ? locale === "bn"
+                ? "⚠️ নিষ্ক্রিয় করা হলে এই ব্যবহারকারী আর সিস্টেমে লগইন করতে পারবে না এবং বর্তমান সেশন সাথে সাথে বাতিল হবে।"
+                : "⚠️ Once deactivated, this user will NOT be able to log in, and their current active session will be invalidated immediately."
+              : locale === "bn"
+              ? "✓ সক্রিয় করা হলে এই ব্যবহারকারী পুনরায় ইউজারনেম ও পাসওয়ার্ড দিয়ে স্বাভাবিকভাবে লগইন করতে পারবেন।"
+              : "✓ Once activated, this user will be able to log in normally with their existing credentials."}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setStatusToggleTarget(null)}
+            >
+              {locale === "bn" ? "বাতিল" : "Cancel"}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              isLoading={isUpdatingStatus}
+              className={
+                statusToggleTarget?.isActive
+                  ? "bg-red-600 hover:bg-red-700 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }
+              onClick={handleToggleStatus}
+            >
+              {statusToggleTarget?.isActive
+                ? locale === "bn"
+                  ? "হ্যাঁ, নিষ্ক্রিয় করুন"
+                  : "Deactivate User"
+                : locale === "bn"
+                ? "হ্যাঁ, সক্রিয় করুন"
+                : "Activate User"}
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* MODAL 3: ADMIN PASSWORD RESET MODAL */}
       <Dialog
         isOpen={!!adminResetTargetUser}
         onClose={() => setAdminResetTargetUser(null)}
@@ -736,7 +1137,7 @@ export function UsersView() {
         </form>
       </Dialog>
 
-      {/* MODAL 3: DELETE CONFIRMATION MODAL */}
+      {/* MODAL 4: DELETE CONFIRMATION MODAL */}
       <Dialog
         isOpen={!!deleteTargetUser}
         onClose={() => setDeleteTargetUser(null)}
@@ -784,3 +1185,4 @@ export function UsersView() {
     </div>
   );
 }
+

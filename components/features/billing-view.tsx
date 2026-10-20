@@ -38,7 +38,10 @@ export function BillingView() {
     triggerRefresh,
     openGenerateBills,
     openQuickCollect,
+    currentUser,
   } = useApp();
+  const isOperator = currentUser?.role === "OPERATOR";
+
 
   const [chargeTypes, setChargeTypes] = useState<any[]>([]);
   const [search, setSearch] = useState("");
@@ -139,10 +142,12 @@ export function BillingView() {
           </p>
         </div>
 
-        <Button onClick={openGenerateBills} className="shadow-xs">
-          <Receipt className="w-4 h-4 mr-1.5" />
-          {t("billing.generateBills")}
-        </Button>
+        {!isOperator && (
+          <Button onClick={openGenerateBills} className="shadow-xs">
+            <Receipt className="w-4 h-4 mr-1.5" />
+            {t("billing.generateBills")}
+          </Button>
+        )}
       </div>
 
       {/* Filter and Search Bar */}
@@ -261,19 +266,21 @@ export function BillingView() {
 
                   <div className="flex items-center gap-2">
                     {/* Add/Manage Variable Extra Charges button */}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-9 px-2.5"
-                      onClick={() => {
-                        setActiveBill(bill);
-                        setIsAddChargeOpen(true);
-                      }}
-                      title={locale === "bn" ? "অতিরিক্ত খরচ পরিচালনা করুন" : "Manage Additional Costs"}
-                    >
-                      <Plus className="w-3.5 h-3.5 mr-1 text-teal-600 dark:text-teal-400" />
-                      {locale === "bn" ? "অতিরিক্ত খরচ" : "Extra Costs"}
-                    </Button>
+                    {!isOperator && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-9 px-2.5"
+                        onClick={() => {
+                          setActiveBill(bill);
+                          setIsAddChargeOpen(true);
+                        }}
+                        title={locale === "bn" ? "অতিরিক্ত খরচ পরিচালনা করুন" : "Manage Additional Costs"}
+                      >
+                        <Plus className="w-3.5 h-3.5 mr-1 text-teal-600 dark:text-teal-400" />
+                        {locale === "bn" ? "অতিরিক্ত খরচ" : "Extra Costs"}
+                      </Button>
+                    )}
 
                     {/* Collect payment button */}
                     {bill.dueAmount > 0 && (

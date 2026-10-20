@@ -15,9 +15,10 @@ import { toast } from "sonner";
 
 export function MarketsView() {
   const { t, locale } = useTranslation();
-  const { markets, refreshMarkets, setSelectedMarketId, setActiveTab, isAdmin, refreshApprovals } = useApp();
+  const { markets, refreshMarkets, setSelectedMarketId, setActiveTab, isAdmin, refreshApprovals, currentUser } = useApp();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [editingMarket, setEditingMarket] = useState<any | null>(null);
   const [deletingMarket, setDeletingMarket] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -197,7 +198,7 @@ export function MarketsView() {
                     </div>
                   </div>
                   <div className="flex items-center gap-1">
-                    {isAdmin && (
+                    {(isAdmin || currentUser?.role === "MANAGER") && (
                       <>
                         <button
                           onClick={(e) => {

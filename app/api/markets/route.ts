@@ -147,6 +147,13 @@ export async function PUT(req: Request) {
 
     // If not Admin OR explicitly submitted for approval:
     const isAdmin = session?.role === "ADMIN";
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো মার্কেট পরিবর্তন বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     if (!isAdmin || submitForApproval) {
       const cr = await prisma.changeRequest.create({
         data: {
@@ -216,9 +223,17 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Market not found" }, { status: 404 });
     }
 
+    if (session?.role === "OPERATOR") {
+      return NextResponse.json(
+        { error: "অপারেটর কেবল নির্ধারিত কাজ করতে পারবেন, কোনো মার্কেট ডিলিট বা আবেদন করতে পারবেন না।" },
+        { status: 403 }
+      );
+    }
+
     const isAdmin = session?.role === "ADMIN";
     if (!isAdmin) {
       // Create change request for delete
+
       const cr = await prisma.changeRequest.create({
         data: {
           entityType: "MARKET",

@@ -14,6 +14,7 @@ model User {
   passwordHash String
   role         String   @default("ADMIN") // ADMIN, MANAGER
   locale       String   @default("bn")    // bn, en
+  isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
