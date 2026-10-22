@@ -7,10 +7,14 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const marketId = searchParams.get("marketId");
+    const shopId = searchParams.get("shopId");
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
     const where: any = { isActive: true };
+    if (shopId) {
+      where.id = shopId;
+    }
     if (marketId && marketId !== "ALL") {
       where.marketId = marketId;
     }

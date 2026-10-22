@@ -50,6 +50,7 @@ export function QuickCollectModal() {
   const [note, setNote] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeBill, setActiveBill] = useState<any | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
 
   // Staff (Received by) state
   const [staffList, setStaffList] = useState<any[]>([]);
@@ -116,68 +117,178 @@ export function QuickCollectModal() {
     }
   }, [paymentMethod, isQuickCollectOpen]);
 
-  // Initialize market
-  useEffect(() => {
-    if (isQuickCollectOpen) {
-      if (quickCollectInitialData?.marketId) {
-        setMarketId(quickCollectInitialData.marketId);
-      } else if (markets.length > 0) {
-        setMarketId(markets[0].id);
+  // Helper to load bills for a specific shop
+  const loadBillsForShop = async (shopId: string, preferredBillId?: string, isCancelled = false) => {
+    if (!shopId) {
+      setBills([]);
+      setSelectedBillId("");
+      setActiveBill(null);
+      setAmountBDT(0);
+      return;
+    }
+
+    try {
+      setIsLoadingData(true);
+      const res = await fetch(`/api/billing?shopId=${shopId}&status=ALL`);
+      if (res.ok) {
+        const data = await res.json();
+        if (isCancelled) return;
+        const shopBills = data.bills || [];
+        setBills(shopBills);
+
+        let chosenBill: any = null;
+        if (preferredBillId) {
+          chosenBill = shopBills.find((b: any) => b.id === preferredBillId);
+        }
+        if (!chosenBill) {
+          chosenBill = shopBills.find((b: any) => b.dueAmount > 0) || shopBills[0] || null;
+        }
+
+        if (chosenBill) {
+          setSelectedBillId(chosenBill.id);
+          setActiveBill(chosenBill);
+          setAmountBDT(Math.round(chosenBill.dueAmount / 100));
+        } else {
+          setSelectedBillId("");
+          setActiveBill(null);
+          setAmountBDT(0);
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load bills for shop:", e);
+    } finally {
+      if (!isCancelled) {
+        setIsLoadingData(false);
       }
     }
+  };
+
+  // Coordinated loader on modal open or initial data change
+  useEffect(() => {
+    if (!isQuickCollectOpen) {
+      setIsLoadingData(false);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const initData = async () => {
+      setIsLoadingData(true);
+
+      // 1. Instantly prefill dueAmount if provided
+      if (quickCollectInitialData?.dueAmount && quickCollectInitialData.dueAmount > 0) {
+        setAmountBDT(Math.round(quickCollectInitialData.dueAmount / 100));
+      } else {
+        setAmountBDT(0);
+      }
+
+      let resolvedMarketId = quickCollectInitialData?.marketId || "";
+      const targetShopId = quickCollectInitialData?.shopId || "";
+      const targetBillId = quickCollectInitialData?.billId || "";
+
+      // 2. If shopId is provided but marketId is missing or "ALL", resolve market from shop
+      if (targetShopId && (!resolvedMarketId || resolvedMarketId === "ALL")) {
+        try {
+          const shopRes = await fetch(`/api/shops?shopId=${targetShopId}`);
+          if (shopRes.ok) {
+            const shopData = await shopRes.json();
+            const foundShop = (shopData.shops || []).find((s: any) => s.id === targetShopId) || shopData.shops?.[0];
+            if (foundShop?.marketId) {
+              resolvedMarketId = foundShop.marketId;
+            }
+          }
+        } catch (e) {
+          console.warn("Could not resolve market from shopId:", e);
+        }
+      }
+
+      // 3. Fallback to first market if still not resolved
+      if (!resolvedMarketId || resolvedMarketId === "ALL") {
+        if (markets.length > 0) {
+          resolvedMarketId = markets[0].id;
+        }
+      }
+
+      if (isCancelled) return;
+      setMarketId(resolvedMarketId);
+
+      // 4. Fetch occupied shops for this market
+      let occupiedShops: any[] = [];
+      if (resolvedMarketId) {
+        try {
+          const res = await fetch(`/api/shops?marketId=${resolvedMarketId}&status=OCCUPIED`);
+          if (res.ok) {
+            const data = await res.json();
+            occupiedShops = data.shops || [];
+          }
+        } catch (e) {
+          console.error("Could not fetch occupied shops:", e);
+        }
+      }
+
+      if (isCancelled) return;
+      setShops(occupiedShops);
+
+      // 5. Select target shop or fallback to first shop in the market
+      let finalShopId = targetShopId;
+      if (!finalShopId || !occupiedShops.some((s) => s.id === finalShopId)) {
+        finalShopId = occupiedShops[0]?.id || "";
+      }
+      setSelectedShopId(finalShopId);
+
+      // 6. Fetch bills for the selected shop
+      if (finalShopId) {
+        await loadBillsForShop(finalShopId, targetBillId, isCancelled);
+      } else {
+        setBills([]);
+        setSelectedBillId("");
+        setActiveBill(null);
+        setAmountBDT(0);
+        if (!isCancelled) {
+          setIsLoadingData(false);
+        }
+      }
+    };
+
+    initData();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [isQuickCollectOpen, quickCollectInitialData, markets]);
 
-  // Load occupied shops for selected market
-  useEffect(() => {
-    if (!marketId) return;
-    const fetchShops = async () => {
-      try {
-        const res = await fetch(`/api/shops?marketId=${marketId}&status=OCCUPIED`);
-        if (res.ok) {
-          const data = await res.json();
-          setShops(data.shops || []);
-          if (quickCollectInitialData?.shopId) {
-            setSelectedShopId(quickCollectInitialData.shopId);
-          } else if (data.shops?.length > 0) {
-            setSelectedShopId(data.shops[0].id);
-          }
+  // Handle manual market change by user
+  const handleMarketChange = async (newMarketId: string) => {
+    setMarketId(newMarketId);
+    setIsLoadingData(true);
+    try {
+      const res = await fetch(`/api/shops?marketId=${newMarketId}&status=OCCUPIED`);
+      if (res.ok) {
+        const data = await res.json();
+        const newShops = data.shops || [];
+        setShops(newShops);
+        const firstShopId = newShops[0]?.id || "";
+        setSelectedShopId(firstShopId);
+        if (firstShopId) {
+          await loadBillsForShop(firstShopId);
+        } else {
+          setBills([]);
+          setSelectedBillId("");
+          setActiveBill(null);
+          setAmountBDT(0);
+          setIsLoadingData(false);
         }
-      } catch (e) {
-        console.error(e);
       }
-    };
-    fetchShops();
-  }, [marketId, quickCollectInitialData]);
+    } catch (e) {
+      setIsLoadingData(false);
+    }
+  };
 
-  // Load bills for selected shop
-  useEffect(() => {
-    if (!selectedShopId) return;
-    const fetchBills = async () => {
-      try {
-        const res = await fetch(`/api/billing?marketId=${marketId}&status=ALL`);
-        if (res.ok) {
-          const data = await res.json();
-          const shopBills = (data.bills || []).filter((b: any) => b.shopId === selectedShopId);
-          setBills(shopBills);
-
-          const unpaid = shopBills.find((b: any) => b.dueAmount > 0) || shopBills[0];
-          if (unpaid) {
-            setSelectedBillId(unpaid.id);
-            setActiveBill(unpaid);
-            const dueBDT = Math.round(unpaid.dueAmount / 100);
-            setAmountBDT(dueBDT);
-          } else {
-            setSelectedBillId("");
-            setActiveBill(null);
-            setAmountBDT(0);
-          }
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    };
-    fetchBills();
-  }, [selectedShopId, marketId]);
+  // Handle manual shop change by user
+  const handleShopChange = async (newShopId: string) => {
+    setSelectedShopId(newShopId);
+    await loadBillsForShop(newShopId);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -256,7 +367,7 @@ export function QuickCollectModal() {
         <SearchableSelect
           label={t("collections.selectMarket")}
           value={marketId}
-          onChange={(val) => setMarketId(val)}
+          onChange={(val) => handleMarketChange(val)}
           options={markets.map((m) => ({
             value: m.id,
             label: m.name,
@@ -270,7 +381,7 @@ export function QuickCollectModal() {
         <SearchableSelect
           label={t("collections.selectShop")}
           value={selectedShopId}
-          onChange={(val) => setSelectedShopId(val)}
+          onChange={(val) => handleShopChange(val)}
           options={shops.map((s) => ({
             value: s.id,
             label: `${s.shopNumber} - ${s.tenant?.name || (locale === "bn" ? "কোনো ভাড়াটিয়া নেই" : "No tenant")}`,
@@ -281,9 +392,42 @@ export function QuickCollectModal() {
           disabled={shops.length === 0}
         />
 
+        {/* Multi-Invoice Selector if shop has multiple bills */}
+        {bills.length > 1 && (
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              {locale === "bn" ? "মাসের বিল / ইনভয়েস নির্বাচন" : "Select Due Bill Month"}
+            </label>
+            <Select
+              value={selectedBillId}
+              onChange={(e) => {
+                const bId = e.target.value;
+                setSelectedBillId(bId);
+                const found = bills.find((b) => b.id === bId);
+                if (found) {
+                  setActiveBill(found);
+                  setAmountBDT(Math.round(found.dueAmount / 100));
+                }
+              }}
+              className="text-xs font-semibold"
+            >
+              {bills.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {locale === "bn" ? toBanglaDigits(b.month) : b.month}/{locale === "bn" ? toBanglaDigits(b.year) : b.year} — {locale === "bn" ? "বকেয়া:" : "Due:"} {formatCurrency(b.dueAmount, locale)} {b.status === "PAID" ? `(${locale === "bn" ? "পরিশোধিত" : "PAID"})` : ""}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+
         {/* Invoice Summary Card */}
-        {activeBill ? (
-          <div className="p-3.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-xs md:text-sm space-y-1.5">
+        {isLoadingData ? (
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center gap-2.5 py-6 text-teal-600 dark:text-teal-400 font-semibold text-xs">
+            <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+            <span>{locale === "bn" ? "ভাড়া ও বিলের তথ্য নির্ভুলভাবে লোড হচ্ছে..." : "Loading rent and bill data accurately..."}</span>
+          </div>
+        ) : activeBill ? (
+          <div className="p-3.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-xs md:text-sm space-y-1.5 shadow-xs">
             <div className="flex justify-between">
               <span className="text-slate-600 dark:text-slate-400">{t("billing.billDetails")}:</span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
@@ -309,8 +453,13 @@ export function QuickCollectModal() {
             </div>
           </div>
         ) : (
-          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs">
-            {t("billing.alreadyGenerated")} / No pending invoice.
+          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between border border-amber-200 dark:border-amber-900/60">
+            <span>{locale === "bn" ? "এই দোকানের কোনো অপরিশোধিত বকেয়া ইনভয়েস নেই।" : "No pending due invoice for this shop."}</span>
+            {selectedShopId && (
+              <span className="font-bold text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                {locale === "bn" ? "পরিশোধিত" : "Settled"}
+              </span>
+            )}
           </div>
         )}
 
@@ -532,7 +681,12 @@ export function QuickCollectModal() {
           >
             {t("common.cancel")}
           </Button>
-          <Button type="submit" isLoading={isSubmitting} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
+          <Button
+            type="submit"
+            isLoading={isSubmitting}
+            disabled={isLoadingData || isSubmitting || !selectedBillId}
+            className="bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer"
+          >
             <CheckCircle2 className="w-4 h-4 mr-1.5" />
             {t("collections.collectPayment")}
           </Button>

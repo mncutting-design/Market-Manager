@@ -169,6 +169,7 @@ export async function GET(req: Request) {
         shopId: b.shop.id,
         shopNumber: b.shop.shopNumber,
         floor: b.shop.floor,
+        marketId: b.shop.marketId || b.shop.market?.id,
         marketName: b.shop.market.name,
         tenantName: b.tenant.name,
         phone: b.tenant.phone,

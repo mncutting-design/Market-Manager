@@ -7,12 +7,14 @@ export async function GET(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const marketId = searchParams.get("marketId");
+    const shopId = searchParams.get("shopId");
     const month = searchParams.get("month") ? parseInt(searchParams.get("month")!, 10) : undefined;
     const year = searchParams.get("year") ? parseInt(searchParams.get("year")!, 10) : undefined;
     const status = searchParams.get("status");
     const search = searchParams.get("search");
 
     const where: any = {};
+    if (shopId) where.shopId = shopId;
     if (month) where.month = month;
     if (year) where.year = year;
     if (status && status !== "ALL") where.status = status;

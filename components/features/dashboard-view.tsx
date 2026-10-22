@@ -586,7 +586,7 @@ export function DashboardView() {
                 key={shop.billId}
                 onClick={() =>
                   openQuickCollect({
-                    marketId: selectedMarketId !== "ALL" ? selectedMarketId : shop.marketId,
+                    marketId: shop.marketId || (selectedMarketId !== "ALL" ? selectedMarketId : undefined),
                     shopId: shop.shopId,
                     billId: shop.billId,
                     dueAmount: shop.dueAmount,
@@ -638,13 +638,13 @@ export function DashboardView() {
                       onClick={(e) => {
                         e.stopPropagation();
                         openQuickCollect({
-                          marketId: selectedMarketId !== "ALL" ? selectedMarketId : undefined,
+                          marketId: shop.marketId || (selectedMarketId !== "ALL" ? selectedMarketId : undefined),
                           shopId: shop.shopId,
                           billId: shop.billId,
                           dueAmount: shop.dueAmount,
                         });
                       }}
-                      className="h-8 px-2.5 text-xs font-bold"
+                      className="h-8 px-2.5 text-xs font-bold cursor-pointer"
                     >
                       {t("collections.quickCollect")}
                     </Button>

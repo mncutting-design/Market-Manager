@@ -54,7 +54,7 @@ import { useRealtimeData } from "@/lib/realtime-sync";
 
 export function ShopsView() {
   const { t, locale } = useTranslation();
-  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh, isAdmin, refreshApprovals, currentUser } = useApp();
+  const { selectedMarketId, setSelectedMarketId, markets, refreshMarkets, refreshKey, triggerRefresh, isAdmin, refreshApprovals, currentUser, openQuickCollect } = useApp();
   const isOperator = currentUser?.role === "OPERATOR";
 
   const [search, setSearch] = useState("");
@@ -783,6 +783,25 @@ export function ShopsView() {
                   </Button>
                 ) : (
                   <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
+                    {/* Quick Collect Rent Button */}
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="text-xs h-8 px-2 flex-1 sm:flex-initial font-bold"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openQuickCollect({
+                          marketId: shop.marketId,
+                          shopId: shop.id,
+                          dueAmount: shop.currentRent,
+                        });
+                      }}
+                      title={t("collections.quickCollect")}
+                    >
+                      <Wallet className="w-3.5 h-3.5 mr-1" />
+                      <span>{locale === "bn" ? "ভাড়া আদায়" : "Collect"}</span>
+                    </Button>
+
                     {/* Tenant Profile & Advance Ledger Button */}
                     <Button
                       size="sm"
