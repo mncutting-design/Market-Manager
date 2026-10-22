@@ -26,6 +26,8 @@ export interface SearchableSelectProps {
   dropdownClassName?: string;
   id?: string;
   allowClear?: boolean;
+  showSublabelInTrigger?: boolean;
+  autoWidth?: boolean;
   extraAction?: {
     label: string;
     onClick: () => void;
@@ -46,6 +48,8 @@ export function SearchableSelect({
   dropdownClassName,
   id,
   allowClear = false,
+  showSublabelInTrigger = true,
+  autoWidth = false,
   extraAction,
 }: SearchableSelectProps) {
   const generatedId = useId();
@@ -141,7 +145,13 @@ export function SearchableSelect({
   };
 
   return (
-    <div className={cn("w-full relative", className)} ref={containerRef}>
+    <div
+      className={cn(
+        autoWidth ? "w-fit relative inline-block transition-all duration-200" : "w-full relative",
+        className
+      )}
+      ref={containerRef}
+    >
       {label && (
         <label
           htmlFor={selectId}
@@ -160,18 +170,25 @@ export function SearchableSelect({
         onKeyDown={handleKeyDown}
         aria-haspopup="listbox"
         aria-expanded={isOpen}
+        title={selectedOption ? selectedOption.label : placeholder}
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-left text-base md:text-sm text-slate-900 dark:text-white transition-colors shadow-xs focus:outline-none focus:ring-2 focus:ring-teal-600 dark:focus:ring-teal-500",
+          "flex h-11 items-center justify-between rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-left text-base md:text-sm text-slate-900 dark:text-white transition-all duration-200 shadow-xs focus:outline-none focus:ring-2 focus:ring-teal-600 dark:focus:ring-teal-500",
+          autoWidth ? "w-fit min-w-[130px] max-w-[340px] xl:max-w-[420px] gap-2" : "w-full",
           error && "border-red-500 focus:ring-red-500 dark:border-red-500",
           disabled && "cursor-not-allowed opacity-50 bg-slate-50 dark:bg-slate-800/40",
           buttonClassName
         )}
       >
-        <span className="truncate flex-1 font-medium">
+        <span
+          className={cn(
+            "font-medium",
+            autoWidth ? "truncate whitespace-nowrap min-w-0" : "truncate flex-1"
+          )}
+        >
           {selectedOption ? (
             <span className="text-slate-900 dark:text-white">
               {selectedOption.label}
-              {selectedOption.sublabel && (
+              {showSublabelInTrigger && selectedOption.sublabel && (
                 <span className="text-xs text-slate-400 dark:text-slate-300 ml-2">
                   ({selectedOption.sublabel})
                 </span>
@@ -209,7 +226,8 @@ export function SearchableSelect({
       {isOpen && (
         <div
           className={cn(
-            "absolute z-50 mt-1.5 w-full rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150",
+            "absolute z-50 mt-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden animate-in fade-in-50 zoom-in-95 duration-150",
+            autoWidth ? "min-w-[260px] sm:min-w-[300px] w-max max-w-sm left-0" : "w-full",
             dropdownClassName
           )}
         >

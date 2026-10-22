@@ -120,28 +120,28 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
         </div>
 
         {/* DESKTOP (>= 900px) CENTER: Market, Month & Year Selectors */}
-        <div className="hidden min-[900px]:flex items-center justify-center gap-2.5 flex-1 px-4 max-w-2xl mx-auto">
-          {/* Market selector */}
-          <div className="flex-1 max-w-[220px]">
-            <SearchableSelect
-              value={selectedMarketId}
-              onChange={(val) => setSelectedMarketId(val || "ALL")}
-              options={[
-                { value: "ALL", label: t("common.allMarkets") },
-                ...markets.map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                  sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
-                })),
-              ]}
-              placeholder={t("dashboard.selectMarket")}
-              searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search..."}
-              buttonClassName="h-10 text-xs md:text-sm font-semibold rounded-xl bg-slate-100 dark:bg-[#182234] border-slate-300 dark:border-[#2d3b52] shadow-xs"
-            />
-          </div>
+        <div className="hidden min-[900px]:flex items-center justify-center gap-2.5 flex-1 px-4 max-w-3xl mx-auto">
+          {/* Market selector - Auto-adjusts width based on text size */}
+          <SearchableSelect
+            value={selectedMarketId}
+            onChange={(val) => setSelectedMarketId(val || "ALL")}
+            options={[
+              { value: "ALL", label: t("common.allMarkets") },
+              ...markets.map((m) => ({
+                value: m.id,
+                label: m.name,
+                sublabel: `${m.totalShops || 0} ${locale === "bn" ? "দোকান" : "Shops"}`,
+              })),
+            ]}
+            placeholder={t("dashboard.selectMarket")}
+            searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search..."}
+            autoWidth={true}
+            showSublabelInTrigger={false}
+            buttonClassName="h-10 text-xs md:text-sm font-semibold rounded-xl bg-slate-100 dark:bg-[#182234] border-slate-300 dark:border-[#2d3b52] shadow-xs"
+          />
 
           {/* Month selector */}
-          <div className="relative w-[135px]">
+          <div className="relative w-[135px] shrink-0">
             <select
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
@@ -159,7 +159,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           </div>
 
           {/* Year selector */}
-          <div className="relative w-[95px]">
+          <div className="relative w-[95px] shrink-0">
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
@@ -432,6 +432,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             ]}
             placeholder={t("dashboard.selectMarket")}
             searchPlaceholder={locale === "bn" ? "মার্কেট..." : "Search..."}
+            showSublabelInTrigger={false}
             buttonClassName="h-10 text-xs font-bold rounded-lg bg-white dark:bg-[#182234] border-slate-300 dark:border-[#2d3b52] shadow-2xs min-h-[44px]"
           />
         </div>
