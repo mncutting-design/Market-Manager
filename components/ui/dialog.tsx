@@ -28,13 +28,14 @@ export function Dialog({
       }
     };
     if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        document.body.style.overflow = prevOverflow || "";
+        window.removeEventListener("keydown", handleKeyDown);
+      };
     }
-    return () => {
-      document.body.style.overflow = "unset";
-      window.removeEventListener("keydown", handleKeyDown);
-    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -52,7 +53,7 @@ export function Dialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto custom-scrollbar">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in no-print"
@@ -65,7 +66,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white dark:bg-[#182234] rounded-2xl p-3 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-[#2d3b52] transition-all animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)] flex flex-col my-auto",
+          "relative z-50 w-full bg-white dark:bg-[#182234] rounded-2xl p-3 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-[#2d3b52] animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col",
           maxWidths[maxWidth] || maxWidths.lg
         )}
       >
@@ -74,7 +75,7 @@ export function Dialog({
           <div className="flex items-start justify-between pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-[#2d3b52] gap-2 shrink-0 no-print">
             <div className="flex-1 min-w-0 pr-1">
               {title && (
-                <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-white leading-snug">
+                <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-white leading-snug truncate">
                   {title}
                 </div>
               )}
@@ -95,7 +96,7 @@ export function Dialog({
         )}
 
         {/* Scrollable Content Body with sleek custom scrollbar */}
-        <div className="overflow-y-auto py-2 sm:py-3.5 flex-1 overscroll-contain pr-0.5 sm:pr-1 custom-scrollbar">
+        <div className="overflow-y-auto py-2 sm:py-3.5 flex-1 overscroll-contain pr-0.5 sm:pr-1 custom-scrollbar min-h-0">
           {children}
         </div>
       </div>

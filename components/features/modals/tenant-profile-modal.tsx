@@ -312,7 +312,10 @@ export function TenantProfileModal({
         maxWidth="3xl"
       >
         {isLoading || !tenantData ? (
-          <div className="py-16 text-center text-slate-500">{t("common.loading")}</div>
+          <div className="py-20 flex flex-col items-center justify-center min-h-[380px] text-slate-500 space-y-3">
+            <div className="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
+            <p className="text-xs font-semibold">{t("common.loading")}</p>
+          </div>
         ) : (
           <div className="space-y-4">
             {/* Top Header Card */}
