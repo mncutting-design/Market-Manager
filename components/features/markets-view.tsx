@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { Dialog } from "@/components/ui/dialog";
 import { DiffViewer } from "@/components/ui/diff-viewer";
-import { Building2, Plus, Edit, Trash2, Store, Users, CheckCircle2, MapPin, Layers, AlertTriangle, Eye, ShieldCheck } from "lucide-react";
+import { Building2, Plus, Edit, Trash2, Store, Users, CheckCircle2, MapPin, Layers, AlertTriangle, Eye, ShieldCheck, Receipt } from "lucide-react";
 import { toast } from "sonner";
 
 export function MarketsView() {
@@ -163,8 +163,8 @@ export function MarketsView() {
         )}
       </div>
 
-      {/* Markets Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+      {/* Markets Cards Grid - Max 3 columns on desktop for beautiful balanced layout */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {markets.map((m) => {
           const occupancyRate = m.totalShops > 0 ? (m.occupiedShops / m.totalShops) * 100 : 0;
           const floors = m.totalFloors || 5;
@@ -180,19 +180,22 @@ export function MarketsView() {
             >
               <CardHeader className="p-5 pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <CardTitle className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <CardTitle
+                      className="text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors truncate"
+                      title={m.name}
+                    >
                       {m.name}
                     </CardTitle>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       {m.address && (
-                        <p className="text-xs text-slate-500 flex items-center gap-1">
+                        <p className="text-xs text-slate-500 flex items-center gap-1 min-w-0">
                           <MapPin className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate max-w-[170px]">{m.address}</span>
+                          <span className="truncate max-w-[220px]" title={m.address}>{m.address}</span>
                         </p>
                       )}
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                        <Layers className="w-3 h-3 text-teal-600 dark:text-teal-400" />
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shrink-0">
+                        <Layers className="w-3 h-3 text-teal-600 dark:text-teal-400 shrink-0" />
                         <span>
                           {locale === "bn"
                             ? `${toBanglaDigits(floors)} তলা ভবন`
@@ -201,7 +204,7 @@ export function MarketsView() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 shrink-0">
                     {(isAdmin || currentUser?.role === "MANAGER") && (
                       <>
                         <button
@@ -232,7 +235,7 @@ export function MarketsView() {
 
               <CardContent className="p-5 pt-0 space-y-4">
                 {/* Expected Rent Badge */}
-                <div className="p-3 rounded-xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/80">
+                <div className="p-3.5 rounded-xl bg-teal-50/80 dark:bg-teal-950/40 border border-teal-200/80 dark:border-teal-800/80">
                   <p className="text-xs font-semibold text-teal-800 dark:text-teal-300 uppercase tracking-wider">
                     {t("markets.monthlyExpected")}
                   </p>
@@ -242,7 +245,7 @@ export function MarketsView() {
                 </div>
 
                 {/* Shop Counters */}
-                <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="grid grid-cols-3 gap-2.5 text-center">
                   <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
                     <p className="text-[11px] text-slate-500">{t("markets.totalShops")}</p>
                     <p className="font-bold text-base text-slate-900 dark:text-slate-100">
@@ -278,31 +281,32 @@ export function MarketsView() {
                 </div>
               </CardContent>
 
-              <CardFooter className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 flex justify-between gap-2 mt-auto">
+              <CardFooter className="p-5 pt-0 border-t border-slate-100 dark:border-slate-800 flex justify-between gap-2.5 mt-auto">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="w-full text-xs"
+                  className="w-full text-xs h-9 font-medium"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedMarketId(m.id);
                     setActiveTab("shops");
                   }}
                 >
-                  <Store className="w-3.5 h-3.5 mr-1.5" />
-                  {t("nav.shops")}
+                  <Store className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                  <span className="truncate">{t("nav.shops")}</span>
                 </Button>
                 <Button
                   size="sm"
                   variant="outline"
-                  className="w-full text-xs"
+                  className="w-full text-xs h-9 font-medium"
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedMarketId(m.id);
                     setActiveTab("billing");
                   }}
                 >
-                  {t("nav.billing")}
+                  <Receipt className="w-3.5 h-3.5 mr-1.5 shrink-0" />
+                  <span className="truncate">{t("nav.billing")}</span>
                 </Button>
               </CardFooter>
             </Card>
