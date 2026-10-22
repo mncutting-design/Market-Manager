@@ -641,7 +641,7 @@ export function ShopsView() {
           <p className="text-xs text-slate-500 mt-2">{t("markets.createFirstMarket")}</p>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5 sm:gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sortedShops.map((shop) => (
             <Card
               key={shop.id}
@@ -655,89 +655,91 @@ export function ShopsView() {
                   setIsAssignTenantOpen(true);
                 }
               }}
-              className="p-4 sm:p-4.5 flex flex-col justify-between hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-lg transition-all shadow-xs cursor-pointer group"
+              className="p-4 flex flex-col justify-between hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-lg transition-all shadow-xs cursor-pointer group"
             >
-              <div>
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex items-center gap-2">
-                      <span>{shop.shopNumber}</span>
-                      <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
-                        ({formatFloorName(shop.floor, locale)})
-                      </span>
-                    </h3>
-                    <p className="text-xs text-slate-500 truncate max-w-[200px]">{shop.marketName}</p>
+              <div className="flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex items-center gap-2 truncate">
+                        <span className="truncate">{shop.shopNumber}</span>
+                        <span className="text-xs font-normal text-slate-500 dark:text-slate-400 shrink-0">
+                          ({formatFloorName(shop.floor, locale)})
+                        </span>
+                      </h3>
+                      <p className="text-xs text-slate-500 truncate" title={shop.marketName}>{shop.marketName}</p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <StatusBadge status={shop.status} />
+                      {(isAdmin || currentUser?.role === "MANAGER") && (
+                        <>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditShop(shop);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            title={locale === "bn" ? "দোকান সম্পাদনা" : "Edit Shop"}
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeletingShop(shop);
+                            }}
+                            className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                            title={locale === "bn" ? "দোকান মুছুন" : "Delete Shop"}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <StatusBadge status={shop.status} />
-                    {(isAdmin || currentUser?.role === "MANAGER") && (
-                      <>
-                        <button
-                          type="button"
+
+                  {/* Tenant Info or Vacant notice */}
+                  <div className="my-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
+                    {shop.tenant ? (
+                      <div className="space-y-1.5">
+                        <div
+                          className="flex items-center justify-between gap-2 cursor-pointer group/t hover:text-teal-600 transition-colors"
                           onClick={(e) => {
                             e.stopPropagation();
-                            openEditShop(shop);
+                            setActiveProfileTenantId(shop.tenant.id);
                           }}
-                          className="p-1 rounded text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-                          title={locale === "bn" ? "দোকান সম্পাদনা" : "Edit Shop"}
+                          title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল দেখুন" : "View Tenant Profile"}
                         >
-                          <Edit className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeletingShop(shop);
-                          }}
-                          className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
-                          title={locale === "bn" ? "দোকান মুছুন" : "Delete Shop"}
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </>
+                          <span className="text-slate-500 group-hover/t:text-teal-600 shrink-0">{t("shops.currentTenant")}:</span>
+                          <span className="font-bold text-slate-900 dark:text-slate-100 group-hover/t:text-teal-600 flex items-center gap-1 min-w-0 truncate">
+                            <User className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                            <span className="truncate">{shop.tenant.name}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-slate-500 shrink-0">{t("tenants.phone")}:</span>
+                          <a
+                            href={`tel:${shop.tenant.phone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="font-mono text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 shrink-0"
+                          >
+                            <Phone className="w-3 h-3 shrink-0" />
+                            <span>{shop.tenant.phone}</span>
+                          </a>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center py-2 text-slate-400">
+                        <span>{t("shops.noTenant")}</span>
+                      </div>
                     )}
                   </div>
                 </div>
 
-                {/* Tenant Info or Vacant notice */}
-                <div className="my-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
-                  {shop.tenant ? (
-                    <div className="space-y-1">
-                      <div
-                        className="flex items-center justify-between cursor-pointer group/t hover:text-teal-600 transition-colors"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setActiveProfileTenantId(shop.tenant.id);
-                        }}
-                        title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল দেখুন" : "View Tenant Profile"}
-                      >
-                        <span className="text-slate-500 group-hover/t:text-teal-600">{t("shops.currentTenant")}:</span>
-                        <span className="font-bold text-slate-900 dark:text-slate-100 group-hover/t:text-teal-600 flex items-center gap-1">
-                          <User className="w-3.5 h-3.5 text-teal-600" />
-                          <span>{shop.tenant.name}</span>
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-slate-500">{t("tenants.phone")}:</span>
-                        <a
-                          href={`tel:${shop.tenant.phone}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="font-mono text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
-                        >
-                          <Phone className="w-3 h-3" />
-                          <span>{shop.tenant.phone}</span>
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-1 text-slate-400">
-                      <span>{t("shops.noTenant")}</span>
-                    </div>
-                  )}
-                </div>
-
                 {/* Financial Rates */}
-                <div className="flex items-center justify-between text-xs py-1">
+                <div className="flex items-center justify-between text-xs py-1 mt-auto">
                   <span className="text-slate-500">{t("shops.rentAmount")}:</span>
                   <span className="font-bold text-base text-teal-700 dark:text-teal-400">
                     {formatCurrency(shop.currentRent, locale)}
@@ -745,49 +747,50 @@ export function ShopsView() {
                 </div>
               </div>
 
-              {/* Actions Footer - 100% Mobile Responsive */}
-              <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-1.5">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="text-xs h-8 px-2 flex-1 sm:flex-initial"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedShop(shop);
-                    setNewRentBDT(Math.round(shop.currentRent / 100));
-                    setIsUpdateRentOpen(true);
-                  }}
-                  title={t("shops.updateRent")}
-                >
-                  <History className="w-3.5 h-3.5 mr-1" />
-                  {t("shops.updateRent")}
-                </Button>
-
+              {/* Actions Footer */}
+              <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
                 {shop.status === "VACANT" ? (
-                  <Button
-                    size="sm"
-                    variant="primary"
-                    className="text-xs h-8 px-2.5 flex-1 sm:flex-initial"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedShop(shop);
-                      setAgreedRentBDT(Math.round(shop.defaultRent / 100));
-                      // Advance deposit is negotiated individually renter-wise, not fixed 3x multiplier
-                      setAdvanceDepositBDT(0);
-                      resetAssignTenantForm();
-                      setIsAssignTenantOpen(true);
-                    }}
-                  >
-                    <UserPlus className="w-3.5 h-3.5 mr-1" />
-                    {t("shops.assignTenant")}
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2 w-full">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-8 px-2 w-full justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedShop(shop);
+                        setNewRentBDT(Math.round(shop.currentRent / 100));
+                        setIsUpdateRentOpen(true);
+                      }}
+                      title={t("shops.updateRent")}
+                    >
+                      <History className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <span className="truncate">{locale === "bn" ? "ভাড়া পরিবর্তন" : "Update Rent"}</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="primary"
+                      className="text-xs h-8 px-2 w-full justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedShop(shop);
+                        setAgreedRentBDT(Math.round(shop.defaultRent / 100));
+                        setAdvanceDepositBDT(0);
+                        resetAssignTenantForm();
+                        setIsAssignTenantOpen(true);
+                      }}
+                      title={t("shops.assignTenant")}
+                    >
+                      <UserPlus className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <span className="truncate">{locale === "bn" ? "বরাদ্দ দিন" : "Assign"}</span>
+                    </Button>
+                  </div>
                 ) : (
-                  <div className="flex items-center gap-1.5 flex-1 sm:flex-initial justify-end">
+                  <div className="grid grid-cols-2 gap-2 w-full">
                     {/* Quick Collect Rent Button */}
                     <Button
                       size="sm"
                       variant="primary"
-                      className="text-xs h-8 px-2 flex-1 sm:flex-initial font-bold"
+                      className="text-xs h-8 px-2 w-full font-bold justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
                         openQuickCollect({
@@ -798,38 +801,59 @@ export function ShopsView() {
                       }}
                       title={t("collections.quickCollect")}
                     >
-                      <Wallet className="w-3.5 h-3.5 mr-1" />
-                      <span>{locale === "bn" ? "ভাড়া আদায়" : "Collect"}</span>
+                      <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <span className="truncate">{locale === "bn" ? "ভাড়া আদায়" : "Collect"}</span>
                     </Button>
 
                     {/* Tenant Profile & Advance Ledger Button */}
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-8 px-2 border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 flex-1 sm:flex-initial font-medium"
+                      className="text-xs h-8 px-2 w-full border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-medium justify-center"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveProfileTenantId(shop.tenant.id);
+                        if (shop.tenant) {
+                          setActiveProfileTenantId(shop.tenant.id);
+                        }
                       }}
                       title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল ও জামানত" : "Tenant Profile & Advance"}
                     >
-                      <UserCheck className="w-3.5 h-3.5 mr-1 text-teal-600" />
-                      <span>{locale === "bn" ? "প্রোফাইল ও জামানত" : "Profile & Advance"}</span>
+                      <UserCheck className="w-3.5 h-3.5 mr-1 text-teal-600 shrink-0" />
+                      <span className="truncate">{locale === "bn" ? "প্রোফাইল/জামানত" : "Profile"}</span>
+                    </Button>
+
+                    {/* Update Rent Button */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-8 px-2 w-full justify-center"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedShop(shop);
+                        setNewRentBDT(Math.round(shop.currentRent / 100));
+                        setIsUpdateRentOpen(true);
+                      }}
+                      title={t("shops.updateRent")}
+                    >
+                      <History className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <span className="truncate">{locale === "bn" ? "ভাড়া পরিবর্তন" : "Update Rent"}</span>
                     </Button>
 
                     {/* Settle & Vacate Button */}
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="text-xs h-8 px-2 flex-1 sm:flex-initial"
+                      className="text-xs h-8 px-2 w-full justify-center bg-rose-600 hover:bg-rose-700 text-white"
                       onClick={(e) => {
                         e.stopPropagation();
-                        setActiveSettlementTenantId(shop.tenant.id);
+                        if (shop.tenant) {
+                          setActiveSettlementTenantId(shop.tenant.id);
+                        }
                       }}
                       title={t("settlement.settleAndVacate")}
                     >
-                      <UserX className="w-3.5 h-3.5 mr-1" />
-                      <span>{t("settlement.settleAndVacate")}</span>
+                      <UserX className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <span className="truncate">{locale === "bn" ? "হিসাব নিষ্পত্তি" : "Settle"}</span>
                     </Button>
                   </div>
                 )}
