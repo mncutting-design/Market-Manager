@@ -50,12 +50,12 @@ function MainApp() {
   }, [activeTab]);
 
   return (
-    <div className="flex-1 flex overflow-hidden">
+    <div className="flex-1 flex items-start min-w-0">
       {/* Desktop Sidebar */}
       <Sidebar />
 
       {/* Main Content Area — Responsive Full-Width Layout with Clean Side Padding */}
-      <main className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 pb-28 md:pb-8 w-full">
+      <main className="flex-1 px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 pb-28 md:pb-8 w-full min-w-0">
         <div className={activeTab === "dashboard" ? "block" : "hidden"}>
           {visitedTabs.has("dashboard") && <DashboardView />}
         </div>

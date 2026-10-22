@@ -43,11 +43,13 @@ export function Sidebar() {
     <aside
       className={cn(
         "hidden md:flex flex-col border-r border-slate-200/80 dark:border-[#2d3b52] bg-white dark:bg-[#101726] transition-all duration-300 select-none shrink-0",
+        "md:sticky md:top-[109px] min-[900px]:top-16 md:self-start md:z-30",
+        "md:h-[calc(100dvh-109px)] min-[900px]:h-[calc(100dvh-4rem)]",
         isCollapsed ? "w-20" : "w-64"
       )}
     >
       {/* Toggle button */}
-      <div className="flex items-center justify-end p-3 border-b border-slate-100 dark:border-[#2d3b52]">
+      <div className="flex items-center justify-end p-3 border-b border-slate-100 dark:border-[#2d3b52] shrink-0">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className="p-1.5 rounded-lg text-slate-500 hover:text-slate-700 dark:text-white dark:hover:bg-slate-800 transition-colors cursor-pointer"
@@ -58,7 +60,7 @@ export function Sidebar() {
       </div>
 
       {/* Nav List */}
-      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto custom-scrollbar min-h-0">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -87,7 +89,7 @@ export function Sidebar() {
       </nav>
 
       {/* User profile bottom bar */}
-      <div className="p-3 border-t border-slate-100 dark:border-[#2d3b52]">
+      <div className="p-3 border-t border-slate-100 dark:border-[#2d3b52] shrink-0">
         <div
           className={cn(
             "flex items-center gap-3 p-2 rounded-xl bg-slate-50 dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52]",
