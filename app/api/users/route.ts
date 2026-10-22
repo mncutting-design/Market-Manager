@@ -108,6 +108,7 @@ export async function GET(req: Request) {
       where: {
         NOT: [
           { email: "admin@marketmanager.com" },
+          { email: "nazrul@marketmanager.com" },
           { name: "প্রশাসক (Admin)" },
         ],
       },
@@ -146,8 +147,17 @@ export async function GET(req: Request) {
       });
     }
 
+    // Deduplicate accounts with the same name to prevent duplicate cards
+    const seenNames = new Set<string>();
+    const uniqueUsers = users.filter((u) => {
+      const key = u.name.trim().toUpperCase();
+      if (seenNames.has(key)) return false;
+      seenNames.add(key);
+      return true;
+    });
+
     // Attach real-time online presence and relative last-active time
-    const enrichedUsers = users.map((u) => {
+    const enrichedUsers = uniqueUsers.map((u) => {
       const activity = getUserActivity(u.name, u.createdAt);
       return {
         ...u,

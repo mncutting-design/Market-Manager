@@ -48,3 +48,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# scratch/maintenance scripts
+scripts/check-user-relations.ts
+scripts/delete-duplicate-admin.ts
+scripts/list-users.ts

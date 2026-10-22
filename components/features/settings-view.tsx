@@ -21,7 +21,7 @@ export function SettingsView() {
 
   // Profile Form
   const [adminName, setAdminName] = useState(currentUser?.name || "NAZRUL");
-  const [adminEmail, setAdminEmail] = useState(currentUser?.email || "nazrul@marketmanager.com");
+  const [adminEmail, setAdminEmail] = useState(currentUser?.email || "nazrul@rentpro.internal");
 
   // Password Form
   const [currentPassword, setCurrentPassword] = useState("");

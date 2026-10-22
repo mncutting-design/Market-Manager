@@ -9,7 +9,7 @@ async function main() {
   // 1. Create Primary Admin User (NAZRUL)
   const nazrulHash = await bcrypt.hash("NAZRUL", 10);
   const nazrulUser = await prisma.user.upsert({
-    where: { email: "nazrul@marketmanager.com" },
+    where: { email: "nazrul@rentpro.internal" },
     update: {},
     create: {
       name: "NAZRUL",
@@ -21,11 +21,12 @@ async function main() {
   });
   console.log("✅ Super Admin user ready:", nazrulUser.name);
 
-  // Clean up demo admin if exists
+  // Clean up demo admin or legacy emails if exists
   await prisma.user.deleteMany({
     where: {
       OR: [
         { email: "admin@marketmanager.com" },
+        { email: "nazrul@marketmanager.com" },
         { name: "প্রশাসক (Admin)" },
       ],
     },
