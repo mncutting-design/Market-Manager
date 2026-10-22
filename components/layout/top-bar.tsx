@@ -15,9 +15,7 @@ import {
   Database,
   LogOut,
   ShieldCheck,
-  FolderArchive,
   KeyRound,
-  Trash2,
   RefreshCw,
   User,
   Check,
@@ -399,29 +397,6 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                     <Settings className="w-4 h-4 text-slate-500 dark:text-teal-400" />
                     <span>{t("nav.settings")}</span>
                   </button>
-
-                  <a
-                    href="/api/download-project"
-                    download="market-manager-project.zip"
-                    onClick={() => setIsProfileOpen(false)}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-teal-700 dark:text-teal-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-left cursor-pointer min-h-[44px]"
-                  >
-                    <FolderArchive className="w-4 h-4 text-teal-600 dark:text-teal-400" />
-                    <span>{locale === "bn" ? "প্রজেক্ট জিপ ডাউনলোড" : "Download Project ZIP"}</span>
-                  </a>
-
-                  {currentUser?.role === "ADMIN" && (
-                    <button
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        setActiveTab("settings");
-                      }}
-                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors text-left cursor-pointer min-h-[44px]"
-                    >
-                      <Trash2 className="w-4 h-4 text-rose-500" />
-                      <span>{locale === "bn" ? "ডেটা মুছে ফেলুন / রিসেট" : "Clear Data / Reset"}</span>
-                    </button>
-                  )}
                 </div>
 
                 {/* Logout Button */}
