@@ -4,7 +4,7 @@ import React, { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "accent";
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "destructive" | "accent" | "neo";
   size?: "sm" | "md" | "lg" | "icon";
   isLoading?: boolean;
 }
@@ -27,6 +27,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     const variants = {
       primary:
+        "bg-[#FED734] text-black font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#000000]",
+      neo:
         "bg-[#FED734] text-black font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#000000]",
       secondary:
         "bg-white dark:bg-[#262830] text-black dark:text-white font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] dark:hover:bg-[#323540] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
