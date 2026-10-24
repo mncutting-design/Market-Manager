@@ -20,6 +20,34 @@
   --shadow-brutal-xl: 8px 8px 0px #000000;
 }
 
+@keyframes brutal-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-12px) rotate(-1deg);
+  }
+  30% {
+    transform: translateX(10px) rotate(1deg);
+  }
+  45% {
+    transform: translateX(-8px) rotate(-0.5deg);
+  }
+  60% {
+    transform: translateX(6px) rotate(0.5deg);
+  }
+  75% {
+    transform: translateX(-4px);
+  }
+  90% {
+    transform: translateX(2px);
+  }
+}
+
+.animate-brutal-shake {
+  animation: brutal-shake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
 :root {
   --background: #F4F1EA;
   --foreground: #000000;

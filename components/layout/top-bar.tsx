@@ -52,14 +52,8 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light") {
-      document.documentElement.classList.remove("dark");
-      setIsDark(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      setIsDark(true);
-    }
+    const isCurrentlyDark = document.documentElement.classList.contains("dark");
+    setIsDark(isCurrentlyDark);
   }, []);
 
   // Close profile dropdown on click outside
@@ -239,11 +233,11 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             <span>{locale === "bn" ? "EN" : "বাং"}</span>
           </button>
 
-          {/* DESKTOP ONLY: Theme toggle */}
+          {/* Theme toggle: ALWAYS VISIBLE */}
           <button
             onClick={toggleTheme}
             type="button"
-            className="hidden min-[900px]:flex w-10 h-10 items-center justify-center rounded-xl border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white hover:bg-[#FBF9F5] dark:hover:bg-[#353744] transition-all cursor-pointer shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-h-[40px] min-w-[40px]"
+            className="flex w-10 h-10 items-center justify-center rounded-xl border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black transition-all cursor-pointer shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-h-[40px] min-w-[40px]"
             title={isDark ? t("common.lightMode") : t("common.darkMode")}
             aria-label="Toggle dark/light theme"
           >
@@ -312,6 +306,22 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
 
                 {/* Account Settings & Shortcuts */}
                 <div className="py-1">
+                  {/* Theme Switch Option in Menu */}
+                  <button
+                    onClick={() => {
+                      toggleTheme();
+                    }}
+                    className="w-full flex items-center justify-between px-4 py-2.5 text-xs font-bold text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black transition-colors text-left cursor-pointer min-h-[40px]"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      {isDark ? <Sun className="w-4 h-4 stroke-[2.2]" /> : <Moon className="w-4 h-4 stroke-[2.2]" />}
+                      <span>{isDark ? (locale === "bn" ? "লাইট মোড (Light Mode)" : "Switch to Light Mode") : (locale === "bn" ? "নাইট মোড (Night Mode)" : "Switch to Night Mode")}</span>
+                    </div>
+                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded border border-black bg-black text-white dark:bg-white dark:text-black shadow-[1px_1px_0px_#000000]">
+                      {isDark ? "DARK" : "LIGHT"}
+                    </span>
+                  </button>
+
                   <button
                     onClick={() => {
                       setIsProfileOpen(false);

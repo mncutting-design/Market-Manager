@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,12 +11,12 @@ import {
   ArrowRight,
   Eye,
   EyeOff,
-  Cpu,
   Lock,
   Sparkles,
-  ShieldCheck,
-  CheckCircle2,
-  Zap,
+  ShieldAlert,
+  Sun,
+  Moon,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,24 +27,85 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Aesthetic Post-Login Portal Warp Transition State
-  const [isWarping, setIsWarping] = useState(false);
-  const [warpStep, setWarpStep] = useState(1);
-  const [authenticatedUser, setAuthenticatedUser] = useState<string>("NAZRUL");
+  // Theme state for login page
+  const [isDark, setIsDark] = useState(false);
+
+  // Wrong Password Animation & Error States
+  const [isShaking, setIsShaking] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Detect active theme
+    const isCurrentlyDark = document.documentElement.classList.contains("dark");
+    setIsDark(isCurrentlyDark);
+  }, []);
+
+  const toggleTheme = () => {
+    if (document.documentElement.classList.contains("dark")) {
+      document.documentElement.classList.remove("dark");
+      setIsDark(false);
+      localStorage.setItem("theme", "light");
+    } else {
+      document.documentElement.classList.add("dark");
+      setIsDark(true);
+      localStorage.setItem("theme", "dark");
+    }
+  };
+
+  const triggerWrongPasswordAnimation = (msg: string) => {
+    setHasError(true);
+    setErrorMessage(msg);
+    setIsShaking(true);
+
+    // Haptic feedback if supported by browser/device
+    if (typeof window !== "undefined" && "navigator" in window && navigator.vibrate) {
+      try {
+        navigator.vibrate([100, 60, 100]);
+      } catch (_) {}
+    }
+
+    // Clear password and refocus
+    setPassword("");
+    setTimeout(() => {
+      passwordInputRef.current?.focus();
+    }, 100);
+
+    // Reset shake animation after 600ms so subsequent wrong attempts shake again
+    setTimeout(() => {
+      setIsShaking(false);
+    }, 600);
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!identifier.trim() || !password) {
-      toast.error(
+
+    if (!identifier.trim()) {
+      triggerWrongPasswordAnimation(
         locale === "bn"
-          ? "ইউজারনেম এবং পাসওয়ার্ড উভয়ই আবশ্যক"
-          : "Username and password are required"
+          ? "ইউজারনেম আবশ্যক"
+          : "Username is required"
       );
+      toast.error(locale === "bn" ? "ইউজারনেম দিন" : "Please enter username");
+      return;
+    }
+
+    if (!password) {
+      triggerWrongPasswordAnimation(
+        locale === "bn"
+          ? "পাসওয়ার্ড আবশ্যক"
+          : "Password is required"
+      );
+      toast.error(locale === "bn" ? "পাসওয়ার্ড দিন" : "Please enter password");
       return;
     }
 
     try {
       setIsLoading(true);
+      setHasError(false);
+      setErrorMessage("");
+
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -56,367 +117,243 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
 
       const data = await res.json();
       if (!res.ok) {
-        toast.error(
+        const errorText =
           data.error ||
-            (locale === "bn"
-              ? "ভুল ইউজারনেম বা পাসওয়ার্ড"
-              : "Invalid username or password")
-        );
+          (locale === "bn"
+            ? "ভুল পাসওয়ার্ড বা ইউজারনেম! অনুগ্রহ করে সঠিক তথ্য দিন।"
+            : "Invalid username or password! Please check credentials.");
+
+        triggerWrongPasswordAnimation(errorText);
+        toast.error(errorText);
         setIsLoading(false);
         return;
       }
 
       const userName = data.user?.name || identifier.trim();
-      setAuthenticatedUser(userName);
-
-      // Trigger Aesthetic Cyber Warp Transition into the system
-      setIsWarping(true);
-      setWarpStep(1);
-
-      setTimeout(() => setWarpStep(2), 350);
-      setTimeout(() => setWarpStep(3), 750);
-      setTimeout(() => {
-        toast.success(
-          locale === "bn"
-            ? `স্বাগতম ${userName}! সিস্টেম আনলক হয়েছে।`
-            : `Welcome ${userName}! Access authorized.`
-        );
-        onLoginSuccess();
-      }, 1300);
+      toast.success(
+        locale === "bn"
+          ? `স্বাগতম ${userName}! সিস্টেম আনলক হয়েছে।`
+          : `Welcome ${userName}! Access authorized.`
+      );
+      onLoginSuccess();
     } catch (e) {
-      toast.error(locale === "bn" ? "লগইন এরর হয়েছে" : "Authentication error");
+      const networkError =
+        locale === "bn"
+          ? "সার্ভারের সাথে সংযোগ স্থাপন করা যায়নি"
+          : "Authentication network error";
+      triggerWrongPasswordAnimation(networkError);
+      toast.error(networkError);
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-3 sm:p-6 overflow-hidden bg-[#030611] text-white selection:bg-teal-500 selection:text-black">
-      {/* 1. CINEMATIC POST-LOGIN WARP PORTAL OVERLAY */}
-      {isWarping && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#02050f]/95 backdrop-blur-3xl animate-in fade-in duration-300">
-          {/* Radial Warp Cyber Grid */}
-          <div
-            className="absolute inset-0 opacity-40 animate-pulse pointer-events-none"
-            style={{
-              backgroundImage: `radial-gradient(circle at center, rgba(6, 182, 212, 0.4) 0%, rgba(13, 148, 136, 0.2) 40%, transparent 70%)`,
-            }}
-          />
+    <div className="relative min-h-screen w-full flex items-center justify-center p-3 sm:p-6 bg-[#F4F1EA] dark:bg-[#121214] text-black dark:text-white transition-colors duration-150 overflow-hidden select-none">
+      {/* Subtle Neo-Brutalist Grid Pattern */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.05] dark:opacity-[0.03]"
+        style={{
+          backgroundImage: `radial-gradient(currentColor 1.5px, transparent 1.5px)`,
+          backgroundSize: "24px 24px",
+        }}
+      />
 
-          {/* High-speed Warp Rings Expanding */}
-          <div className="relative w-64 h-64 sm:w-80 sm:h-80 flex items-center justify-center">
-            <div className="absolute inset-0 rounded-full border-2 border-cyan-400/80 animate-ping" />
-            <div
-              className="absolute inset-6 rounded-full border border-teal-400 animate-spin"
-              style={{ animationDuration: "3s" }}
-            />
-            <div
-              className="absolute inset-12 rounded-full border-2 border-dashed border-emerald-400/90 animate-spin"
-              style={{ animationDuration: "6s", animationDirection: "reverse" }}
-            />
-            <div className="w-24 h-24 rounded-3xl bg-gradient-to-tr from-cyan-500 via-teal-400 to-emerald-400 flex items-center justify-center shadow-[0_0_60px_rgba(6,182,212,0.8)] animate-bounce">
-              <Building2 className="w-12 h-12 text-slate-950" />
-            </div>
-          </div>
-
-          {/* Status HUD Terminal Stream */}
-          <div className="relative z-10 text-center space-y-3 mt-6 max-w-sm px-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-400/50 text-cyan-300 text-xs font-mono tracking-wider">
-              <Zap className="w-3.5 h-3.5 text-cyan-400 animate-spin" />
-              <span>INITIALIZING SECURE QUANTUM NODE</span>
-            </div>
-
-            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
-              {warpStep === 1 && (
-                <span className="text-cyan-300 animate-pulse">
-                  VERIFYING CREDENTIALS...
-                </span>
-              )}
-              {warpStep === 2 && (
-                <span className="text-teal-300 animate-pulse">
-                  DECRYPTING COMMERCIAL ASSET SCHEMAS...
-                </span>
-              )}
-              {warpStep === 3 && (
-                <span className="text-emerald-400">
-                  SYSTEM READY • WELCOME {authenticatedUser.toUpperCase()}
-                </span>
-              )}
-            </h2>
-
-            {/* Glowing progress bar */}
-            <div className="w-full h-2 rounded-full bg-slate-900 border border-cyan-500/30 overflow-hidden p-0.5 shadow-inner">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-cyan-400 via-teal-400 to-emerald-400 transition-all duration-300 shadow-[0_0_15px_rgba(6,182,212,0.8)]"
-                style={{
-                  width: warpStep === 1 ? "40%" : warpStep === 2 ? "80%" : "100%",
-                }}
-              />
-            </div>
-
-            <p className="text-[11px] font-mono text-cyan-200/60 uppercase tracking-widest">
-              ENTERING RENT PRO COMMERCIAL MARKET OS
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* 2. FUTURISTIC AMBIENT NEON CYBER GRID BACKGROUND */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Glowing Quantum Orbs */}
-        <div className="absolute -top-32 -left-32 w-96 h-96 bg-cyan-600/20 rounded-full blur-[120px] animate-pulse" />
-        <div
-          className="absolute -bottom-32 -right-32 w-96 h-96 bg-teal-500/20 rounded-full blur-[140px] animate-pulse"
-          style={{ animationDuration: "6s" }}
-        />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-600/10 rounded-full blur-[160px]" />
-
-        {/* Futuristic Cyber Perspective Grid Floor */}
-        <div
-          className="absolute inset-0 opacity-[0.16]"
-          style={{
-            backgroundImage: `
-              linear-gradient(to right, rgba(6, 182, 212, 0.4) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(6, 182, 212, 0.4) 1px, transparent 1px)
-            `,
-            backgroundSize: "44px 44px",
-            maskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
-            WebkitMaskImage: "radial-gradient(ellipse at center, black 40%, transparent 80%)",
-          }}
-        />
-
-        {/* Scanning Laser Beam across screen */}
-        <div
-          className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-75 blur-xs animate-bounce"
-          style={{ animationDuration: "5s" }}
-        />
-      </div>
-
-      {/* 3. TOP HUD STATUS & LANGUAGE TOGGLE */}
+      {/* TOP HUD BAR: Status, Theme Toggle, Language Toggle */}
       <div className="absolute top-3 sm:top-5 left-3 sm:left-6 right-3 sm:right-6 flex items-center justify-between z-20">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-cyan-500/30 backdrop-blur-md text-[11px] font-mono tracking-wider text-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-          <span className="font-bold">SYSTEM ACTIVE // ENCRYPTION AES-256</span>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black text-black dark:text-white shadow-[2px_2px_0px_#000000] text-xs font-black">
+          <span className="w-2 h-2 rounded-full bg-[#00BA88] border border-black animate-ping" />
+          <span>{locale === "bn" ? "সিস্টেম অনলাইন // নিরাপদ প্ল্যাটফর্ম" : "RENT PRO OS // ENCRYPTED"}</span>
         </div>
 
-        <button
-          onClick={toggleLocale}
-          type="button"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-teal-500/40 bg-slate-900/80 text-teal-300 font-bold text-xs shadow-lg backdrop-blur-md hover:bg-teal-950/80 hover:border-teal-400 transition-all cursor-pointer"
-        >
-          <Languages className="w-3.5 h-3.5 text-teal-400" />
-          <span>{locale === "bn" ? "English (EN)" : "বাংলা (BN)"}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {/* Theme Toggle Button */}
+          <button
+            onClick={toggleTheme}
+            type="button"
+            className="flex items-center justify-center w-9 h-9 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer"
+            title={isDark ? "Switch to Light Mode" : "Switch to Night Mode"}
+            aria-label="Toggle theme"
+          >
+            {isDark ? (
+              <Sun className="w-4 h-4 stroke-[2.5]" />
+            ) : (
+              <Moon className="w-4 h-4 stroke-[2.5]" />
+            )}
+          </button>
+
+          {/* Language Toggle Button */}
+          <button
+            onClick={toggleLocale}
+            type="button"
+            className="flex items-center gap-1.5 px-3 h-9 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] text-black dark:text-white font-black text-xs shadow-[2px_2px_0px_#000000] hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black transition-all cursor-pointer"
+          >
+            <Languages className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>{locale === "bn" ? "English" : "বাংলা"}</span>
+          </button>
+        </div>
       </div>
 
-      {/* 4. MAIN HOLOGRAPHIC CYBER CARD */}
-      <div className="relative w-full max-w-md z-10 pt-10 sm:pt-4">
-        {/* Holographic Glowing Outer Border */}
-        <div className="relative rounded-3xl p-[1.5px] bg-gradient-to-b from-cyan-400/60 via-teal-500/30 to-emerald-500/50 shadow-[0_0_60px_-10px_rgba(6,182,212,0.35)]">
-          {/* Futuristic HUD Corner Accents */}
-          <span className="absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 border-cyan-400" />
-          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 border-cyan-400" />
-          <span className="absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 border-emerald-400" />
-          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 border-emerald-400" />
-
-          {/* Card Body with Glassmorphism */}
-          <div className="rounded-[22px] bg-[#0c1222]/92 backdrop-blur-2xl p-6 sm:p-8 space-y-6">
-            {/* ============================================================== */}
-            {/* PRO ANIMATED COMMERCIAL MARKET STRUCTURE / BUILDING HERO ICON */}
-            {/* ============================================================== */}
-            <div className="text-center space-y-3">
-              <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
-                {/* Rotating Cyber HUD Radar Ring */}
-                <div
-                  className="absolute inset-0 rounded-3xl border-2 border-dashed border-cyan-400/50 animate-spin"
-                  style={{ animationDuration: "16s" }}
-                />
-                <div
-                  className="absolute -inset-1 rounded-3xl border border-teal-500/30 animate-pulse"
-                  style={{ animationDuration: "3s" }}
-                />
-
-                {/* Animated Futuristic Commercial Market Complex SVG */}
-                <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-b from-slate-900 to-[#071324] border border-cyan-400/40 p-2 flex items-center justify-center shadow-lg shadow-cyan-500/25 overflow-hidden group">
-                  {/* Facade Vertical Laser Scanner */}
-                  <div
-                    className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-80 blur-xs animate-bounce pointer-events-none"
-                    style={{ animationDuration: "2.8s" }}
-                  />
-
-                  {/* Multi-story Commercial Market Illustration with Illuminated Windows */}
-                  <svg
-                    viewBox="0 0 64 64"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="w-full h-full"
-                  >
-                    {/* Roof Antenna with Signal Beacon Pulse */}
-                    <line x1="32" y1="4" x2="32" y2="12" stroke="#22d3ee" strokeWidth="2" strokeLinecap="round" />
-                    <circle cx="32" cy="4" r="2.5" fill="#34d399" className="animate-ping" />
-                    <circle cx="32" cy="3" r="1.5" fill="#22d3ee" />
-
-                    {/* Central Highrise Market Tower Structure */}
-                    <rect x="20" y="12" width="24" height="46" rx="2" fill="#0e1e38" stroke="#06b6d4" strokeWidth="1.5" />
-
-                    {/* Left Commercial Wing */}
-                    <rect x="8" y="24" width="12" height="34" rx="2" fill="#091426" stroke="#0d9488" strokeWidth="1.2" />
-
-                    {/* Right Commercial Wing */}
-                    <rect x="44" y="24" width="12" height="34" rx="2" fill="#091426" stroke="#0d9488" strokeWidth="1.2" />
-
-                    {/* Left Wing Shop Windows (illuminated) */}
-                    <rect x="11" y="28" width="6" height="3.5" rx="0.5" fill="#22d3ee" className="animate-pulse" style={{ animationDuration: "2s" }} />
-                    <rect x="11" y="35" width="6" height="3.5" rx="0.5" fill="#34d399" />
-                    <rect x="11" y="42" width="6" height="3.5" rx="0.5" fill="#22d3ee" className="animate-pulse" style={{ animationDuration: "3s" }} />
-
-                    {/* Central Tower Floor Windows (Floors 5 to 1) */}
-                    <rect x="23" y="16" width="7" height="3" rx="0.5" fill="#38bdf8" />
-                    <rect x="34" y="16" width="7" height="3" rx="0.5" fill="#34d399" />
-
-                    <rect x="23" y="22" width="7" height="3" rx="0.5" fill="#34d399" className="animate-pulse" style={{ animationDuration: "2.4s" }} />
-                    <rect x="34" y="22" width="7" height="3" rx="0.5" fill="#38bdf8" />
-
-                    <rect x="23" y="28" width="7" height="3" rx="0.5" fill="#38bdf8" />
-                    <rect x="34" y="28" width="7" height="3" rx="0.5" fill="#34d399" className="animate-pulse" style={{ animationDuration: "1.8s" }} />
-
-                    <rect x="23" y="34" width="7" height="3" rx="0.5" fill="#34d399" />
-                    <rect x="34" y="34" width="7" height="3" rx="0.5" fill="#38bdf8" className="animate-pulse" style={{ animationDuration: "2.2s" }} />
-
-                    <rect x="23" y="40" width="7" height="3" rx="0.5" fill="#38bdf8" />
-                    <rect x="34" y="40" width="7" height="3" rx="0.5" fill="#34d399" />
-
-                    {/* Right Wing Shop Windows */}
-                    <rect x="47" y="28" width="6" height="3.5" rx="0.5" fill="#34d399" />
-                    <rect x="47" y="35" width="6" height="3.5" rx="0.5" fill="#22d3ee" className="animate-pulse" style={{ animationDuration: "2.5s" }} />
-                    <rect x="47" y="42" width="6" height="3.5" rx="0.5" fill="#34d399" />
-
-                    {/* Ground Level Grand Market Entrance Canopy */}
-                    <path d="M16 48 H48 V58 H16 Z" fill="#040b17" stroke="#22d3ee" strokeWidth="1" />
-                    <path d="M26 50 H38 V58 H26 Z" fill="#22d3ee" fillOpacity="0.8" />
-                    {/* Glowing entry arch */}
-                    <line x1="28" y1="58" x2="36" y2="58" stroke="#34d399" strokeWidth="2" strokeLinecap="round" />
-                  </svg>
-                </div>
-
-                {/* Floating Commercial Hologram Status Badges */}
-                <span className="absolute -bottom-1 -right-2 px-1.5 py-0.2 rounded bg-cyan-950 border border-cyan-400 text-[9px] font-mono font-bold text-cyan-300 shadow-md">
-                  MARKET OS
-                </span>
-              </div>
-
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight text-white flex items-center justify-center gap-1.5">
-                  <span className="bg-gradient-to-r from-cyan-400 via-teal-300 to-emerald-400 bg-clip-text text-transparent">
-                    RENT PRO
-                  </span>
-                  <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
-                    OS v2.6
-                  </span>
-                </h1>
-                <p className="text-[11px] sm:text-xs font-mono text-cyan-200/70 uppercase tracking-widest mt-1">
-                  Intelligent Commercial Asset Manager
-                </p>
+      {/* MAIN LOGIN CARD */}
+      <div
+        className={`relative w-full max-w-md z-10 pt-12 sm:pt-4 transition-transform duration-200 ${
+          isShaking ? "animate-brutal-shake" : ""
+        }`}
+      >
+        <div
+          className={`rounded-2xl border-3 p-6 sm:p-8 space-y-5 bg-white dark:bg-[#1E1F24] text-black dark:text-white transition-all ${
+            hasError
+              ? "border-[#FF4B55] shadow-[8px_8px_0px_#FF4B55]"
+              : "border-black shadow-[8px_8px_0px_#000000]"
+          }`}
+        >
+          {/* App Header & Building Icon */}
+          <div className="text-center space-y-3">
+            <div className="relative w-16 h-16 mx-auto flex items-center justify-center">
+              <div className="w-16 h-16 rounded-2xl bg-[#FED734] border-2 border-black flex items-center justify-center shadow-[3px_3px_0px_#000000]">
+                <Building2 className="w-8 h-8 text-black stroke-[2.5]" />
               </div>
             </div>
 
-            {/* Secure Login Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Username Input */}
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-cyan-300/80">
-                  {locale === "bn"
-                    ? "ব্যবহারকারীর নাম / ইউজারনেম"
-                    : "Username / Identity"}
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-cyan-400">
-                    <User className="w-4 h-4" />
-                  </div>
-                  <Input
-                    type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder={
-                      locale === "bn" ? "ইউজারনেম লিখুন..." : "Enter username..."
-                    }
-                    required
-                    autoComplete="username"
-                    className="pl-9 pr-3 h-11 bg-slate-900/80 border-slate-700 focus:border-cyan-400 focus:ring-cyan-400/20 text-white font-mono text-sm placeholder:text-slate-500 rounded-xl"
-                  />
-                </div>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-[#FED734] border border-black text-black text-[10px] font-black uppercase tracking-wider shadow-[1px_1px_0px_#000000]">
+                <Sparkles className="w-3 h-3 text-black" />
+                <span>Market Manager Pro</span>
               </div>
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-black dark:text-white mt-1">
+                {locale === "bn" ? "লগইন করুন" : "Sign In"}
+              </h1>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold mt-0.5">
+                {locale === "bn"
+                  ? "মার্কেট ও ভাড়াটিয়া ব্যবস্থাপনা অ্যাকাউন্টে প্রবেশ করুন"
+                  : "Enter your credentials to access the workspace"}
+              </p>
+            </div>
+          </div>
 
-              {/* Password Input */}
-              <div className="space-y-1.5">
-                <label className="block text-[11px] font-mono uppercase tracking-wider text-cyan-300/80">
-                  {locale === "bn"
-                    ? "সিকিউরিটি পাসওয়ার্ড"
-                    : "Security Password"}
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-cyan-400">
-                    <KeyRound className="w-4 h-4" />
-                  </div>
-                  <Input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder={
-                      locale === "bn" ? "পাসওয়ার্ড লিখুন..." : "Enter password..."
-                    }
-                    required
-                    autoComplete="current-password"
-                    className="pl-9 pr-10 h-11 bg-slate-900/80 border-slate-700 focus:border-cyan-400 focus:ring-cyan-400/20 text-white font-mono text-sm placeholder:text-slate-500 rounded-xl"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-cyan-300 cursor-pointer"
-                  >
-                    {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
+          {/* DYNAMIC WRONG PASSWORD / ERROR BANNER */}
+          {hasError && (
+            <div className="p-3 rounded-xl bg-[#FFEBEF] dark:bg-[#2A1417] border-2 border-[#FF4B55] text-[#FF4B55] shadow-[3px_3px_0px_#FF4B55] flex items-start gap-2.5 animate-in fade-in zoom-in-95 duration-200">
+              <ShieldAlert className="w-5 h-5 text-[#FF4B55] shrink-0 mt-0.5 stroke-[2.5] animate-bounce" />
+              <div className="text-xs font-black leading-snug">
+                <span className="block text-[11px] uppercase tracking-wider text-[#FF4B55]">
+                  {locale === "bn" ? "⚠️ প্রমাণীকরণ ব্যর্থ" : "⚠️ Authentication Failed"}
+                </span>
+                <span>{errorMessage}</span>
               </div>
+            </div>
+          )}
 
-              {/* Futuristic Submit Button */}
-              <button
-                type="submit"
-                disabled={isLoading || isWarping}
-                className="w-full h-11 mt-3 rounded-xl font-bold text-sm tracking-wide bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 text-slate-950 shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer border border-cyan-300/50"
-              >
-                {isLoading || isWarping ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
-                    <span>
-                      {locale === "bn"
-                        ? "অনুমোদন প্রক্রিয়াধীন..."
-                        : "Authenticating Node..."}
-                    </span>
-                  </div>
-                ) : (
-                  <>
-                    <Cpu className="w-4 h-4" />
-                    <span>
-                      {locale === "bn"
-                        ? "সিস্টেম আনলক করুন (LOGIN)"
-                        : "INITIALIZE SYSTEM ACCESS"}
-                    </span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
+          {/* Secure Login Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Username Input */}
+            <div className="space-y-1">
+              <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white">
+                {locale === "bn" ? "ব্যবহারকারীর নাম / ইউজারনেম *" : "Username / Identity *"}
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-black dark:text-neutral-400">
+                  <User className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <Input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    if (hasError) setHasError(false);
+                  }}
+                  placeholder={locale === "bn" ? "ইউজারনেম লিখুন (e.g. NAZRUL)" : "Enter username..."}
+                  required
+                  autoComplete="username"
+                  className="pl-9 pr-3 h-11 text-xs font-bold rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] text-black dark:text-white shadow-[2px_2px_0px_#000000] focus:bg-white dark:focus:bg-[#1E1F24]"
+                />
+              </div>
+            </div>
+
+            {/* Password Input with Wrong Password Animation Style */}
+            <div className="space-y-1">
+              <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center justify-between">
+                <span>{locale === "bn" ? "সিকিউরিটি পাসওয়ার্ড *" : "Security Password *"}</span>
+                {hasError && (
+                  <span className="text-[11px] font-black text-[#FF4B55] flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 stroke-[2.5]" />
+                    {locale === "bn" ? "ভুল পাসওয়ার্ড" : "Incorrect"}
+                  </span>
                 )}
-              </button>
-            </form>
-
-            {/* Bottom Security Assurance Tag */}
-            <div className="pt-2 text-center">
-              <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-slate-500">
-                <Lock className="w-3 h-3 text-cyan-500" />
-                <span>RESTRICTED ACCESS • SECURED WITH ROLE-BASED ACCESS CONTROL</span>
+              </label>
+              <div className="relative">
+                <div
+                  className={`absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none ${
+                    hasError ? "text-[#FF4B55]" : "text-black dark:text-neutral-400"
+                  }`}
+                >
+                  <KeyRound className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <input
+                  ref={passwordInputRef}
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (hasError) setHasError(false);
+                  }}
+                  placeholder={locale === "bn" ? "পাসওয়ার্ড লিখুন..." : "Enter password..."}
+                  required
+                  autoComplete="current-password"
+                  className={`w-full pl-9 pr-10 h-11 text-xs font-bold rounded-xl border-2 transition-all shadow-[2px_2px_0px_#000000] focus:outline-none ${
+                    hasError
+                      ? "border-[#FF4B55] bg-[#FFEBEF] dark:bg-[#2A1417] text-[#FF4B55] shadow-[2px_2px_0px_#FF4B55] placeholder:text-[#FF4B55]/70"
+                      : "border-black bg-[#FBF9F5] dark:bg-[#262830] text-black dark:text-white focus:bg-white dark:focus:bg-[#1E1F24]"
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer"
+                  tabIndex={-1}
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-4 h-4 stroke-[2.5]" />
+                  ) : (
+                    <Eye className="w-4 h-4 stroke-[2.5]" />
+                  )}
+                </button>
               </div>
+            </div>
+
+            {/* Neo-Brutalist Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className={`w-full h-11 mt-2 rounded-xl font-black text-xs tracking-wider uppercase border-2 transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                hasError
+                  ? "bg-[#FF4B55] hover:bg-[#e03d46] text-white border-black shadow-[3px_3px_0px_#000000]"
+                  : "bg-[#FED734] hover:bg-[#FED734]/90 text-black border-black shadow-[3px_3px_0px_#000000] active:translate-x-[2px] active:translate-y-[2px] active:shadow-none"
+              }`}
+            >
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                  <span>{locale === "bn" ? "যাচাই করা হচ্ছে..." : "Authenticating..."}</span>
+                </div>
+              ) : hasError ? (
+                <>
+                  <ShieldAlert className="w-4 h-4 stroke-[2.5]" />
+                  <span>{locale === "bn" ? "পুনরায় চেষ্টা করুন" : "TRY AGAIN"}</span>
+                </>
+              ) : (
+                <>
+                  <span>{locale === "bn" ? "লগইন করুন (LOGIN)" : "SIGN IN TO WORKSPACE"}</span>
+                  <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Bottom Security Assurance Tag */}
+          <div className="pt-2 text-center border-t-2 border-black/10 dark:border-white/10">
+            <div className="inline-flex items-center gap-1.5 text-[11px] font-black text-neutral-600 dark:text-neutral-400">
+              <Lock className="w-3.5 h-3.5 text-black dark:text-[#FED734] stroke-[2.5]" />
+              <span>{locale === "bn" ? "সুরক্ষিত রোল-ভিত্তিক অ্যাক্সেস কন্ট্রোল" : "SECURED WITH ROLE-BASED ACCESS CONTROL"}</span>
             </div>
           </div>
         </div>
@@ -424,5 +361,3 @@ export function LoginView({ onLoginSuccess }: { onLoginSuccess: () => void }) {
     </div>
   );
 }
-
-

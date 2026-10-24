@@ -45,10 +45,32 @@ export default function RootLayout({
   return (
     <html
       lang="bn"
-      className={`dark ${inter.variable} ${anekBangla.variable} antialiased`}
+      className={`${inter.variable} ${anekBangla.variable} antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#101726] text-slate-900 dark:text-white">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const saved = localStorage.getItem('theme');
+                  if (saved === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else if (saved === 'light') {
+                    document.documentElement.classList.remove('dark');
+                  } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-screen flex flex-col bg-[#F4F1EA] dark:bg-[#121214] text-black dark:text-white transition-colors duration-150">
         <I18nProvider initialLocale="bn">
           {children}
           <Toaster richColors position="top-right" />
