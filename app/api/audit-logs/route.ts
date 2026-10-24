@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { POST as undoHandler } from "./undo/route";
 
 export async function GET(req: Request) {
   try {
@@ -25,7 +26,7 @@ export async function GET(req: Request) {
     const logs = await prisma.auditLog.findMany({
       where,
       orderBy: { createdAt: "desc" },
-      take: Math.min(100, limit),
+      take: Math.min(200, limit),
     });
 
     const parsedLogs = logs.map((log) => {
@@ -49,4 +50,8 @@ export async function GET(req: Request) {
       { status: 500 }
     );
   }
+}
+
+export async function POST(req: Request) {
+  return undoHandler(req);
 }

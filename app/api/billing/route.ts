@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { matchesSearchWithDigits } from "@/lib/format";
+import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 
 export async function GET(req: Request) {
@@ -70,15 +72,22 @@ export async function GET(req: Request) {
     }
 
     const billsWithCarryForward = bills.map((bill) => {
+      const itemsTotal = (bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
+      const computedTotal = bill.rentAmount + itemsTotal;
+      const effectiveTotal = Math.max(bill.totalAmount, computedTotal);
+      const effectiveDue = Math.max(0, effectiveTotal - bill.paidAmount);
+
       const priorBills = unpaidByShop.get(bill.shopId) || [];
       const carryForwardDue = priorBills
         .filter((b) => b.year < bill.year || (b.year === bill.year && b.month < bill.month))
         .reduce((sum, b) => sum + b.dueAmount, 0);
 
-      const totalPayableWithArrears = bill.dueAmount + carryForwardDue;
+      const totalPayableWithArrears = effectiveDue + carryForwardDue;
 
       return {
         ...bill,
+        totalAmount: effectiveTotal,
+        dueAmount: effectiveDue,
         carryForwardDue,
         totalPayableWithArrears,
       };
@@ -208,8 +217,6 @@ export async function POST(req: Request) {
   }
 }
 
-import { getSession } from "@/lib/auth";
-
 // Add or edit manual charge item on an existing bill
 export async function PUT(req: Request) {
   try {
@@ -238,35 +245,22 @@ export async function PUT(req: Request) {
     }
 
     const chargePaisa = Math.round(Number(amount));
-    const isAdmin = session?.role === "ADMIN";
 
-    // If manager, generate change request for admin approval
-    if (!isAdmin || submitForApproval) {
-      const cr = await prisma.changeRequest.create({
-        data: {
-          entityType: "BILL",
-          entityId: billId,
-          entityTitle: `বিল চার্জ (${bill.shop.shopNumber} - ${bill.shop.market.name})`,
-          actionType: itemId ? "EDIT_ITEM" : "ADD_ITEM",
-          status: "PENDING",
-          currentData: JSON.stringify({ billId, itemId }),
-          proposedData: JSON.stringify({ itemId, chargeTypeId, description, amount: chargePaisa }),
-          requestedBy: session?.name || "Manager",
-          requesterRole: session?.role || "MANAGER",
-        },
-      });
-
-      return NextResponse.json({
-        success: true,
-        requiresApproval: true,
-        message: "বিলের চার্জ পরিবর্তনের আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে",
-        changeRequest: cr,
-      });
-    }
-
-    // Direct Admin update
+    // Direct update: adding or editing utility bill does NOT require admin approval
+    // per user requirement (utility bills like electricity fluctuate naturally every month)
     const updatedBill = await prisma.$transaction(async (tx) => {
+      let previousItemData: any = null;
+      let createdItemId: string | null = null;
+
       if (itemId) {
+        const existingItem = await tx.billItem.findUnique({ where: { id: itemId } });
+        if (existingItem) {
+          previousItemData = {
+            description: existingItem.description,
+            amount: existingItem.amount,
+          };
+        }
+
         await tx.billItem.update({
           where: { id: itemId },
           data: {
@@ -276,7 +270,7 @@ export async function PUT(req: Request) {
         });
       } else {
         // Create new manual bill item
-        await tx.billItem.create({
+        const newItem = await tx.billItem.create({
           data: {
             billId,
             chargeTypeId: chargeTypeId || null,
@@ -284,6 +278,7 @@ export async function PUT(req: Request) {
             amount: chargePaisa,
           },
         });
+        createdItemId = newItem.id;
       }
 
       const allItems = await tx.billItem.findMany({ where: { billId } });
@@ -292,7 +287,7 @@ export async function PUT(req: Request) {
       const newDue = newTotal - bill.paidAmount;
       const newStatus = newDue <= 0 ? "PAID" : bill.paidAmount > 0 ? "PARTIAL" : "DUE";
 
-      return await tx.bill.update({
+      const billRes = await tx.bill.update({
         where: { id: billId },
         data: {
           totalAmount: newTotal,
@@ -305,6 +300,31 @@ export async function PUT(req: Request) {
           billItems: { include: { chargeType: true } },
         },
       });
+
+      // Audit Log entry
+      await logAudit({
+        userId: session?.id,
+        userName: session?.name || "User",
+        action: itemId ? "BILL_CHARGE_EDITED" : "BILL_CHARGE_ADDED",
+        entityType: "Bill",
+        entityId: billId,
+        details: {
+          billId,
+          itemId: itemId || createdItemId,
+          shopNumber: bill.shop.shopNumber,
+          marketName: bill.shop.market?.name,
+          month: bill.month,
+          year: bill.year,
+          description: description?.trim(),
+          amount: chargePaisa,
+          totalAmount: newTotal,
+          dueAmount: Math.max(0, newDue),
+          previousData: previousItemData,
+        },
+        tx,
+      });
+
+      return billRes;
     });
 
     return NextResponse.json({ success: true, bill: updatedBill });
@@ -368,6 +388,8 @@ export async function DELETE(req: Request) {
 
     // Direct Admin execution - single round-trip returning updated bill
     const updatedBill = await prisma.$transaction(async (tx) => {
+      const existingItem = await tx.billItem.findUnique({ where: { id: itemId } });
+
       await tx.billItem.delete({
         where: { id: itemId },
       });
@@ -378,7 +400,7 @@ export async function DELETE(req: Request) {
       const newDue = newTotal - bill.paidAmount;
       const newStatus = newDue <= 0 ? "PAID" : bill.paidAmount > 0 ? "PARTIAL" : "DUE";
 
-      return await tx.bill.update({
+      const billRes = await tx.bill.update({
         where: { id: billId },
         data: {
           totalAmount: newTotal,
@@ -391,6 +413,34 @@ export async function DELETE(req: Request) {
           billItems: { include: { chargeType: true } },
         },
       });
+
+      if (existingItem) {
+        await logAudit({
+          userId: session?.id,
+          userName: session?.name || "Admin",
+          action: "BILL_CHARGE_DELETED",
+          entityType: "Bill",
+          entityId: billId,
+          details: {
+            billId,
+            deletedItem: {
+              id: existingItem.id,
+              description: existingItem.description,
+              amount: existingItem.amount,
+            },
+            shopNumber: bill.shop.shopNumber,
+            marketName: bill.shop.market?.name,
+            month: bill.month,
+            year: bill.year,
+            amount: existingItem.amount,
+            totalAmount: newTotal,
+            dueAmount: Math.max(0, newDue),
+          },
+          tx,
+        });
+      }
+
+      return billRes;
     });
 
     return NextResponse.json({ success: true, bill: updatedBill });

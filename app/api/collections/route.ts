@@ -195,11 +195,14 @@ export async function POST(req: Request) {
       });
 
       // 2. Recalculate bill amounts
+      const itemsTotal = (bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
+      const computedTotal = bill.rentAmount + itemsTotal;
+      const effectiveTotal = Math.max(bill.totalAmount, computedTotal);
       const newPaidAmount = bill.paidAmount + paymentPaisa;
-      const newDueAmount = Math.max(0, bill.totalAmount - newPaidAmount);
+      const newDueAmount = Math.max(0, effectiveTotal - newPaidAmount);
 
       let newStatus = "DUE";
-      if (newPaidAmount >= bill.totalAmount) {
+      if (newPaidAmount >= effectiveTotal) {
         newStatus = "PAID";
       } else if (newPaidAmount > 0) {
         newStatus = "PARTIAL";
@@ -208,6 +211,7 @@ export async function POST(req: Request) {
       const updatedBill = await tx.bill.update({
         where: { id: billId },
         data: {
+          totalAmount: effectiveTotal,
           paidAmount: newPaidAmount,
           dueAmount: newDueAmount,
           status: newStatus,

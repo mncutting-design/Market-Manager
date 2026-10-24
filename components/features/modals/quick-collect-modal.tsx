@@ -445,6 +445,21 @@ export function QuickCollectModal() {
                 {formatCurrency(activeBill.paidAmount, locale)}
               </span>
             </div>
+            {activeBill.billItems && activeBill.billItems.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 pt-1.5 pb-0.5 border-t border-black/10 dark:border-white/10 text-[11px]">
+                <span className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200 font-bold">
+                  {locale === "bn" ? "মূল ভাড়া" : "Rent"}: {formatCurrency(activeBill.rentAmount, locale)}
+                </span>
+                {activeBill.billItems.map((item: any) => (
+                  <span
+                    key={item.id}
+                    className="bg-amber-100 dark:bg-amber-950/80 px-1.5 py-0.5 rounded text-amber-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-800"
+                  >
+                    {item.description}: {formatCurrency(item.amount, locale)}
+                  </span>
+                ))}
+              </div>
+            )}
             <div className="flex justify-between pt-1 border-t-2 border-black/10 dark:border-white/10 font-black text-sm">
               <span className="text-[#FF4B55]">{t("collections.totalDue")}:</span>
               <span className="text-[#FF4B55]">

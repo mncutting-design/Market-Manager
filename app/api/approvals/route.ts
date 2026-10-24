@@ -415,7 +415,11 @@ export async function PUT(req: Request) {
         });
       } else if (cr.entityType === "BILL") {
         if (cr.actionType === "DELETE_ITEM" && proposed.itemId) {
-          await tx.billItem.delete({ where: { id: proposed.itemId } });
+          try {
+            await tx.billItem.delete({ where: { id: proposed.itemId } });
+          } catch (e) {
+            console.warn("Item already deleted or not found:", proposed.itemId);
+          }
         } else if (cr.actionType === "ADD_ITEM") {
           await tx.billItem.create({
             data: {
@@ -432,6 +436,24 @@ export async function PUT(req: Request) {
               ...(proposed.totalAmount !== undefined && { totalAmount: Math.round(Number(proposed.totalAmount)) }),
               ...(proposed.dueAmount !== undefined && { dueAmount: Math.round(Number(proposed.dueAmount)) }),
               ...(proposed.status !== undefined && { status: proposed.status }),
+            },
+          });
+        }
+
+        // Always keep bill totalAmount and dueAmount in sync after modifying items
+        const b = await tx.bill.findUnique({ where: { id: cr.entityId } });
+        if (b) {
+          const items = await tx.billItem.findMany({ where: { billId: cr.entityId } });
+          const itemsSum = items.reduce((sum, item) => sum + item.amount, 0);
+          const newTotal = b.rentAmount + itemsSum;
+          const newDue = Math.max(0, newTotal - b.paidAmount);
+          const newStatus = newDue <= 0 ? "PAID" : b.paidAmount > 0 ? "PARTIAL" : "DUE";
+          await tx.bill.update({
+            where: { id: cr.entityId },
+            data: {
+              totalAmount: newTotal,
+              dueAmount: newDue,
+              status: newStatus,
             },
           });
         }
