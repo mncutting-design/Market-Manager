@@ -49,8 +49,8 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#101726]/95 backdrop-blur-md border-t border-slate-200 dark:border-[#2d3b52] shadow-lg px-2 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
-        <div className="flex items-center justify-around h-15 sm:h-16">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F4F1EA] border-t-2 border-black shadow-[0px_-4px_0px_#000000] px-2 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
+        <div className="flex items-center justify-around h-16 gap-1">
           {mainTabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -60,19 +60,16 @@ export function BottomNav() {
                 key={tab.id}
                 onClick={() => handleSelectTab(tab.id)}
                 className={cn(
-                  "flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[44px] transition-colors relative",
+                  "flex flex-col items-center justify-center flex-1 h-12 py-1 min-h-[44px] transition-all cursor-pointer rounded-xl",
                   isActive
-                    ? "text-teal-600 dark:text-teal-400 font-semibold"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                    ? "bg-[#FED734] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+                    : "text-gray-800 hover:text-black hover:bg-white/80 font-bold border-2 border-transparent hover:border-black"
                 )}
               >
-                <Icon className="w-5 h-5 mb-1" />
-                <span className="text-[11px] leading-tight truncate max-w-[64px]">
+                <Icon className="w-4 h-4 mb-0.5 stroke-[2.5]" />
+                <span className="text-[10px] leading-tight truncate max-w-[64px]">
                   {t(tab.labelKey)}
                 </span>
-                {isActive && (
-                  <span className="absolute bottom-1 w-6 h-0.5 bg-teal-600 dark:bg-teal-400 rounded-full" />
-                )}
               </button>
             );
           })}
@@ -81,14 +78,14 @@ export function BottomNav() {
           <button
             onClick={() => setIsMoreOpen(true)}
             className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full py-1 min-h-[44px] transition-colors relative",
+              "flex flex-col items-center justify-center flex-1 h-12 py-1 min-h-[44px] transition-all cursor-pointer rounded-xl",
               moreItems.some((item) => item.id === activeTab)
-                ? "text-teal-600 dark:text-teal-400 font-semibold"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                ? "bg-[#FED734] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+                : "text-gray-800 hover:text-black hover:bg-white/80 font-bold border-2 border-transparent hover:border-black"
             )}
           >
-            <Menu className="w-5 h-5 mb-1" />
-            <span className="text-[11px] leading-tight">আরও</span>
+            <Menu className="w-4 h-4 mb-0.5 stroke-[2.5]" />
+            <span className="text-[10px] leading-tight">আরও</span>
           </button>
         </div>
       </nav>
@@ -100,7 +97,7 @@ export function BottomNav() {
         title="মেনু ও অন্যান্য বিভাগ"
         description="মার্কেট, দোকান, বিলিং এবং বকেয়া তালিকা"
       >
-        <div className="grid grid-cols-1 gap-2">
+        <div className="grid grid-cols-1 gap-2.5">
           {moreItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -110,17 +107,17 @@ export function BottomNav() {
                 key={item.id}
                 onClick={() => handleSelectTab(item.id)}
                 className={cn(
-                  "flex items-center gap-3.5 p-3.5 rounded-xl border transition-all text-left min-h-[48px]",
+                  "flex items-center gap-3.5 p-3 rounded-xl border-2 border-black transition-all text-left min-h-[48px] cursor-pointer shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5",
                   isActive
-                    ? "bg-teal-50 dark:bg-teal-950/60 border-teal-300 dark:border-teal-700 text-teal-800 dark:text-teal-200 font-semibold"
-                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                    ? "bg-[#FED734] text-black font-black"
+                    : "bg-white text-black hover:bg-[#FBF9F5] font-bold"
                 )}
               >
-                <div className="w-9 h-9 rounded-lg bg-teal-100 dark:bg-teal-900/40 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0">
-                  <Icon className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg border-2 border-black bg-white text-black flex items-center justify-center shrink-0 shadow-[1px_1px_0px_#000000]">
+                  <Icon className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-medium">{t(item.labelKey)}</p>
+                  <p className="text-sm font-black">{t(item.labelKey)}</p>
                 </div>
               </button>
             );

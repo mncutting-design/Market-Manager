@@ -16,7 +16,7 @@ export function FloatingActionButton() {
       {/* Backdrop when menu is open */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/30 backdrop-blur-2xs z-30 animate-in fade-in"
+          className="fixed inset-0 bg-black/60 z-30 animate-in fade-in"
           onClick={() => setIsOpen(false)}
         />
       )}
@@ -30,10 +30,10 @@ export function FloatingActionButton() {
               setIsOpen(false);
               openQuickCollect();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shadow-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-xs md:text-sm cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border-2 border-black text-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
           >
-            <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-              <Wallet className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg border-2 border-black bg-[#00BA88] text-white flex items-center justify-center shadow-[1px_1px_0px_#000000]">
+              <Wallet className="w-4 h-4 stroke-[2.5]" />
             </div>
             <span>{t("collections.quickCollect")}</span>
           </button>
@@ -44,10 +44,10 @@ export function FloatingActionButton() {
               setIsOpen(false);
               openAddExpense();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shadow-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-xs md:text-sm cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border-2 border-black text-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
           >
-            <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center">
-              <Wrench className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg border-2 border-black bg-[#F59E0B] text-black flex items-center justify-center shadow-[1px_1px_0px_#000000]">
+              <Wrench className="w-4 h-4 stroke-[2.5]" />
             </div>
             <span>{t("expenses.addExpense")}</span>
           </button>
@@ -58,10 +58,10 @@ export function FloatingActionButton() {
               setIsOpen(false);
               openGenerateBills();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 shadow-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-all font-medium text-xs md:text-sm cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border-2 border-black text-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
           >
-            <div className="w-8 h-8 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-600 dark:text-teal-400 flex items-center justify-center">
-              <Receipt className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-lg border-2 border-black bg-[#FED734] text-black flex items-center justify-center shadow-[1px_1px_0px_#000000]">
+              <Receipt className="w-4 h-4 stroke-[2.5]" />
             </div>
             <span>{t("billing.generateBills")}</span>
           </button>
@@ -72,15 +72,15 @@ export function FloatingActionButton() {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "w-14 h-14 rounded-full flex items-center justify-center shadow-xl text-white transition-all transform active:scale-95 z-40 cursor-pointer min-h-[44px] min-w-[44px]",
+          "w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-black shadow-[4px_4px_0px_#000000] transition-all transform active:translate-x-1 active:translate-y-1 active:shadow-[1px_1px_0px_#000000] z-40 cursor-pointer min-h-[44px] min-w-[44px]",
           isOpen
-            ? "bg-slate-800 dark:bg-slate-700 rotate-45"
-            : "bg-teal-600 hover:bg-teal-500 shadow-teal-600/30 hover:scale-105"
+            ? "bg-[#FF4B55] text-white rotate-45"
+            : "bg-[#FED734] hover:bg-[#ffe169] text-black hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_#000000]"
         )}
         aria-label="Quick Actions"
         title="Quick Actions"
       >
-        <Plus className="w-6 h-6 stroke-[2.5]" />
+        <Plus className="w-7 h-7 stroke-[3]" />
       </button>
     </div>
   );

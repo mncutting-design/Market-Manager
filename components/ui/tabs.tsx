@@ -50,7 +50,7 @@ export function Tabs({
                   "ml-1 px-1.5 py-0.5 text-[10px] font-black rounded-full border border-black",
                   isActive
                     ? "bg-black text-[#FED734]"
-                    : "bg-white text-black"
+                    : "bg-white text-black dark:bg-[#2D2F39] dark:text-white"
                 )}
               >
                 {tab.count}

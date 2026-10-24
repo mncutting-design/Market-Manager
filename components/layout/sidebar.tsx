@@ -89,7 +89,7 @@ export function Sidebar() {
   return (
     <aside
       className={cn(
-        "hidden md:flex flex-col border-r-2 border-black bg-[#F4F1EA] text-black transition-all duration-300 ease-in-out select-none shrink-0",
+        "hidden md:flex flex-col border-r-2 border-black bg-[#F4F1EA] dark:bg-[#121214] text-black dark:text-white transition-all duration-300 ease-in-out select-none shrink-0",
         "md:sticky md:top-14 md:self-start md:z-30",
         "md:h-[calc(100dvh-3.5rem)]",
         !isSidebarOpen
@@ -100,12 +100,12 @@ export function Sidebar() {
       )}
     >
       {/* Top Header with Compact Neo-Brutalist Controls */}
-      <div className="flex items-center justify-between px-2.5 py-1.5 border-b-2 border-black shrink-0 h-10 bg-white">
+      <div className="flex items-center justify-between px-2.5 py-1.5 border-b-2 border-black shrink-0 h-10 bg-white dark:bg-[#1E1F24]">
         {!isSidebarMini ? (
           <>
             <div className="flex items-center gap-1.5 px-1 min-w-0">
               <span className="w-2 h-2 rounded-full bg-[#FED734] border border-black" />
-              <span className="text-[10px] font-black tracking-widest uppercase text-black truncate">
+              <span className="text-[10px] font-black tracking-widest uppercase text-black dark:text-white truncate">
                 {locale === "bn" ? "মেনু" : "NAVIGATION"}
               </span>
             </div>
@@ -113,7 +113,7 @@ export function Sidebar() {
               {/* Mini rail button */}
               <button
                 onClick={toggleSidebarMini}
-                className="p-1 rounded-md text-black border-2 border-black bg-white hover:bg-[#FED734] shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                className="p-1 rounded-md text-black dark:text-white border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                 title={locale === "bn" ? "সংকুচিত আইকন বার" : "Collapse to mini rail"}
               >
                 <ChevronsLeft className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -121,7 +121,7 @@ export function Sidebar() {
               {/* Close completely */}
               <button
                 onClick={toggleSidebar}
-                className="p-1 rounded-md text-black border-2 border-black bg-white hover:bg-[#FF4B55] hover:text-white shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                className="p-1 rounded-md text-black dark:text-white border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FF4B55] hover:text-white dark:hover:bg-[#FF4B55] dark:hover:text-white shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                 title={locale === "bn" ? "মেনুবার বন্ধ করুন (Ctrl+B)" : "Close sidebar (Ctrl+B)"}
               >
                 <PanelLeftClose className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -132,7 +132,7 @@ export function Sidebar() {
           <div className="w-full flex justify-center">
             <button
               onClick={toggleSidebarMini}
-              className="p-1 rounded-md text-black border-2 border-black bg-white hover:bg-[#FED734] shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+              className="p-1 rounded-md text-black dark:text-white border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
               title={locale === "bn" ? "মেনুবার বিস্তারিত করুন" : "Expand sidebar"}
             >
               <ChevronsRight className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -173,13 +173,13 @@ export function Sidebar() {
                         : "gap-2.5 px-3 py-2",
                       isActive
                         ? "bg-[#FED734] text-black border-2 border-black shadow-[3px_3px_0px_#000000] font-black"
-                        : "text-gray-700 hover:text-black hover:bg-white/80 border-2 border-transparent hover:border-black"
+                        : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-[#2D2F39] border-2 border-transparent hover:border-black"
                     )}
                   >
                     <Icon
                       className={cn(
                         "w-4 h-4 shrink-0 transition-transform duration-150 stroke-[2.2]",
-                        isActive ? "text-black scale-110" : "text-gray-700 group-hover:text-black"
+                        isActive ? "text-black scale-110" : "text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-white"
                       )}
                     />
 
@@ -203,7 +203,7 @@ export function Sidebar() {
 
                     {/* Floating Tooltip in Mini Mode */}
                     {isSidebarMini && (
-                      <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-white text-black border-2 border-black text-xs font-black whitespace-nowrap shadow-[4px_4px_0px_#000000] z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-x-1 group-hover:translate-x-0 flex items-center gap-2">
+                      <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-white dark:bg-[#1E1F24] text-black dark:text-white border-2 border-black text-xs font-black whitespace-nowrap shadow-[4px_4px_0px_#000000] z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-x-1 group-hover:translate-x-0 flex items-center gap-2">
                         <span>{t(item.labelKey)}</span>
                         {(item as any).badge && (
                           <span className="px-1.5 py-0.2 rounded-md bg-[#FED734] text-black text-[10px] font-black border border-black">
@@ -221,10 +221,10 @@ export function Sidebar() {
       </nav>
 
       {/* Modern User Profile & Status Footer */}
-      <div className="p-2 border-t-2 border-black shrink-0 bg-white">
+      <div className="p-2 border-t-2 border-black shrink-0 bg-white dark:bg-[#1E1F24]">
         <div
           className={cn(
-            "flex items-center gap-2.5 p-2 rounded-xl bg-[#FBF9F5] border-2 border-black shadow-[2px_2px_0px_#000000] hover:bg-[#FED734] transition-all cursor-pointer group relative",
+            "flex items-center gap-2.5 p-2 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] hover:bg-[#FED734] dark:hover:bg-[#FED734] transition-all cursor-pointer group relative",
             isSidebarMini && "justify-center p-1"
           )}
           onClick={() => setActiveTab("settings")}
@@ -241,14 +241,14 @@ export function Sidebar() {
           {!isSidebarMini && (
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-1">
-                <p className="text-xs font-black text-black truncate">
+                <p className="text-xs font-black text-black dark:text-white group-hover:text-black dark:group-hover:text-black truncate">
                   {currentUser?.name || "NAZRUL"}
                 </p>
                 <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-black text-[#FED734] shrink-0">
                   {currentUser?.role || "ADMIN"}
                 </span>
               </div>
-              <p className="text-[10px] text-gray-700 font-bold truncate flex items-center gap-1 mt-0.5">
+              <p className="text-[10px] text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-black font-bold truncate flex items-center gap-1 mt-0.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00BA88] inline-block border border-black" />
                 <span>{locale === "bn" ? "সক্রিয় রয়েছেন" : "Online"}</span>
               </p>
@@ -257,9 +257,9 @@ export function Sidebar() {
 
           {/* Floating Tooltip in Mini Mode */}
           {isSidebarMini && (
-            <div className="absolute left-full ml-3 px-3 py-2 rounded-xl bg-white text-black border-2 border-black text-xs font-black whitespace-nowrap shadow-[4px_4px_0px_#000000] z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-x-1 group-hover:translate-x-0">
+            <div className="absolute left-full ml-3 px-3 py-2 rounded-xl bg-white dark:bg-[#1E1F24] text-black dark:text-white border-2 border-black text-xs font-black whitespace-nowrap shadow-[4px_4px_0px_#000000] z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-x-1 group-hover:translate-x-0">
               <p className="font-black">{currentUser?.name || "NAZRUL"}</p>
-              <p className="text-[10px] text-black font-black uppercase">{currentUser?.role || "ADMIN"}</p>
+              <p className="text-[10px] text-black dark:text-white font-black uppercase">{currentUser?.role || "ADMIN"}</p>
             </div>
           )}
         </div>

@@ -102,7 +102,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const years = [2025, 2026, 2027];
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b-2 border-black transition-colors shadow-[0px_3px_0px_#000000]">
+    <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#1E1F24] border-b-2 border-black transition-colors shadow-[0px_3px_0px_#000000]">
       {/* 1. TOP MAIN BAR */}
       <div className="h-14 px-2 min-[900px]:px-5 flex items-center justify-between gap-2 min-[900px]:gap-4">
         {/* LEFT: Sidebar Toggle Button + Logo & Brand */}
@@ -111,7 +111,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           <button
             type="button"
             onClick={handleToggleSidebar}
-            className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl text-black hover:bg-[#FED734] border-2 border-black shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shrink-0"
+            className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black border-2 border-black shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer shrink-0"
             title={
               isSidebarOpen
                 ? (locale === "bn" ? "মেনুবার বন্ধ করুন (Ctrl+B)" : "Close sidebar (Ctrl+B)")
@@ -120,9 +120,9 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             aria-label="Toggle sidebar"
           >
             {isSidebarOpen ? (
-              <PanelLeftClose className="w-5 h-5 text-black stroke-[2.5]" />
+              <PanelLeftClose className="w-5 h-5 text-black dark:text-white stroke-[2.5]" />
             ) : (
-              <PanelLeftOpen className="w-5 h-5 text-black stroke-[2.5]" />
+              <PanelLeftOpen className="w-5 h-5 text-black dark:text-white stroke-[2.5]" />
             )}
           </button>
 
@@ -133,14 +133,14 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             </div>
             <div className="flex flex-col">
               <div className="flex items-center gap-1.5">
-                <span className="text-sm min-[900px]:text-base font-black tracking-tight text-black whitespace-nowrap">
+                <span className="text-sm min-[900px]:text-base font-black tracking-tight text-black dark:text-white whitespace-nowrap">
                   {t("common.appName")}
                 </span>
                 <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-[#FED734] text-black border border-black shadow-[1px_1px_0px_#000000] shrink-0">
                   PRO
                 </span>
               </div>
-              <p className="hidden xl:block text-[11px] text-gray-700 font-bold truncate max-w-[220px]">
+              <p className="hidden xl:block text-[11px] text-gray-700 dark:text-gray-300 font-bold truncate max-w-[220px]">
                 {t("common.appTagline")}
               </p>
             </div>
@@ -165,7 +165,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             searchPlaceholder={locale === "bn" ? "মার্কেট খুঁজুন..." : "Search..."}
             autoWidth={true}
             showSublabelInTrigger={false}
-            buttonClassName="h-10 text-xs md:text-sm font-bold rounded-xl bg-white border-2 border-black shadow-[2.5px_2.5px_0px_#000000]"
+            buttonClassName="h-10 text-xs md:text-sm font-bold rounded-xl bg-white dark:bg-[#262830] text-black dark:text-white border-2 border-black shadow-[2.5px_2.5px_0px_#000000]"
           />
 
           {/* Month selector */}
@@ -174,7 +174,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(Number(e.target.value))}
               aria-label={t("dashboard.selectMonth")}
-              className="w-full h-10 pl-6 pr-6 text-xs md:text-sm font-bold bg-white border-2 border-black rounded-xl text-black appearance-none focus:outline-none shadow-[2.5px_2.5px_0px_#000000] cursor-pointer"
+              className="w-full h-10 pl-6 pr-6 text-xs md:text-sm font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2.5px_2.5px_0px_#000000] cursor-pointer"
             >
               {months.map((m) => (
                 <option key={m.value} value={m.value}>
@@ -182,8 +182,8 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                 </option>
               ))}
             </select>
-            <Calendar className="w-4 h-4 text-black absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-            <ChevronDown className="w-4 h-4 text-black absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
+            <Calendar className="w-4 h-4 text-black dark:text-white absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <ChevronDown className="w-4 h-4 text-black dark:text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
           </div>
 
           {/* Year selector */}
@@ -192,7 +192,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               value={selectedYear}
               onChange={(e) => setSelectedYear(Number(e.target.value))}
               aria-label={t("dashboard.selectYear")}
-              className="w-full h-10 pl-3 pr-6 text-xs md:text-sm font-bold bg-white border-2 border-black rounded-xl text-black appearance-none focus:outline-none shadow-[2.5px_2.5px_0px_#000000] cursor-pointer"
+              className="w-full h-10 pl-3 pr-6 text-xs md:text-sm font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2.5px_2.5px_0px_#000000] cursor-pointer"
             >
               {years.map((y) => (
                 <option key={y} value={y}>
@@ -200,7 +200,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                 </option>
               ))}
             </select>
-            <ChevronDown className="w-4 h-4 text-black absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
+            <ChevronDown className="w-4 h-4 text-black dark:text-white absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
           </div>
         </div>
 
@@ -243,22 +243,22 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
           <button
             onClick={toggleTheme}
             type="button"
-            className="hidden min-[900px]:flex w-10 h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black hover:bg-[#FBF9F5] transition-all cursor-pointer shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-h-[40px] min-w-[40px]"
+            className="hidden min-[900px]:flex w-10 h-10 items-center justify-center rounded-xl border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white hover:bg-[#FBF9F5] dark:hover:bg-[#353744] transition-all cursor-pointer shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-h-[40px] min-w-[40px]"
             title={isDark ? t("common.lightMode") : t("common.darkMode")}
             aria-label="Toggle dark/light theme"
           >
-            {isDark ? <Sun className="w-4 h-4 text-black stroke-[2.5]" /> : <Moon className="w-4 h-4 text-black stroke-[2.5]" />}
+            {isDark ? <Sun className="w-4 h-4 text-black dark:text-white stroke-[2.5]" /> : <Moon className="w-4 h-4 text-black dark:text-white stroke-[2.5]" />}
           </button>
 
           {/* DESKTOP ONLY: Admin Approvals Button */}
           <button
             onClick={openApprovals}
             type="button"
-            className="hidden min-[900px]:flex relative w-10 h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black hover:bg-[#FED734] transition-all cursor-pointer shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-h-[40px] min-w-[40px]"
+            className="hidden min-[900px]:flex relative w-10 h-10 items-center justify-center rounded-xl border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] dark:hover:text-black transition-all cursor-pointer shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none min-h-[40px] min-w-[40px]"
             title={locale === "bn" ? "অ্যাডমিন অনুমোদন কেন্দ্র" : "Admin Approvals"}
             aria-label="Admin Approvals"
           >
-            <ShieldCheck className="w-4 h-4 text-black stroke-[2.5]" />
+            <ShieldCheck className="w-4 h-4 text-black dark:text-white stroke-[2.5]" />
             {pendingApprovalsCount > 0 && (
               <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-[#FF4B55] text-[10px] font-black text-white border border-black shadow-[1px_1px_0px_#000000]">
                 {locale === "bn" ? toBanglaDigits(pendingApprovalsCount) : pendingApprovalsCount}
@@ -271,7 +271,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
               type="button"
-              className="flex items-center gap-1.5 p-1 rounded-xl bg-white border-2 border-black hover:bg-[#FED734] shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer min-h-[40px] min-w-[40px] justify-center"
+              className="flex items-center gap-1.5 p-1 rounded-xl bg-white dark:bg-[#262830] border-2 border-black hover:bg-[#FED734] dark:hover:bg-[#FED734] shadow-[2.5px_2.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer min-h-[40px] min-w-[40px] justify-center group"
               aria-label="User Profile and Menu"
               aria-expanded={isProfileOpen}
             >
@@ -282,30 +282,30 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                 <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-[#00BA88] border border-black rounded-full" />
               </div>
               <div className="hidden lg:flex flex-col text-left">
-                <span className="text-xs font-black text-black leading-tight">
+                <span className="text-xs font-black text-black dark:text-white group-hover:text-black dark:group-hover:text-black leading-tight">
                   {currentUser?.name || "NAZRUL"}
                 </span>
-                <span className="text-[9px] text-gray-700 font-extrabold uppercase">
+                <span className="text-[9px] text-gray-700 dark:text-gray-300 group-hover:text-black dark:group-hover:text-black font-extrabold uppercase">
                   {currentUser?.role || "ADMIN"}
                 </span>
               </div>
-              <ChevronDown className="w-3.5 h-3.5 text-black hidden lg:block stroke-[2.5]" />
+              <ChevronDown className="w-3.5 h-3.5 text-black dark:text-white group-hover:text-black dark:group-hover:text-black hidden lg:block stroke-[2.5]" />
             </button>
 
             {/* Profile Dropdown */}
             {isProfileOpen && (
-              <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white border-2 border-black shadow-[6px_6px_0px_#000000] py-2 z-50 animate-in fade-in-50 zoom-in-95 text-black divide-y-2 divide-black/10">
+              <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[6px_6px_0px_#000000] py-2 z-50 animate-in fade-in-50 zoom-in-95 text-black dark:text-white divide-y-2 divide-black/10 dark:divide-white/10">
                 {/* User Header */}
-                <div className="px-4 py-3 bg-[#FBF9F5]">
+                <div className="px-4 py-3 bg-[#FBF9F5] dark:bg-[#262830]">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-black text-black truncate">
+                    <p className="text-sm font-black text-black dark:text-white truncate">
                       {currentUser?.name || "NAZRUL"}
                     </p>
                     <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-[#FED734] text-black border border-black">
                       {currentUser?.role || "ADMIN"}
                     </span>
                   </div>
-                  <p className="text-xs text-gray-600 font-bold truncate mt-0.5">
+                  <p className="text-xs text-gray-600 dark:text-gray-300 font-bold truncate mt-0.5">
                     {currentUser?.email || "nazrul@rentpro.internal"}
                   </p>
                 </div>
@@ -317,9 +317,9 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                       setIsProfileOpen(false);
                       openChangePassword();
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-black hover:bg-[#FED734] transition-colors text-left cursor-pointer min-h-[40px]"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black transition-colors text-left cursor-pointer min-h-[40px]"
                   >
-                    <KeyRound className="w-4 h-4 text-black stroke-[2.2]" />
+                    <KeyRound className="w-4 h-4 stroke-[2.2]" />
                     <span>{locale === "bn" ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}</span>
                   </button>
 
@@ -328,9 +328,9 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                       setIsProfileOpen(false);
                       setActiveTab("backup");
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-black hover:bg-[#FED734] transition-colors text-left cursor-pointer min-h-[40px]"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black transition-colors text-left cursor-pointer min-h-[40px]"
                   >
-                    <Database className="w-4 h-4 text-black stroke-[2.2]" />
+                    <Database className="w-4 h-4 stroke-[2.2]" />
                     <span>{t("nav.backup")}</span>
                   </button>
 
@@ -339,9 +339,9 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                       setIsProfileOpen(false);
                       setActiveTab("settings");
                     }}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-black hover:bg-[#FED734] transition-colors text-left cursor-pointer min-h-[40px]"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black transition-colors text-left cursor-pointer min-h-[40px]"
                   >
-                    <Settings className="w-4 h-4 text-black stroke-[2.2]" />
+                    <Settings className="w-4 h-4 stroke-[2.2]" />
                     <span>{t("nav.settings")}</span>
                   </button>
                 </div>
@@ -350,7 +350,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
                 <div className="py-1">
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-black text-[#FF4B55] hover:bg-[#FFEBEF] transition-colors text-left cursor-pointer min-h-[40px]"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-black text-[#FF4B55] hover:bg-[#FFEBEF] dark:hover:bg-[#2A1417] transition-colors text-left cursor-pointer min-h-[40px]"
                   >
                     <LogOut className="w-4 h-4 stroke-[2.2]" />
                     <span>{t("nav.logout")}</span>
@@ -363,7 +363,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
       </div>
 
       {/* 2. MOBILE DEDICATED SUB-BAR: Market & Month Filters */}
-      <div className="min-[900px]:hidden border-t-2 border-black bg-[#FBF9F5] px-2 py-1.5 flex items-center gap-1.5">
+      <div className="min-[900px]:hidden border-t-2 border-black bg-[#FBF9F5] dark:bg-[#1A1A1E] px-2 py-1.5 flex items-center gap-1.5">
         {/* Market selector */}
         <div className="flex-1 min-w-0">
           <SearchableSelect
@@ -380,7 +380,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             placeholder={t("dashboard.selectMarket")}
             searchPlaceholder={locale === "bn" ? "মার্কেট..." : "Search..."}
             showSublabelInTrigger={false}
-            buttonClassName="h-10 text-xs font-bold rounded-xl bg-white border-2 border-black shadow-[2px_2px_0px_#000000]"
+            buttonClassName="h-10 text-xs font-bold rounded-xl bg-white dark:bg-[#262830] text-black dark:text-white border-2 border-black shadow-[2px_2px_0px_#000000]"
           />
         </div>
 
@@ -390,7 +390,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             value={selectedMonth}
             onChange={(e) => setSelectedMonth(Number(e.target.value))}
             aria-label={t("dashboard.selectMonth")}
-            className="w-full h-10 pl-5 pr-5 text-[11px] font-bold bg-white border-2 border-black rounded-xl text-black appearance-none focus:outline-none shadow-[2px_2px_0px_#000000] cursor-pointer"
+            className="w-full h-10 pl-5 pr-5 text-[11px] font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2px_2px_0px_#000000] cursor-pointer"
           >
             {months.map((m) => (
               <option key={m.value} value={m.value}>
@@ -398,8 +398,8 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               </option>
             ))}
           </select>
-          <Calendar className="w-3.5 h-3.5 text-black absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <ChevronDown className="w-3.5 h-3.5 text-black absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
+          <Calendar className="w-3.5 h-3.5 text-black dark:text-white absolute left-1.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <ChevronDown className="w-3.5 h-3.5 text-black dark:text-white absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
         </div>
 
         {/* Year selector */}
@@ -408,7 +408,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
             aria-label={t("dashboard.selectYear")}
-            className="w-full h-10 pl-2 pr-4 text-[11px] font-bold bg-white border-2 border-black rounded-xl text-black appearance-none focus:outline-none shadow-[2px_2px_0px_#000000] cursor-pointer"
+            className="w-full h-10 pl-2 pr-4 text-[11px] font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2px_2px_0px_#000000] cursor-pointer"
           >
             {years.map((y) => (
               <option key={y} value={y}>
@@ -416,7 +416,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               </option>
             ))}
           </select>
-          <ChevronDown className="w-3.5 h-3.5 text-black absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
+          <ChevronDown className="w-3.5 h-3.5 text-black dark:text-white absolute right-1 top-1/2 -translate-y-1/2 pointer-events-none stroke-[2.5]" />
         </div>
       </div>
     </header>

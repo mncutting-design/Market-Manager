@@ -422,41 +422,41 @@ export function QuickCollectModal() {
 
         {/* Invoice Summary Card */}
         {isLoadingData ? (
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/60 flex items-center justify-center gap-2.5 py-6 text-teal-600 dark:text-teal-400 font-semibold text-xs">
-            <div className="w-4 h-4 border-2 border-teal-500 border-t-transparent rounded-full animate-spin" />
+          <div className="p-4 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black flex items-center justify-center gap-2.5 py-6 text-black dark:text-white font-bold text-xs shadow-[2px_2px_0px_#000000]">
+            <div className="w-4 h-4 border-2 border-black dark:border-white border-t-transparent rounded-full animate-spin" />
             <span>{locale === "bn" ? "ভাড়া ও বিলের তথ্য নির্ভুলভাবে লোড হচ্ছে..." : "Loading rent and bill data accurately..."}</span>
           </div>
         ) : activeBill ? (
-          <div className="p-3.5 rounded-xl bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800 text-xs md:text-sm space-y-1.5 shadow-xs">
+          <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-xs md:text-sm space-y-1.5 shadow-[2px_2px_0px_#000000]">
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">{t("billing.billDetails")}:</span>
-              <span className="font-semibold text-slate-800 dark:text-slate-200">
+              <span className="text-gray-600 dark:text-gray-400 font-bold">{t("billing.billDetails")}:</span>
+              <span className="font-black text-black dark:text-white">
                 {locale === "bn" ? toBanglaDigits(activeBill.month) : activeBill.month}/
                 {locale === "bn" ? toBanglaDigits(activeBill.year) : activeBill.year}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">{t("billing.totalBill")}:</span>
-              <span className="font-semibold">{formatCurrency(activeBill.totalAmount, locale)}</span>
+              <span className="text-gray-600 dark:text-gray-400 font-bold">{t("billing.totalBill")}:</span>
+              <span className="font-black text-black dark:text-white">{formatCurrency(activeBill.totalAmount, locale)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-600 dark:text-slate-400">{t("billing.paidAmount")}:</span>
-              <span className="font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="text-gray-600 dark:text-gray-400 font-bold">{t("billing.paidAmount")}:</span>
+              <span className="font-black text-[#00BA88]">
                 {formatCurrency(activeBill.paidAmount, locale)}
               </span>
             </div>
-            <div className="flex justify-between pt-1 border-t border-teal-200/60 dark:border-teal-800 font-bold text-sm">
-              <span className="text-red-700 dark:text-red-400">{t("collections.totalDue")}:</span>
-              <span className="text-red-700 dark:text-red-400">
+            <div className="flex justify-between pt-1 border-t-2 border-black/10 dark:border-white/10 font-black text-sm">
+              <span className="text-[#FF4B55]">{t("collections.totalDue")}:</span>
+              <span className="text-[#FF4B55]">
                 {formatCurrency(activeBill.dueAmount, locale)}
               </span>
             </div>
           </div>
         ) : (
-          <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 text-xs flex items-center justify-between border border-amber-200 dark:border-amber-900/60">
-            <span>{locale === "bn" ? "এই দোকানের কোনো অপরিশোধিত বকেয়া ইনভয়েস নেই।" : "No pending due invoice for this shop."}</span>
+          <div className="p-3.5 rounded-xl bg-[#FFEBEF] dark:bg-[#2A1417] text-black dark:text-white text-xs flex items-center justify-between border-2 border-black shadow-[2px_2px_0px_#000000]">
+            <span className="font-bold">{locale === "bn" ? "এই দোকানের কোনো অপরিশোধিত বকেয়া ইনভয়েস নেই।" : "No pending due invoice for this shop."}</span>
             {selectedShopId && (
-              <span className="font-bold text-[11px] text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+              <span className="font-black text-[11px] bg-[#00BA88] text-white px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000000]">
                 {locale === "bn" ? "পরিশোধিত" : "Settled"}
               </span>
             )}
@@ -466,7 +466,7 @@ export function QuickCollectModal() {
         {/* Payment Amount & Received by Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
               {t("collections.paymentAmount")} (৳ BDT) *
             </label>
             <NumberInput
@@ -474,22 +474,22 @@ export function QuickCollectModal() {
               onChange={(val) => setAmountBDT(val)}
               prefix="৳"
               placeholder="0"
-              className="text-lg font-bold text-teal-700 dark:text-teal-400"
+              className="text-lg font-black text-black dark:text-white"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center justify-between">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5 flex items-center justify-between">
               <span>{locale === "bn" ? "আদায়কারী (Received by) *" : "Received by *"}</span>
               {isCollectorOnly && (
-                <span className="text-[10px] text-amber-600 font-normal lowercase">(only self)</span>
+                <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold lowercase">(only self)</span>
               )}
             </label>
             <Select
               value={receivedById}
               onChange={(e) => setReceivedById(e.target.value)}
               disabled={isCollectorOnly}
-              className="font-medium text-xs"
+              className="font-bold text-xs"
             >
               {staffList.length > 0 ? (
                 staffList.map((s) => (
@@ -508,7 +508,7 @@ export function QuickCollectModal() {
 
         {/* Payment Channel Selector */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
             {locale === "bn" ? "পেমেন্ট মাধ্যম (Payment Channel)" : "Payment Channel"}
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -523,10 +523,10 @@ export function QuickCollectModal() {
                 key={m.id}
                 type="button"
                 onClick={() => setPaymentMethod(m.id)}
-                className={`py-2 px-2.5 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center ${
+                className={`py-2 px-2.5 rounded-xl text-xs font-black border-2 border-black transition-all cursor-pointer text-center ${
                   paymentMethod === m.id
-                    ? "bg-teal-600 text-white border-teal-600 shadow-xs"
-                    : "bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100"
+                    ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
+                    : "bg-white dark:bg-[#262830] text-black dark:text-white hover:bg-[#FED734]/30 dark:hover:bg-[#2D2F39] shadow-[1px_1px_0px_#000000]"
                 }`}
               >
                 {locale === "bn" ? m.label_bn : m.label_en}

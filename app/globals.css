@@ -72,83 +72,453 @@ body {
   overflow-x: hidden;
 }
 
-/* Header fix: Dark, solid, premium, no washed out ash */
-.glass-header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+/* ========================================================
+   NEO-BRUTALIST DUAL-THEME ENGINE (LIGHT & DARK/NIGHT MOOD)
+   ======================================================== */
+
+/* --- 1. DARK / NIGHT MODE BASE CANVAS & BODY --- */
+html.dark,
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
 }
 
-.dark .glass-header,
-html.dark .glass-header,
-[data-theme="dark"] .glass-header {
-  background: #101726 !important;
-  background-color: #101726 !important;
-  border-bottom: 1px solid #2d3b52 !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35) !important;
+html.dark body,
+.dark body,
+[data-theme="dark"] body {
+  background-color: #121214 !important;
+  color: #FFFFFF !important;
 }
 
-/* REPLACING ALL ASH / FADED GRAY TEXT WITH CRISP HIGH-CONTRAST PURE WHITE IN DARK MODE */
-.dark .text-slate-400,
-.dark .text-slate-500,
-.dark .text-slate-600,
-.dark .text-gray-400,
-.dark .text-gray-500,
-.dark .text-zinc-400,
-.dark .text-zinc-500,
-.dark .text-neutral-400,
-.dark .text-neutral-500,
-.dark .text-muted-foreground {
-  color: #ffffff !important;
+/* Page root container */
+.dark .bg-canvas,
+.dark .bg-\[\#F4F1EA\],
+.dark [class~="bg-[#F4F1EA]"],
+html.dark [class~="bg-[#F4F1EA]"] {
+  background-color: #121214 !important;
+  color: #FFFFFF !important;
 }
 
-.dark .text-slate-300,
-.dark .text-slate-200,
-.dark .text-slate-100 {
-  color: #ffffff !important;
-}
-
-.dark .text-slate-700,
-.dark .text-slate-800,
-.dark .text-slate-900 {
-  color: #ffffff !important;
-}
-
-/* Dark mode cards, backgrounds, and borders */
-.dark .bg-white {
-  background-color: #182234 !important;
-}
-
+/* --- 2. CARD, HEADER & MODAL SURFACES IN DARK MODE --- */
+.dark .bg-white,
+.dark [class~="bg-white"],
+html.dark .bg-white,
+.dark .bg-surface,
+.dark [role="dialog"],
+.dark aside.bg-white,
+.dark header.bg-white,
 .dark .bg-slate-900,
 .dark .bg-slate-950 {
-  background-color: #182234 !important;
+  background-color: #1E1F24 !important;
+  color: #FFFFFF !important;
 }
 
-.dark .bg-slate-50 {
-  background-color: #101726 !important;
-}
-
-.dark .border-slate-800,
-.dark .border-slate-700,
-.dark .border-slate-200 {
-  border-color: #2d3b52 !important;
+/* --- 3. SUBSURFACE / WELLS / INPUTS IN DARK MODE --- */
+.dark .bg-subsurface,
+.dark .bg-\[\#FBF9F5\],
+.dark [class~="bg-[#FBF9F5]"],
+html.dark [class~="bg-[#FBF9F5]"],
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: #262830 !important;
+  color: #FFFFFF !important;
 }
 
 .dark input,
 .dark select,
 .dark textarea {
-  background-color: #1c283c !important;
-  color: #ffffff !important;
-  border-color: #3b4d6a !important;
+  background-color: #262830 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus {
+  background-color: #1E1F24 !important;
+  color: #FFFFFF !important;
+  box-shadow: 3px 3px 0px #000000 !important;
 }
 
 .dark select option {
-  background-color: #182234 !important;
-  color: #ffffff !important;
+  background-color: #1E1F24 !important;
+  color: #FFFFFF !important;
 }
 
-.dark input::placeholder {
-  color: #94a3b8 !important;
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* --- 4. STRICT CONTRAST IN ACCENT BUTTONS & PILLS (EXACT MATCH ONLY) --- */
+
+/* A. Industrial Safety Yellow: ALWAYS PITCH BLACK TEXT #000000 IN BOTH LIGHT & DARK MODE! */
+.bg-\[\#FED734\],
+[class~="bg-[#FED734]"],
+.bg-brutal-yellow,
+[class~="bg-brutal-yellow"],
+.dark .bg-\[\#FED734\],
+.dark [class~="bg-[#FED734]"],
+.dark .bg-brutal-yellow,
+.dark [class~="bg-brutal-yellow"] {
+  background-color: #FED734 !important;
+  color: #000000 !important;
+}
+
+.bg-\[\#FED734\] *,
+[class~="bg-[#FED734]"] *,
+.bg-brutal-yellow *,
+[class~="bg-brutal-yellow"] *,
+.dark .bg-\[\#FED734\] *,
+.dark [class~="bg-[#FED734]"] *,
+.dark .bg-brutal-yellow *,
+.dark [class~="bg-brutal-yellow"] * {
+  color: #000000 !important;
+}
+
+.bg-\[\#FED734\] svg,
+[class~="bg-[#FED734]"] svg,
+.bg-brutal-yellow svg,
+[class~="bg-brutal-yellow"] svg,
+.dark .bg-\[\#FED734\] svg,
+.dark [class~="bg-[#FED734]"] svg,
+.dark .bg-brutal-yellow svg,
+.dark [class~="bg-brutal-yellow"] svg {
+  stroke: #000000 !important;
+}
+
+/* B. Destructive Coral Red: ALWAYS PURE WHITE TEXT #FFFFFF IN BOTH LIGHT & DARK MODE! */
+.bg-\[\#FF4B55\],
+[class~="bg-[#FF4B55]"],
+.bg-brutal-red,
+[class~="bg-brutal-red"],
+.dark .bg-\[\#FF4B55\],
+.dark [class~="bg-[#FF4B55]"],
+.dark .bg-brutal-red,
+.dark [class~="bg-brutal-red"] {
+  background-color: #FF4B55 !important;
+  color: #FFFFFF !important;
+}
+
+.bg-\[\#FF4B55\] *,
+[class~="bg-[#FF4B55]"] *,
+.bg-brutal-red *,
+[class~="bg-brutal-red"] *,
+.dark .bg-\[\#FF4B55\] *,
+.dark [class~="bg-[#FF4B55]"] *,
+.dark .bg-brutal-red *,
+.dark [class~="bg-brutal-red"] * {
+  color: #FFFFFF !important;
+}
+
+.bg-\[\#FF4B55\] svg,
+[class~="bg-[#FF4B55]"] svg,
+.bg-brutal-red svg,
+[class~="bg-brutal-red"] svg,
+.dark .bg-\[\#FF4B55\] svg,
+.dark [class~="bg-[#FF4B55]"] svg,
+.dark .bg-brutal-red svg,
+.dark [class~="bg-brutal-red"] svg {
+  stroke: #FFFFFF !important;
+}
+
+/* C. Mint Emerald Paid */
+.bg-\[\#00BA88\],
+[class~="bg-[#00BA88]"],
+.dark .bg-\[\#00BA88\],
+.dark [class~="bg-[#00BA88]"] {
+  background-color: #00BA88 !important;
+}
+
+/* White text if explicitly requested, otherwise high contrast */
+.bg-\[\#00BA88\].text-white,
+[class~="bg-[#00BA88]"][class~="text-white"],
+.dark .bg-\[\#00BA88\].text-white,
+.dark [class~="bg-[#00BA88]"][class~="text-white"] {
+  color: #FFFFFF !important;
+}
+
+.bg-\[\#00BA88\].text-white svg,
+[class~="bg-[#00BA88]"][class~="text-white"] svg,
+.dark .bg-\[\#00BA88\].text-white svg,
+.dark [class~="bg-[#00BA88]"][class~="text-white"] svg {
+  stroke: #FFFFFF !important;
+}
+
+.bg-\[\#00BA88\].text-black,
+[class~="bg-[#00BA88]"][class~="text-black"],
+.dark .bg-\[\#00BA88\].text-black,
+.dark [class~="bg-[#00BA88]"][class~="text-black"] {
+  color: #000000 !important;
+}
+
+.bg-\[\#00BA88\].text-black svg,
+[class~="bg-[#00BA88]"][class~="text-black"] svg,
+.dark .bg-\[\#00BA88\].text-black svg,
+.dark [class~="bg-[#00BA88]"][class~="text-black"] svg {
+  stroke: #000000 !important;
+}
+
+/* --- 5. TEXT COLORING IN DARK MODE (WHEN OUTSIDE YELLOW ACCENTS) --- */
+.dark h1:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark h2:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark h3:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark h4:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark h5:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark h6:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark p.text-black:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark span.text-black:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark div.text-black:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark button.text-black:not([class~="bg-[#FED734]"]):not([class~="bg-[#FED734]"] *),
+.dark a.text-black:not([class~="bg-[#FED734]"]):not([class~="bg-[#FED734]"] *),
+.dark label.text-black:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+.dark .text-black:not([class~="bg-[#FED734]"]):not([class~="bg-[#FED734]"] *),
+.dark .text-slate-950:not([class~="bg-[#FED734]"] *),
+.dark .text-slate-900:not([class~="bg-[#FED734]"] *),
+.dark .text-slate-800:not([class~="bg-[#FED734]"] *),
+.dark .text-gray-900:not([class~="bg-[#FED734]"] *),
+.dark .text-gray-800:not([class~="bg-[#FED734]"] *) {
+  color: #FFFFFF !important;
+}
+
+/* Secondary & Muted text in Dark Mode */
+.dark .text-gray-700:not([class~="bg-[#FED734]"] *),
+.dark .text-gray-600:not([class~="bg-[#FED734]"] *),
+.dark .text-gray-500:not([class~="bg-[#FED734]"] *),
+.dark .text-slate-700:not([class~="bg-[#FED734]"] *),
+.dark .text-slate-600:not([class~="bg-[#FED734]"] *),
+.dark .text-slate-500:not([class~="bg-[#FED734]"] *),
+.dark .text-slate-400:not([class~="bg-[#FED734]"] *),
+.dark .text-muted-foreground:not([class~="bg-[#FED734]"] *) {
+  color: #A1A1AA !important;
+}
+
+/* Lucide SVGs in dark mode default to currentColor */
+.dark svg:not([class~="bg-[#FED734]"] svg):not([class~="bg-[#FED734]"] * svg) {
+  stroke: currentColor;
+}
+
+/* Status colors remain vibrant in both modes */
+.dark .text-\[\#00BA88\] { color: #00BA88 !important; }
+.dark .text-\[\#FF4B55\] { color: #FF4B55 !important; }
+.dark .text-\[\#F59E0B\] { color: #F59E0B !important; }
+.dark .text-\[\#00BCD4\] { color: #00BCD4 !important; }
+
+/* --- 6. ALL HOVER STATES IN BOTH LIGHT AND DARK/NIGHT MODE --- */
+
+/* A. Hovering into Safety Yellow (#FED734): ALWAYS PITCH BLACK TEXT #000000 ON HOVER! */
+.hover\:bg-\[\#FED734\]:hover,
+[class~="hover:bg-[#FED734]"]:hover,
+.hover\:bg-\[\#ffe169\]:hover,
+[class~="hover:bg-[#ffe169]"]:hover,
+.hover\:bg-\[\#edd028\]:hover,
+[class~="hover:bg-[#edd028]"]:hover,
+.dark .hover\:bg-\[\#FED734\]:hover,
+.dark [class~="hover:bg-[#FED734]"]:hover,
+.dark .hover\:bg-\[\#ffe169\]:hover,
+.dark [class~="hover:bg-[#ffe169]"]:hover,
+.dark .hover\:bg-\[\#edd028\]:hover,
+.dark [class~="hover:bg-[#edd028]"]:hover {
+  background-color: #FED734 !important;
+  color: #000000 !important;
+}
+
+.hover\:bg-\[\#FED734\]:hover *,
+[class~="hover:bg-[#FED734]"]:hover *,
+.hover\:bg-\[\#ffe169\]:hover *,
+[class~="hover:bg-[#ffe169]"]:hover *,
+.hover\:bg-\[\#edd028\]:hover *,
+[class~="hover:bg-[#edd028]"]:hover *,
+.dark .hover\:bg-\[\#FED734\]:hover *,
+.dark [class~="hover:bg-[#FED734]"]:hover *,
+.dark .hover\:bg-\[\#ffe169\]:hover *,
+.dark [class~="hover:bg-[#ffe169]"]:hover *,
+.dark .hover\:bg-\[\#edd028\]:hover *,
+.dark [class~="hover:bg-[#edd028]"]:hover * {
+  color: #000000 !important;
+}
+
+.hover\:bg-\[\#FED734\]:hover svg,
+[class~="hover:bg-[#FED734]"]:hover svg,
+.dark .hover\:bg-\[\#FED734\]:hover svg,
+.dark [class~="hover:bg-[#FED734]"]:hover svg {
+  stroke: #000000 !important;
+}
+
+/* B. Hovering into Destructive Coral Red (#FF4B55): ALWAYS PURE WHITE TEXT #FFFFFF! */
+.hover\:bg-\[\#FF4B55\]:hover,
+[class~="hover:bg-[#FF4B55]"]:hover,
+.dark .hover\:bg-\[\#FF4B55\]:hover,
+.dark [class~="hover:bg-[#FF4B55]"]:hover {
+  background-color: #FF4B55 !important;
+  color: #FFFFFF !important;
+}
+
+.hover\:bg-\[\#FF4B55\]:hover *,
+[class~="hover:bg-[#FF4B55]"]:hover *,
+.dark .hover\:bg-\[\#FF4B55\]:hover *,
+.dark [class~="hover:bg-[#FF4B55]"]:hover * {
+  color: #FFFFFF !important;
+}
+
+.hover\:bg-\[\#FF4B55\]:hover svg,
+[class~="hover:bg-[#FF4B55]"]:hover svg,
+.dark .hover\:bg-\[\#FF4B55\]:hover svg,
+.dark [class~="hover:bg-[#FF4B55]"]:hover svg {
+  stroke: #FFFFFF !important;
+}
+
+/* C. Hovering into 30% Yellow Tint: Subtle Glow */
+[class~="hover:bg-[#FED734]/30"]:hover,
+.hover\:bg-\[\#FED734\]\/30:hover {
+  background-color: rgba(254, 215, 52, 0.3) !important;
+}
+
+.dark [class~="hover:bg-[#FED734]/30"]:hover,
+.dark .hover\:bg-\[\#FED734\]\/30:hover {
+  background-color: rgba(254, 215, 52, 0.2) !important;
+  color: #FED734 !important;
+}
+
+.dark [class~="hover:bg-[#FED734]/30"]:hover *,
+.dark .hover\:bg-\[\#FED734\]\/30:hover * {
+  color: #FED734 !important;
+}
+
+/* D. Hovering on White / Gray / Slate in Dark Mode: Sleek Dark Slate #2D2F39 with WHITE TEXT */
+.dark .hover\:bg-white:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-white"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-white\/80:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-white/80"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-white\/70:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-white/70"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-gray-50:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-gray-50"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-gray-100:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-gray-100"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-slate-50:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-slate-50"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-slate-100:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-slate-100"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark .hover\:bg-\[\#FBF9F5\]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]),
+.dark [class~="hover:bg-[#FBF9F5]"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="hover:bg-[#FF4B55]"]) {
+  background-color: #2D2F39 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .hover\:bg-white:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark [class~="hover:bg-white"]:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark .hover\:bg-white\/80:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark [class~="hover:bg-white/80"]:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark .hover\:bg-gray-50:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark [class~="hover:bg-gray-50"]:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark .hover\:bg-gray-100:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark [class~="hover:bg-gray-100"]:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark .hover\:bg-slate-100:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark [class~="hover:bg-slate-100"]:hover *:not([class~="hover:bg-[#FED734]"] *),
+.dark .hover\:bg-\[\#FBF9F5\]:hover *:not([class~="hover:bg-[#FED734]"] *) {
+  color: #FFFFFF !important;
+}
+
+.dark .hover\:bg-white:hover svg,
+.dark [class~="hover:bg-white"]:hover svg,
+.dark .hover\:bg-gray-100:hover svg,
+.dark [class~="hover:bg-gray-100"]:hover svg,
+.dark .hover\:bg-slate-100:hover svg,
+.dark [class~="hover:bg-slate-100"]:hover svg,
+.dark .hover\:bg-\[\#FBF9F5\]:hover svg {
+  stroke: #FFFFFF !important;
+}
+
+/* E. In dark mode, hover:text-black turns to white UNLESS hovering on yellow */
+.dark .hover\:text-black:hover:not([class~="hover:bg-[#FED734]"]):not([class~="bg-[#FED734]"]),
+.dark [class~="hover:text-black"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="bg-[#FED734]"]),
+.dark [class~="group-hover:text-black"]:hover:not([class~="hover:bg-[#FED734]"]):not([class~="bg-[#FED734]"]),
+.dark .group:hover .group-hover\:text-black:not([class~="hover:bg-[#FED734]"]):not([class~="bg-[#FED734]"]) {
+  color: #FFFFFF !important;
+}
+
+.dark .group:hover .group-hover\:text-black svg {
+  stroke: #FFFFFF !important;
+}
+
+/* F. Sidebar nav inactive button hover in dark mode */
+.dark aside button:not([class~="bg-[#FED734]"]):hover {
+  background-color: #2D2F39 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
+}
+
+.dark aside button:not([class~="bg-[#FED734]"]):hover * {
+  color: #FFFFFF !important;
+}
+
+.dark aside button:not([class~="bg-[#FED734]"]):hover svg {
+  stroke: #FFFFFF !important;
+}
+
+/* G. Table row hover in dark mode */
+.dark .hover\:bg-\[\#FFF9E6\]:hover,
+.dark [class~="hover:bg-[#FFF9E6]"]:hover,
+.dark tr:hover,
+.dark tr:hover td {
+  background-color: rgba(254, 215, 52, 0.12) !important;
+  color: #FFFFFF !important;
+}
+
+/* H. Dropdown highlight in dark mode */
+.dark .bg-\[\#FFF9E6\],
+.dark [class~="bg-[#FFF9E6]"] {
+  background-color: #2D2F39 !important;
+  color: #FFFFFF !important;
+}
+
+/* --- 7. ALERT BOXES IN DARK MODE --- */
+.dark .bg-\[\#FFEBEF\],
+.dark [class~="bg-[#FFEBEF]"],
+.dark .bg-red-50 {
+  background-color: #2A1417 !important;
+  border-color: #FF4B55 !important;
+  color: #FFFFFF !important;
+}
+
+.dark .bg-\[\#FFEBEF\] p,
+.dark [class~="bg-[#FFEBEF]"] p {
+  color: #E2E8F0 !important;
+}
+
+.dark .bg-\[\#FFEBEF\] [class~="text-[#FF4B55]"],
+.dark [class~="bg-[#FFEBEF]"] [class~="text-[#FF4B55]"],
+.dark [class*="text-[#FF4B55]"] {
+  color: #FF6B75 !important;
+}
+
+.dark .hover\:bg-\[\#FFEBEF\]:hover,
+.dark [class~="hover:bg-[#FFEBEF]"]:hover {
+  background-color: #36161B !important;
+  color: #FF6B75 !important;
+}
+
+/* --- 8. INNER BORDERS & DIVIDERS IN DARK MODE --- */
+.dark .border-black\/10,
+.dark [class~="border-black/10"],
+.dark .border-black\/20,
+.dark [class~="border-black/20"],
+.dark .divide-black\/10,
+.dark [class~="divide-black/10"],
+.dark .divide-black\/20,
+.dark [class~="divide-black/20"] {
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* --- 9. POPOVERS & DROPDOWNS IN DARK MODE --- */
+.dark [role="dialog"],
+.dark [role="menu"],
+.dark [role="listbox"],
+.dark [data-radix-popper-content-wrapper] > div {
+  background-color: #1E1F24 !important;
+  color: #FFFFFF !important;
+  border-color: #000000 !important;
 }
 
 /* Bangla specific typography rules */

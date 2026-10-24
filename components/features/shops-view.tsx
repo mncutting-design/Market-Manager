@@ -498,11 +498,11 @@ export function ShopsView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black flex items-center gap-2">
-            <Store className="w-6 h-6 text-black stroke-[2.5]" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white flex items-center gap-2">
+            <Store className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
             <span>{t("shops.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-gray-700 font-bold mt-1">
+          <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-bold mt-1">
             {t("shops.subtitle")}
           </p>
         </div>
@@ -566,7 +566,7 @@ export function ShopsView() {
           </div>
 
           {/* Status filter tabs - Scrollable on mobile */}
-          <div className="flex gap-1.5 bg-white p-1 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] shrink-0 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1.5 bg-white dark:bg-[#1E1F24] p-1 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] shrink-0 overflow-x-auto no-scrollbar">
             {["ALL", "OCCUPIED", "VACANT"].map((status) => (
               <button
                 key={status}
@@ -574,7 +574,7 @@ export function ShopsView() {
                 className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                   statusFilter === status
                     ? "bg-[#FED734] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
-                    : "text-gray-700 hover:text-black hover:bg-gray-100"
+                    : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#2D2F39]"
                 }`}
               >
                 {status === "ALL"
@@ -589,8 +589,8 @@ export function ShopsView() {
 
         {/* Market-wise Block / Serialised Line Pills (এ, বি, সি, ডি, ই, এফ / A, B, C, D, E, F) */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          <span className="text-[11px] font-black text-black uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5 text-black stroke-[2.5]" />
+          <span className="text-[11px] font-black text-black dark:text-white uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-black dark:text-white stroke-[2.5]" />
             <span>{locale === "bn" ? "সিরিয়াল / ব্লক:" : "Serial / Block:"}</span>
           </span>
           <button
@@ -598,7 +598,7 @@ export function ShopsView() {
             className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border-2 border-black ${
               selectedBlock === "ALL"
                 ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
-                : "bg-white text-black shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/30"
+                : "bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/30 dark:hover:bg-[#FED734]/20"
             }`}
           >
             {locale === "bn" ? "সব সিরিয়াল" : "All Blocks"} ({shops.length})
@@ -610,12 +610,12 @@ export function ShopsView() {
               className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border-2 border-black flex items-center gap-1.5 ${
                 selectedBlock === b.key
                   ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
-                  : "bg-white text-black shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/30"
+                  : "bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/30 dark:hover:bg-[#FED734]/20"
               }`}
             >
               <span>{b.label}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-md border border-black font-black ${
-                selectedBlock === b.key ? "bg-black text-[#FED734]" : "bg-[#FBF9F5] text-black"
+                selectedBlock === b.key ? "bg-black text-[#FED734]" : "bg-[#FBF9F5] dark:bg-[#262830] text-black dark:text-white"
               }`}>
                 {locale === "bn" ? toBanglaDigits(b.count) : b.count}
               </span>
@@ -628,9 +628,9 @@ export function ShopsView() {
       {isLoading ? (
         <TableSkeleton rows={6} />
       ) : sortedShops.length === 0 ? (
-        <Card className="p-12 text-center bg-white border-2 border-black shadow-[4px_4px_0px_#000000]">
-          <Store className="w-12 h-12 text-black mx-auto mb-3 stroke-[2]" />
-          <p className="text-base font-black text-black">
+        <Card className="p-12 text-center bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000]">
+          <Store className="w-12 h-12 text-black dark:text-white mx-auto mb-3 stroke-[2]" />
+          <p className="text-base font-black text-black dark:text-white">
             {t("shops.noShopsFound")}
           </p>
           {selectedBlock !== "ALL" && (
@@ -640,7 +640,7 @@ export function ShopsView() {
               </Button>
             </div>
           )}
-          <p className="text-xs text-gray-600 font-bold mt-2">{t("markets.createFirstMarket")}</p>
+          <p className="text-xs text-gray-600 dark:text-gray-400 font-bold mt-2">{t("markets.createFirstMarket")}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -657,19 +657,19 @@ export function ShopsView() {
                   setIsAssignTenantOpen(true);
                 }
               }}
-              className="p-4 rounded-2xl bg-white border-2 border-black shadow-[4px_4px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[6px_6px_0px_#000000] transition-all cursor-pointer flex flex-col justify-between group"
+              className="p-4 rounded-2xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[6px_6px_0px_#000000] transition-all cursor-pointer flex flex-col justify-between group"
             >
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg font-black text-black group-hover:text-black flex items-center gap-2 truncate">
+                      <h3 className="text-base sm:text-lg font-black text-black dark:text-white group-hover:text-black dark:group-hover:text-white flex items-center gap-2 truncate">
                         <span className="truncate">{shop.shopNumber}</span>
-                        <span className="text-xs font-bold text-gray-600 shrink-0">
+                        <span className="text-xs font-bold text-gray-600 dark:text-gray-400 shrink-0">
                           ({formatFloorName(shop.floor, locale)})
                         </span>
                       </h3>
-                      <p className="text-xs text-gray-500 font-bold truncate" title={shop.marketName}>{shop.marketName}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-bold truncate" title={shop.marketName}>{shop.marketName}</p>
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0">
                       <StatusBadge status={shop.status} />
@@ -681,7 +681,7 @@ export function ShopsView() {
                               e.stopPropagation();
                               openEditShop(shop);
                             }}
-                            className="p-1.5 rounded-lg border-2 border-black bg-white hover:bg-[#FED734] shadow-[1.5px_1.5px_0px_#000000] text-black transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+                            className="p-1.5 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] text-black dark:text-white hover:text-black dark:hover:text-black shadow-[1.5px_1.5px_0px_#000000] transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
                             title={locale === "bn" ? "দোকান সম্পাদনা" : "Edit Shop"}
                           >
                             <Edit className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -692,7 +692,7 @@ export function ShopsView() {
                               e.stopPropagation();
                               setDeletingShop(shop);
                             }}
-                            className="p-1.5 rounded-lg border-2 border-black bg-white hover:bg-[#FF4B55] hover:text-white shadow-[1.5px_1.5px_0px_#000000] text-black transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+                            className="p-1.5 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FF4B55] hover:text-white dark:hover:bg-[#FF4B55] dark:hover:text-white shadow-[1.5px_1.5px_0px_#000000] text-black dark:text-white transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
                             title={locale === "bn" ? "দোকান মুছুন" : "Delete Shop"}
                           >
                             <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -703,7 +703,7 @@ export function ShopsView() {
                   </div>
 
                   {/* Tenant Info or Vacant notice */}
-                  <div className="my-2.5 p-2.5 rounded-xl bg-[#FBF9F5] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] text-xs">
+                  <div className="my-2.5 p-2.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] text-xs">
                     {shop.tenant ? (
                       <div className="space-y-1.5">
                         <div
@@ -714,18 +714,18 @@ export function ShopsView() {
                           }}
                           title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল দেখুন" : "View Tenant Profile"}
                         >
-                          <span className="text-gray-600 font-bold shrink-0">{t("shops.currentTenant")}:</span>
-                          <span className="font-black text-black group-hover/t:underline flex items-center gap-1 min-w-0 truncate">
-                            <User className="w-3.5 h-3.5 text-black shrink-0 stroke-[2.5]" />
+                          <span className="text-gray-600 dark:text-gray-400 font-bold shrink-0">{t("shops.currentTenant")}:</span>
+                          <span className="font-black text-black dark:text-white group-hover/t:underline flex items-center gap-1 min-w-0 truncate">
+                            <User className="w-3.5 h-3.5 text-black dark:text-white shrink-0 stroke-[2.5]" />
                             <span className="truncate">{shop.tenant.name}</span>
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-gray-600 font-bold shrink-0">{t("tenants.phone")}:</span>
+                          <span className="text-gray-600 dark:text-gray-400 font-bold shrink-0">{t("tenants.phone")}:</span>
                           <a
                             href={`tel:${shop.tenant.phone}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="font-mono text-black font-bold hover:underline flex items-center gap-1 shrink-0"
+                            className="font-mono text-black dark:text-white font-bold hover:underline flex items-center gap-1 shrink-0"
                           >
                             <Phone className="w-3 h-3 shrink-0 stroke-[2.5]" />
                             <span>{shop.tenant.phone}</span>
@@ -733,7 +733,7 @@ export function ShopsView() {
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-2 text-gray-500 font-bold">
+                      <div className="text-center py-2 text-gray-500 dark:text-gray-400 font-bold">
                         <span>{t("shops.noTenant")}</span>
                       </div>
                     )}
@@ -741,9 +741,9 @@ export function ShopsView() {
                 </div>
 
                 {/* Financial Rates */}
-                <div className="flex items-center justify-between text-xs font-bold py-1 mt-auto border-t-2 border-black/10">
-                  <span className="text-gray-600">{t("shops.rentAmount")}:</span>
-                  <span className="font-black text-base text-black">
+                <div className="flex items-center justify-between text-xs font-bold py-1 mt-auto border-t-2 border-black/10 dark:border-white/10">
+                  <span className="text-gray-600 dark:text-gray-400">{t("shops.rentAmount")}:</span>
+                  <span className="font-black text-base text-black dark:text-white">
                     {formatCurrency(shop.currentRent, locale)}
                   </span>
                 </div>
