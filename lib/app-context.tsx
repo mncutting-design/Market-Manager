@@ -48,6 +48,13 @@ interface AppContextType {
   isChangePasswordOpen: boolean;
   setIsChangePasswordOpen: (open: boolean) => void;
   openChangePassword: () => void;
+  // Sidebar state
+  isSidebarOpen: boolean;
+  setIsSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
+  isSidebarMini: boolean;
+  setIsSidebarMini: (mini: boolean) => void;
+  toggleSidebarMini: () => void;
   // User Session & Approvals
   currentUser: { id: string; name: string; email: string; role: string; locale: string } | null;
   isAdmin: boolean;
@@ -88,6 +95,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isGenerateBillsOpen, setIsGenerateBillsOpen] = useState(false);
   const [activeReceipt, setActiveReceipt] = useState<any | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+
+  // Sidebar Open & Mini-Rail States
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
+  const [isSidebarMini, setIsSidebarMini] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedOpen = localStorage.getItem("rentpro_sidebar_open");
+      if (savedOpen !== null) {
+        setIsSidebarOpen(savedOpen === "true");
+      }
+      const savedMini = localStorage.getItem("rentpro_sidebar_mini");
+      if (savedMini !== null) {
+        setIsSidebarMini(savedMini === "true");
+      }
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("rentpro_sidebar_open", String(next));
+      }
+      return next;
+    });
+  };
+
+  const toggleSidebarMini = () => {
+    setIsSidebarMini((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("rentpro_sidebar_mini", String(next));
+      }
+      return next;
+    });
+  };
+
+  // Global Ctrl+B / Cmd+B keyboard shortcut to toggle sidebar
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        const target = e.target as HTMLElement;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) {
+          return;
+        }
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const openChangePassword = () => {
     setIsChangePasswordOpen(true);
@@ -217,6 +277,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         isChangePasswordOpen,
         setIsChangePasswordOpen,
         openChangePassword,
+        isSidebarOpen,
+        setIsSidebarOpen,
+        toggleSidebar,
+        isSidebarMini,
+        setIsSidebarMini,
+        toggleSidebarMini,
         currentUser,
         isAdmin,
         pendingApprovalsCount,

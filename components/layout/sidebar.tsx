@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
 import {
@@ -15,44 +15,25 @@ import {
   Users,
   Settings,
   Database,
-  ChevronLeft,
-  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  PanelLeftClose,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toBanglaDigits } from "@/lib/format";
 
 export function Sidebar() {
   const { t, locale } = useTranslation();
-  const { activeTab, setActiveTab, currentUser, pendingApprovalsCount } = useApp();
-
-  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("sidebar_collapsed") === "true";
-    }
-    return false;
-  });
-
-  const toggleCollapse = () => {
-    setIsCollapsed((prev) => {
-      const next = !prev;
-      if (typeof window !== "undefined") {
-        localStorage.setItem("sidebar_collapsed", String(next));
-      }
-      return next;
-    });
-  };
-
-  // Keyboard shortcut Ctrl+B or Cmd+B to toggle sidebar on desktop
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
-        e.preventDefault();
-        toggleCollapse();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  const {
+    activeTab,
+    setActiveTab,
+    currentUser,
+    pendingApprovalsCount,
+    isSidebarOpen,
+    toggleSidebar,
+    isSidebarMini,
+    toggleSidebarMini,
+  } = useApp();
 
   const navSections = [
     {
@@ -91,7 +72,12 @@ export function Sidebar() {
           id: "users",
           labelKey: "nav.users",
           icon: Users,
-          badge: pendingApprovalsCount > 0 ? (locale === "bn" ? toBanglaDigits(pendingApprovalsCount) : pendingApprovalsCount) : undefined,
+          badge:
+            pendingApprovalsCount > 0
+              ? locale === "bn"
+                ? toBanglaDigits(pendingApprovalsCount)
+                : pendingApprovalsCount
+              : undefined,
           badgeColor: "bg-teal-500 text-slate-950 font-black",
         },
         { id: "backup", labelKey: "nav.backup", icon: Database },
@@ -104,56 +90,70 @@ export function Sidebar() {
     <aside
       className={cn(
         "hidden md:flex flex-col border-r border-slate-200/90 dark:border-[#1e293b] bg-white/95 dark:bg-[#0c1322]/95 backdrop-blur-xl transition-all duration-300 ease-in-out select-none shrink-0 shadow-xs",
-        "md:sticky md:top-[109px] min-[900px]:top-16 md:self-start md:z-30",
-        "md:h-[calc(100dvh-109px)] min-[900px]:h-[calc(100dvh-4rem)]",
-        isCollapsed ? "w-20" : "w-64"
+        "md:sticky md:top-14 md:self-start md:z-30",
+        "md:h-[calc(100dvh-3.5rem)]",
+        !isSidebarOpen
+          ? "w-0 opacity-0 overflow-hidden border-r-0 pointer-events-none p-0"
+          : isSidebarMini
+          ? "w-14"
+          : "w-60"
       )}
     >
-      {/* Top Header with Collapse Toggle */}
-      <div className="flex items-center justify-between px-3.5 py-3 border-b border-slate-100 dark:border-[#1e293b] shrink-0">
-        {!isCollapsed ? (
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
-            <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 dark:text-slate-400 truncate">
-              {locale === "bn" ? "মেনুবার" : "Navigation"}
-            </span>
-          </div>
+      {/* Top Header with Compact Controls */}
+      <div className="flex items-center justify-between px-2.5 py-1.5 border-b border-slate-100 dark:border-[#1e293b]/70 shrink-0 h-10">
+        {!isSidebarMini ? (
+          <>
+            <div className="flex items-center gap-1.5 px-1 min-w-0">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
+              <span className="text-[10px] font-black tracking-widest uppercase text-slate-400 dark:text-slate-400 truncate">
+                {locale === "bn" ? "মেনু" : "NAVIGATION"}
+              </span>
+            </div>
+            <div className="flex items-center gap-0.5">
+              {/* Mini rail button */}
+              <button
+                onClick={toggleSidebarMini}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182234] transition-all cursor-pointer"
+                title={locale === "bn" ? "সংকুচিত আইকন বার" : "Collapse to mini rail"}
+              >
+                <ChevronsLeft className="w-4 h-4" />
+              </button>
+              {/* Close completely */}
+              <button
+                onClick={toggleSidebar}
+                className="p-1 rounded-lg text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-all cursor-pointer"
+                title={locale === "bn" ? "মেনুবার বন্ধ করুন (Ctrl+B)" : "Close sidebar (Ctrl+B)"}
+              >
+                <PanelLeftClose className="w-4 h-4" />
+              </button>
+            </div>
+          </>
         ) : (
           <div className="w-full flex justify-center">
-            <span className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+            <button
+              onClick={toggleSidebarMini}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-teal-600 dark:hover:text-teal-300 hover:bg-slate-100 dark:hover:bg-[#182234] transition-all cursor-pointer"
+              title={locale === "bn" ? "মেনুবার বিস্তারিত করুন" : "Expand sidebar"}
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
           </div>
         )}
-
-        <button
-          onClick={toggleCollapse}
-          className={cn(
-            "p-1.5 rounded-lg text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182234] border border-transparent hover:border-slate-200 dark:hover:border-[#2d3b52] transition-all cursor-pointer flex items-center gap-1",
-            isCollapsed && "mx-auto"
-          )}
-          title={isCollapsed ? (locale === "bn" ? "মেনু খুলুন (Ctrl+B)" : "Expand sidebar (Ctrl+B)") : (locale === "bn" ? "মেনু সংকুচিত করুন (Ctrl+B)" : "Collapse sidebar (Ctrl+B)")}
-        >
-          {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          {!isCollapsed && (
-            <span className="text-[10px] font-mono opacity-50 px-1 py-0.5 rounded bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              Ctrl+B
-            </span>
-          )}
-        </button>
       </div>
 
       {/* Nav List with Sections */}
-      <nav className="flex-1 px-2.5 py-3 space-y-4 overflow-y-auto custom-scrollbar min-h-0">
+      <nav className="flex-1 px-2 py-2.5 space-y-3 overflow-y-auto custom-scrollbar min-h-0">
         {navSections.map((section, sIdx) => (
           <div key={section.id} className="space-y-1">
             {/* Section Header */}
-            {!isCollapsed ? (
-              <div className="px-3 pt-1 pb-1.5">
+            {!isSidebarMini ? (
+              <div className="px-2.5 pt-1 pb-1">
                 <p className="text-[10px] font-black tracking-wider uppercase text-slate-400 dark:text-slate-400">
                   {locale === "bn" ? section.titleBn : section.titleEn}
                 </p>
               </div>
             ) : sIdx > 0 ? (
-              <div className="my-2 mx-3 h-px bg-slate-200/70 dark:bg-[#1e293b]" />
+              <div className="my-2 mx-2 h-px bg-slate-200/70 dark:bg-[#1e293b]" />
             ) : null}
 
             {/* Section Items */}
@@ -168,9 +168,9 @@ export function Sidebar() {
                     onClick={() => setActiveTab(item.id)}
                     className={cn(
                       "w-full flex items-center rounded-xl text-xs sm:text-sm transition-all duration-150 cursor-pointer text-left relative group",
-                      isCollapsed
-                        ? "justify-center w-11 h-11 mx-auto"
-                        : "gap-3 px-3.5 py-2.5",
+                      isSidebarMini
+                        ? "justify-center w-10 h-10 mx-auto"
+                        : "gap-2.5 px-3 py-2",
                       isActive
                         ? "bg-gradient-to-r from-teal-500/15 via-teal-500/10 to-emerald-500/5 text-teal-800 dark:text-teal-200 font-bold border border-teal-300/80 dark:border-teal-500/40 shadow-xs before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:bg-teal-500 before:rounded-r-full before:shadow-[0_0_8px_rgba(20,184,166,0.8)]"
                         : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-[#182234]/80 font-medium hover:translate-x-0.5"
@@ -185,14 +185,14 @@ export function Sidebar() {
                       )}
                     />
 
-                    {!isCollapsed && (
+                    {!isSidebarMini && (
                       <span className="truncate flex-1 tracking-tight">
                         {t(item.labelKey)}
                       </span>
                     )}
 
                     {/* Badge if present and expanded */}
-                    {!isCollapsed && (item as any).badge && (
+                    {!isSidebarMini && (item as any).badge && (
                       <span
                         className={cn(
                           "px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 shadow-2xs",
@@ -203,8 +203,8 @@ export function Sidebar() {
                       </span>
                     )}
 
-                    {/* Floating Tooltip in Collapsed Mode */}
-                    {isCollapsed && (
+                    {/* Floating Tooltip in Mini Mode */}
+                    {isSidebarMini && (
                       <div className="absolute left-full ml-3 px-3 py-1.5 rounded-xl bg-slate-900 text-white dark:bg-[#1c2738] dark:border dark:border-[#2d3b52] text-xs font-bold whitespace-nowrap shadow-xl z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-x-1 group-hover:translate-x-0 flex items-center gap-2">
                         <span>{t(item.labelKey)}</span>
                         {(item as any).badge && (
@@ -223,24 +223,24 @@ export function Sidebar() {
       </nav>
 
       {/* Modern User Profile & Status Footer */}
-      <div className="p-3 border-t border-slate-100 dark:border-[#1e293b] shrink-0">
+      <div className="p-2.5 border-t border-slate-100 dark:border-[#1e293b] shrink-0">
         <div
           className={cn(
-            "flex items-center gap-3 p-2 rounded-2xl bg-slate-50/80 dark:bg-[#141e2e]/90 border border-slate-200/80 dark:border-[#1e293b] shadow-2xs hover:border-teal-500/40 dark:hover:border-teal-500/40 transition-colors cursor-pointer group relative",
-            isCollapsed && "justify-center p-1.5"
+            "flex items-center gap-2.5 p-2 rounded-2xl bg-slate-50/80 dark:bg-[#141e2e]/90 border border-slate-200/80 dark:border-[#1e293b] shadow-2xs hover:border-teal-500/40 dark:hover:border-teal-500/40 transition-colors cursor-pointer group relative",
+            isSidebarMini && "justify-center p-1"
           )}
           onClick={() => setActiveTab("settings")}
           title={locale === "bn" ? "প্রোফাইল সেটিংস দেখুন" : "View Profile & Settings"}
         >
           {/* Avatar with Live Indicator */}
           <div className="relative shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-500 via-emerald-400 to-teal-600 text-slate-950 flex items-center justify-center font-black text-xs shadow-sm shadow-teal-500/20 ring-2 ring-white/60 dark:ring-teal-500/30">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-teal-500 via-emerald-400 to-teal-600 text-slate-950 flex items-center justify-center font-black text-xs shadow-sm shadow-teal-500/20 ring-2 ring-white/60 dark:ring-teal-500/30">
               {currentUser?.name ? currentUser.name.slice(0, 2).toUpperCase() : "NZ"}
             </div>
-            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0c1322]" />
+            <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#0c1322]" />
           </div>
 
-          {!isCollapsed && (
+          {!isSidebarMini && (
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between gap-1">
                 <p className="text-xs font-extrabold text-slate-900 dark:text-white truncate">
@@ -257,8 +257,8 @@ export function Sidebar() {
             </div>
           )}
 
-          {/* Floating Tooltip in Collapsed Mode */}
-          {isCollapsed && (
+          {/* Floating Tooltip in Mini Mode */}
+          {isSidebarMini && (
             <div className="absolute left-full ml-3 px-3 py-2 rounded-xl bg-slate-900 text-white dark:bg-[#1c2738] dark:border dark:border-[#2d3b52] text-xs font-bold whitespace-nowrap shadow-xl z-50 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-all duration-150 translate-x-1 group-hover:translate-x-0">
               <p className="font-extrabold">{currentUser?.name || "NAZRUL"}</p>
               <p className="text-[10px] text-teal-400 uppercase font-mono">{currentUser?.role || "ADMIN"}</p>

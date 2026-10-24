@@ -55,7 +55,7 @@ function MainApp() {
       <Sidebar />
 
       {/* Main Content Area — Responsive Full-Width Layout with Clean Side Padding */}
-      <main className="flex-1 px-2 sm:px-4 md:px-6 lg:px-8 py-3 sm:py-6 pb-28 md:pb-8 w-full min-w-0">
+      <main className="flex-1 px-3 sm:px-5 md:px-6 lg:px-8 pt-3 sm:pt-4 pb-24 md:pb-8 w-full min-w-0 transition-all duration-300">
         <div className={activeTab === "dashboard" ? "block" : "hidden"}>
           {visitedTabs.has("dashboard") && <DashboardView />}
         </div>

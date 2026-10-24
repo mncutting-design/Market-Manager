@@ -19,6 +19,8 @@ import {
   RefreshCw,
   User,
   Check,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { toast } from "sonner";
@@ -39,7 +41,11 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
     triggerRefresh,
     currentUser,
     openChangePassword,
+    isSidebarOpen,
+    toggleSidebar,
   } = useApp();
+
+  const handleToggleSidebar = onToggleSidebar || toggleSidebar;
 
   const [isDark, setIsDark] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
@@ -98,24 +104,46 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   return (
     <header className="sticky top-0 z-40 w-full bg-white dark:bg-[#101726] border-b border-slate-200 dark:border-[#2d3b52] transition-colors shadow-xs dark:shadow-lg">
       {/* 1. TOP MAIN BAR */}
-      <div className="h-14 min-[900px]:h-16 px-2 min-[900px]:px-6 flex items-center justify-between gap-2 min-[900px]:gap-4">
-        {/* LEFT: Web App Logo & Brand Title */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="w-9 h-9 min-[900px]:w-10 min-[900px]:h-10 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-teal-500/20 shrink-0">
-            <Building2 className="w-4 h-4 min-[900px]:w-5 min-[900px]:h-5" />
-          </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span className="text-sm min-[900px]:text-lg font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-                {t("common.appName")}
-              </span>
-              <span className="text-[9px] font-bold uppercase px-1.5 py-0.2 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/30 shrink-0">
-                PRO
-              </span>
+      <div className="h-14 px-2 min-[900px]:px-5 flex items-center justify-between gap-2 min-[900px]:gap-4">
+        {/* LEFT: Sidebar Toggle Button + Logo & Brand */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          {/* Desktop Sidebar Toggle Button */}
+          <button
+            type="button"
+            onClick={handleToggleSidebar}
+            className="hidden md:flex items-center justify-center w-9 h-9 rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#182234] border border-transparent hover:border-slate-300 dark:hover:border-[#2d3b52] transition-all cursor-pointer shrink-0 active:scale-95"
+            title={
+              isSidebarOpen
+                ? (locale === "bn" ? "মেনুবার বন্ধ করুন (Ctrl+B)" : "Close sidebar (Ctrl+B)")
+                : (locale === "bn" ? "মেনুবার খুলুন (Ctrl+B)" : "Open sidebar (Ctrl+B)")
+            }
+            aria-label="Toggle sidebar"
+          >
+            {isSidebarOpen ? (
+              <PanelLeftClose className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            ) : (
+              <PanelLeftOpen className="w-5 h-5 text-slate-500 dark:text-slate-400" />
+            )}
+          </button>
+
+          {/* Logo & Brand Title */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-500 to-emerald-400 flex items-center justify-center text-slate-950 font-bold shadow-md shadow-teal-500/20 shrink-0">
+              <Building2 className="w-4.5 h-4.5" />
             </div>
-            <p className="hidden xl:block text-[11px] text-slate-500 dark:text-slate-300 truncate max-w-[220px]">
-              {t("common.appTagline")}
-            </p>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm min-[900px]:text-base font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+                  {t("common.appName")}
+                </span>
+                <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full bg-teal-500/20 text-teal-600 dark:text-teal-300 border border-teal-500/30 shrink-0">
+                  PRO
+                </span>
+              </div>
+              <p className="hidden xl:block text-[11px] text-slate-500 dark:text-slate-400 truncate max-w-[220px]">
+                {t("common.appTagline")}
+              </p>
+            </div>
           </div>
         </div>
 
