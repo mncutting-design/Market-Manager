@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *, .dark, .dark *));
+
 @theme {
   --color-canvas: #F4F1EA;
   --color-surface: #FFFFFF;
@@ -104,6 +106,86 @@ body {
    NEO-BRUTALIST DUAL-THEME ENGINE (LIGHT & DARK/NIGHT MOOD)
    ======================================================== */
 
+/* --- 0. STRICT LIGHT MODE ENGINE (ACTIVATED WHEN NOT .dark) --- */
+html:not(.dark),
+html[data-theme="light"],
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+html:not(.dark) body,
+html[data-theme="light"] body {
+  background-color: #F4F1EA !important;
+  color: #000000 !important;
+}
+
+/* Page canvas in Light Mode */
+html:not(.dark) .min-h-screen,
+html:not(.dark) [class*="bg-[#F4F1EA]"],
+html[data-theme="light"] [class*="bg-[#F4F1EA]"],
+html:not(.dark) .bg-canvas {
+  background-color: #F4F1EA !important;
+  color: #000000 !important;
+}
+
+/* Card, Header, Surfaces in Light Mode */
+html:not(.dark) header.bg-white,
+html:not(.dark) [class~="bg-white"]:not([class~="bg-[#FED734]"]):not([class~="bg-[#FF4B55]"]):not([class~="bg-[#00BA88]"]):not([class~="bg-[#FFEBEF]"]):not([class~="bg-[#E6F8F2]"]):not([class~="bg-[#FEF3C7]"]),
+html[data-theme="light"] [class~="bg-white"]:not([class~="bg-[#FED734]"]):not([class~="bg-[#FF4B55]"]):not([class~="bg-[#00BA88]"]):not([class~="bg-[#FFEBEF]"]):not([class~="bg-[#E6F8F2]"]):not([class~="bg-[#FEF3C7]"]) {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+html:not(.dark) aside {
+  background-color: #F4F1EA !important;
+  color: #000000 !important;
+}
+
+html:not(.dark) aside .bg-white {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+}
+
+/* Subsurfaces, wells and inputs in Light Mode */
+html:not(.dark) .bg-\[\#FBF9F5\],
+html:not(.dark) [class~="bg-[#FBF9F5]"] {
+  background-color: #FBF9F5 !important;
+  color: #000000 !important;
+}
+
+html:not(.dark) input:not([class~="bg-[#FED734]"]):not([class~="bg-[#FF4B55]"]),
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background-color: #FFFFFF !important;
+  color: #000000 !important;
+  border-color: #000000 !important;
+}
+
+/* Typography in Light Mode */
+html:not(.dark) h1:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+html:not(.dark) h2:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+html:not(.dark) h3:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+html:not(.dark) h4:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+html:not(.dark) h5:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]),
+html:not(.dark) h6:not([class~="bg-[#FED734]"] *):not([class~="bg-[#FED734]"]) {
+  color: #000000 !important;
+}
+
+html:not(.dark) .text-black,
+html:not(.dark) [class~="text-black"] {
+  color: #000000 !important;
+}
+
+html:not(.dark) .text-gray-700,
+html:not(.dark) .text-slate-700 {
+  color: #374151 !important;
+}
+
+html:not(.dark) .text-gray-600,
+html:not(.dark) .text-slate-600 {
+  color: #4B5563 !important;
+}
+
 /* --- 1. DARK / NIGHT MODE BASE CANVAS & BODY --- */
 html.dark,
 .dark,
@@ -122,7 +204,8 @@ html.dark body,
 .dark .bg-canvas,
 .dark .bg-\[\#F4F1EA\],
 .dark [class~="bg-[#F4F1EA]"],
-html.dark [class~="bg-[#F4F1EA]"] {
+html.dark [class~="bg-[#F4F1EA]"],
+[data-theme="dark"] [class~="bg-[#F4F1EA]"] {
   background-color: #121214 !important;
   color: #FFFFFF !important;
 }
@@ -136,7 +219,9 @@ html.dark .bg-white,
 .dark aside.bg-white,
 .dark header.bg-white,
 .dark .bg-slate-900,
-.dark .bg-slate-950 {
+.dark .bg-slate-950,
+[data-theme="dark"] .bg-white,
+[data-theme="dark"] [class~="bg-white"] {
   background-color: #1E1F24 !important;
   color: #FFFFFF !important;
 }
@@ -147,7 +232,9 @@ html.dark .bg-white,
 .dark [class~="bg-[#FBF9F5]"],
 html.dark [class~="bg-[#FBF9F5]"],
 .dark .bg-slate-50,
-.dark .bg-slate-100 {
+.dark .bg-slate-100,
+[data-theme="dark"] .bg-\[\#FBF9F5\],
+[data-theme="dark"] [class~="bg-[#FBF9F5]"] {
   background-color: #262830 !important;
   color: #FFFFFF !important;
 }

@@ -52,7 +52,9 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const isCurrentlyDark = document.documentElement.classList.contains("dark");
+    const isCurrentlyDark =
+      document.documentElement.classList.contains("dark") ||
+      document.documentElement.getAttribute("data-theme") === "dark";
     setIsDark(isCurrentlyDark);
   }, []);
 
@@ -72,12 +74,17 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
   }, [isProfileOpen]);
 
   const toggleTheme = () => {
-    if (document.documentElement.classList.contains("dark")) {
+    const isCurrentlyDark =
+      document.documentElement.classList.contains("dark") ||
+      document.documentElement.getAttribute("data-theme") === "dark";
+    if (isCurrentlyDark) {
       document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
       setIsDark(false);
       localStorage.setItem("theme", "light");
     } else {
       document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
       setIsDark(true);
       localStorage.setItem("theme", "dark");
     }
