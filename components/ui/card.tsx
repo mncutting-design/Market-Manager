@@ -11,7 +11,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-slate-200/80 dark:border-[#2d3b52] bg-white dark:bg-[#182234] text-slate-900 dark:text-white shadow-xs transition-all",
+        "rounded-2xl border-2 border-black bg-white text-black shadow-[4px_4px_0px_#000000] transition-all",
         className
       )}
       {...props}
@@ -27,7 +27,7 @@ export function CardHeader({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("flex flex-col space-y-1.5 p-5 md:p-6", className)} {...props}>
+    <div className={cn("flex flex-col space-y-1.5 p-4 sm:p-5", className)} {...props}>
       {children}
     </div>
   );
@@ -40,7 +40,7 @@ export function CardTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h3
-      className={cn("text-base md:text-lg font-bold leading-none tracking-tight text-slate-900 dark:text-white", className)}
+      className={cn("text-base md:text-lg font-black leading-none tracking-tight text-black", className)}
       {...props}
     >
       {children}
@@ -54,7 +54,7 @@ export function CardDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={cn("text-xs md:text-sm text-slate-600 dark:text-white font-medium mt-1", className)} {...props}>
+    <p className={cn("text-xs md:text-sm text-gray-700 font-bold mt-1", className)} {...props}>
       {children}
     </p>
   );
@@ -66,7 +66,7 @@ export function CardContent({
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn("p-5 md:p-6 pt-0 md:pt-0", className)} {...props}>
+    <div className={cn("p-4 sm:p-5 pt-0 sm:pt-0", className)} {...props}>
       {children}
     </div>
   );
@@ -79,7 +79,7 @@ export function CardFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex items-center p-5 md:p-6 pt-0 border-t border-slate-100 dark:border-[#2d3b52] mt-4", className)}
+      className={cn("flex items-center p-4 sm:p-5 pt-0 border-t-2 border-black/10 mt-3", className)}
       {...props}
     >
       {children}

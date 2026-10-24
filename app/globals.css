@@ -1,76 +1,62 @@
 @import "tailwindcss";
 
+@theme {
+  --color-canvas: #F4F1EA;
+  --color-surface: #FFFFFF;
+  --color-subsurface: #FBF9F5;
+  --color-brutal-yellow: #FED734;
+  --color-brutal-green: #00BA88;
+  --color-brutal-red: #FF4B55;
+  --color-brutal-amber: #F59E0B;
+  --color-brutal-cyan: #00BCD4;
+  --color-brutal-pink: #FFEBEF;
+  --color-brutal-pink-border: #FFA2B2;
+
+  --shadow-brutal-xs: 1.5px 1.5px 0px #000000;
+  --shadow-brutal-sm: 2px 2px 0px #000000;
+  --shadow-brutal-md: 3px 3px 0px #000000;
+  --shadow-brutal: 4px 4px 0px #000000;
+  --shadow-brutal-lg: 6px 6px 0px #000000;
+  --shadow-brutal-xl: 8px 8px 0px #000000;
+}
+
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
-  --card: #ffffff;
-  --card-foreground: #0f172a;
-  --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0d9488;
-  --primary-hover: #0f766e;
-  --primary-foreground: #ffffff;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
+  --background: #F4F1EA;
+  --foreground: #000000;
+  --card: #FFFFFF;
+  --card-foreground: #000000;
+  --popover: #FFFFFF;
+  --popover-foreground: #000000;
+  --primary: #FED734;
+  --primary-hover: #edd028;
+  --primary-foreground: #000000;
+  --secondary: #FBF9F5;
+  --secondary-foreground: #000000;
+  --muted: #FBF9F5;
   --muted-foreground: #475569;
-  --accent: #f0fdfa;
-  --accent-foreground: #0f766e;
-  --destructive: #ef4444;
+  --accent: #FED734;
+  --accent-foreground: #000000;
+  --destructive: #FF4B55;
   --destructive-foreground: #ffffff;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0d9488;
+  --border: #000000;
+  --input: #000000;
+  --ring: #FED734;
   --radius: 0.75rem;
 
   /* Status Colors */
-  --status-paid: #059669;
-  --status-paid-bg: #ecfdf5;
-  --status-partial: #d97706;
-  --status-partial-bg: #fffbeb;
-  --status-due: #dc2626;
-  --status-due-bg: #fef2f2;
-  --status-vacant: #64748b;
-  --status-vacant-bg: #f8fafc;
+  --status-paid: #00BA88;
+  --status-paid-bg: #00BA88;
+  --status-partial: #F59E0B;
+  --status-partial-bg: #F59E0B;
+  --status-due: #FF4B55;
+  --status-due-bg: #FF4B55;
+  --status-vacant: #FFFFFF;
+  --status-vacant-bg: #FFFFFF;
 }
 
-/* ULTRA-CRISP HIGH-CONTRAST DARK THEME (Pure white text, no faded ash, solid dark backgrounds) */
-.dark {
-  --background: #101726;         /* Solid sleek dark canvas */
-  --foreground: #ffffff;         /* Pure crisp white text */
-  --card: #182234;               /* Distinct solid card surface */
-  --card-foreground: #ffffff;
-  --popover: #182234;
-  --popover-foreground: #ffffff;
-  --primary: #14b8a6;
-  --primary-hover: #2dd4bf;
-  --primary-foreground: #042f2e;
-  --secondary: #233148;          /* Bright visible buttons */
-  --secondary-foreground: #ffffff;
-  --muted: #233148;
-  --muted-foreground: #ffffff;   /* Pure white text instead of ash */
-  --accent: #134e4a;
-  --accent-foreground: #ffffff;
-  --destructive: #f87171;
-  --destructive-foreground: #ffffff;
-  --border: #2d3b52;             /* High contrast solid borders */
-  --input: #1c283c;              /* Clean input surface */
-  --ring: #14b8a6;
-
-  /* High contrast status badges */
-  --status-paid: #34d399;
-  --status-paid-bg: rgba(5, 150, 105, 0.25);
-  --status-partial: #fbbf24;
-  --status-partial-bg: rgba(217, 119, 6, 0.25);
-  --status-due: #f87171;
-  --status-due-bg: rgba(220, 38, 38, 0.25);
-  --status-vacant: #ffffff;
-  --status-vacant-bg: rgba(255, 255, 255, 0.15);
-}
-
-* {
-  border-color: var(--border);
-  box-sizing: border-box;
+::selection {
+  background-color: #FED734;
+  color: #000000;
 }
 
 html {
@@ -78,18 +64,12 @@ html {
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background-color: #F4F1EA;
+  color: #000000;
   font-family: var(--font-sans), var(--font-anek-bangla), sans-serif;
   min-height: 100vh;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
   overflow-x: hidden;
-}
-
-/* Dark mode body styling */
-.dark body {
-  background-color: #101726;
-  color: #ffffff;
 }
 
 /* Header fix: Dark, solid, premium, no washed out ash */

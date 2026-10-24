@@ -14,7 +14,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
             {label}
           </label>
         )}
@@ -23,19 +23,19 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             ref={ref}
             disabled={disabled}
             className={cn(
-              "flex h-11 w-full appearance-none rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-base md:text-sm text-slate-900 dark:text-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 dark:focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow-xs pr-10",
-              error && "border-red-500 focus-visible:ring-red-500 dark:border-red-500",
+              "flex h-11 w-full appearance-none rounded-xl border-2 border-black bg-white px-3.5 py-2 text-sm text-black font-bold focus:outline-none shadow-[3px_3px_0px_#000000] focus:shadow-[4px_4px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all pr-10 cursor-pointer",
+              error && "border-[#FF4B55] shadow-[3px_3px_0px_#FF4B55]",
               className
             )}
             {...props}
           >
             {children}
           </select>
-          <div className="pointer-events-none absolute right-3.5 flex items-center text-slate-400 dark:text-slate-500">
-            <ChevronDown className="h-4 w-4" />
+          <div className="pointer-events-none absolute right-3.5 flex items-center text-black">
+            <ChevronDown className="h-4 w-4 stroke-[2.5]" />
           </div>
         </div>
-        {error && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-[#FF4B55] font-black">{error}</p>}
       </div>
     );
   }

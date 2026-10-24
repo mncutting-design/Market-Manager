@@ -23,28 +23,28 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium rounded-lg transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none active:scale-[0.98] cursor-pointer";
+      "inline-flex items-center justify-center font-bold select-none cursor-pointer disabled:pointer-events-none disabled:opacity-50 transition-all duration-150 rounded-xl focus:outline-none";
 
     const variants = {
       primary:
-        "bg-teal-600 hover:bg-teal-700 text-white shadow-xs focus-visible:ring-teal-500 dark:bg-teal-600 dark:hover:bg-teal-500",
+        "bg-[#FED734] text-black font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#000000]",
       secondary:
-        "bg-slate-100 hover:bg-slate-200 text-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-100 focus-visible:ring-slate-500",
+        "bg-white text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
       outline:
-        "border border-slate-300 dark:border-slate-700 bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-900 dark:text-slate-100 focus-visible:ring-teal-500",
+        "bg-white text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
       ghost:
-        "bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 focus-visible:ring-slate-500",
+        "bg-transparent text-black font-bold border-2 border-transparent hover:border-black hover:bg-[#FED734]/30 active:translate-x-[1px] active:translate-y-[1px]",
       destructive:
-        "bg-red-600 hover:bg-red-700 text-white shadow-xs focus-visible:ring-red-500 dark:bg-red-600 dark:hover:bg-red-500",
+        "bg-[#FF4B55] text-white font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#e03d46] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
       accent:
-        "bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 dark:bg-teal-950/60 dark:hover:bg-teal-900/80 dark:text-teal-200 dark:border-teal-800",
+        "bg-[#FED734] text-black font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#000000]",
     };
 
     const sizes = {
       sm: "h-9 px-3 text-xs gap-1.5",
-      md: "h-11 px-4 text-sm gap-2 min-h-[44px]", // Minimum 44px touch target on mobile!
+      md: "h-11 px-4 text-sm gap-2 min-h-[44px]",
       lg: "h-12 px-6 text-base gap-2.5 min-h-[48px]",
-      icon: "h-11 w-11 p-2 min-h-[44px] min-w-[44px]",
+      icon: "h-10 w-10 p-2 min-h-[40px] min-w-[40px]",
     };
 
     return (

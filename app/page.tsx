@@ -150,7 +150,7 @@ export default function Home() {
 
   return (
     <AppProvider>
-      <div className="min-h-screen flex flex-col bg-slate-50 dark:bg-[#101726] text-slate-900 dark:text-white transition-colors">
+      <div className="min-h-screen flex flex-col bg-[#F4F1EA] text-black font-sans selection:bg-[#FED734] selection:text-black">
         <TopBar />
         <MainApp />
       </div>

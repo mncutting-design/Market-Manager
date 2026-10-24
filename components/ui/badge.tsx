@@ -17,7 +17,7 @@ export type BadgeStatus =
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
   status?: BadgeStatus;
-  variant?: "default" | "success" | "warning" | "danger" | "neutral" | "outline" | "teal";
+  variant?: "default" | "success" | "warning" | "danger" | "neutral" | "outline" | "teal" | "cyan";
   size?: "sm" | "md";
 }
 
@@ -64,7 +64,7 @@ export function StatusBadge({
       labelKey = "status.archived";
       break;
     case "RECURRING":
-      variant = "teal";
+      variant = "cyan";
       labelKey = "status.recurring";
       break;
     default:
@@ -74,7 +74,7 @@ export function StatusBadge({
 
   return (
     <Badge variant={variant} className={className}>
-      <span className="w-1.5 h-1.5 rounded-full mr-1.5 inline-block shrink-0 bg-current opacity-80" />
+      <span className="w-2 h-2 rounded-full mr-1.5 inline-block shrink-0 bg-current border border-black" />
       {t(labelKey)}
     </Badge>
   );
@@ -89,30 +89,32 @@ export function Badge({
 }: BadgeProps) {
   const variants = {
     default:
-      "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700",
+      "bg-[#FED734] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     success:
-      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800",
+      "bg-[#00BA88] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     warning:
-      "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200 dark:border-amber-800",
+      "bg-[#F59E0B] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     danger:
-      "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-red-200 dark:border-red-800",
+      "bg-[#FF4B55] text-white border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     neutral:
-      "bg-slate-100 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+      "bg-white text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     outline:
-      "bg-transparent text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-700",
+      "bg-transparent text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     teal:
-      "bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border-teal-200 dark:border-teal-800",
+      "bg-[#FED734] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
+    cyan:
+      "bg-[#00BCD4] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
   };
 
   const sizes = {
-    sm: "px-2 py-0.5 text-xs font-medium",
-    md: "px-2.5 py-1 text-xs font-semibold",
+    sm: "px-2 py-0.5 text-[11px] font-black",
+    md: "px-2.5 py-1 text-xs font-black",
   };
 
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border transition-colors",
+        "inline-flex items-center rounded-lg font-black select-none tracking-tight",
         variants[variant],
         sizes[size],
         className

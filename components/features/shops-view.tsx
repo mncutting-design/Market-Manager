@@ -498,18 +498,18 @@ export function ShopsView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Store className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black flex items-center gap-2">
+            <Store className="w-6 h-6 text-black stroke-[2.5]" />
             <span>{t("shops.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-gray-700 font-bold mt-1">
             {t("shops.subtitle")}
           </p>
         </div>
 
         {!isOperator && (
           <Button onClick={() => setIsAddShopOpen(true)}>
-            <Plus className="w-4 h-4 mr-1.5" />
+            <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("shops.addShop")}
           </Button>
         )}
@@ -524,7 +524,7 @@ export function ShopsView() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t("common.searchShopsPlaceholder")}
-              prefixIcon={<Search className="w-4 h-4" />}
+              prefixIcon={<Search className="w-4 h-4 stroke-[2.5]" />}
             />
           </div>
 
@@ -533,7 +533,7 @@ export function ShopsView() {
             <Select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="h-10 text-xs font-semibold"
+              className="h-11 text-xs font-bold"
             >
               <option value="SHOP_ASC">
                 {locale === "bn" ? "দোকান নং (এ, বি, সি... ১, ২, ৩)" : "Shop Number (A to Z / 1, 2, 3)"}
@@ -566,15 +566,15 @@ export function ShopsView() {
           </div>
 
           {/* Status filter tabs - Scrollable on mobile */}
-          <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1.5 bg-white p-1 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] shrink-0 overflow-x-auto no-scrollbar">
             {["ALL", "OCCUPIED", "VACANT"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
+                className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                   statusFilter === status
-                    ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
-                    : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                    ? "bg-[#FED734] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+                    : "text-gray-700 hover:text-black hover:bg-gray-100"
                 }`}
               >
                 {status === "ALL"
@@ -589,16 +589,16 @@ export function ShopsView() {
 
         {/* Market-wise Block / Serialised Line Pills (এ, বি, সি, ডি, ই, এফ / A, B, C, D, E, F) */}
         <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
-            <Layers className="w-3.5 h-3.5 text-teal-600" />
+          <span className="text-[11px] font-black text-black uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+            <Layers className="w-3.5 h-3.5 text-black stroke-[2.5]" />
             <span>{locale === "bn" ? "সিরিয়াল / ব্লক:" : "Serial / Block:"}</span>
           </span>
           <button
             onClick={() => setSelectedBlock("ALL")}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer border ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border-2 border-black ${
               selectedBlock === "ALL"
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
+                : "bg-white text-black shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/30"
             }`}
           >
             {locale === "bn" ? "সব সিরিয়াল" : "All Blocks"} ({shops.length})
@@ -607,14 +607,16 @@ export function ShopsView() {
             <button
               key={b.key}
               onClick={() => setSelectedBlock(b.key)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold shrink-0 transition-all cursor-pointer border flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border-2 border-black flex items-center gap-1.5 ${
                 selectedBlock === b.key
-                  ? "bg-teal-600 text-white border-teal-600 shadow-xs"
-                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                  ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
+                  : "bg-white text-black shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/30"
               }`}
             >
               <span>{b.label}</span>
-              <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${selectedBlock === b.key ? "bg-white/20 text-white" : "bg-slate-100 dark:bg-slate-800 text-slate-500"}`}>
+              <span className={`text-[10px] px-1.5 py-0.2 rounded-md border border-black font-black ${
+                selectedBlock === b.key ? "bg-black text-[#FED734]" : "bg-[#FBF9F5] text-black"
+              }`}>
                 {locale === "bn" ? toBanglaDigits(b.count) : b.count}
               </span>
             </button>
@@ -626,9 +628,9 @@ export function ShopsView() {
       {isLoading ? (
         <TableSkeleton rows={6} />
       ) : sortedShops.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Store className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
+        <Card className="p-12 text-center bg-white border-2 border-black shadow-[4px_4px_0px_#000000]">
+          <Store className="w-12 h-12 text-black mx-auto mb-3 stroke-[2]" />
+          <p className="text-base font-black text-black">
             {t("shops.noShopsFound")}
           </p>
           {selectedBlock !== "ALL" && (
@@ -638,12 +640,12 @@ export function ShopsView() {
               </Button>
             </div>
           )}
-          <p className="text-xs text-slate-500 mt-2">{t("markets.createFirstMarket")}</p>
+          <p className="text-xs text-gray-600 font-bold mt-2">{t("markets.createFirstMarket")}</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {sortedShops.map((shop) => (
-            <Card
+            <div
               key={shop.id}
               onClick={() => {
                 if (shop.status === "OCCUPIED" && shop.tenant) {
@@ -651,25 +653,25 @@ export function ShopsView() {
                 } else {
                   setSelectedShop(shop);
                   setAgreedRentBDT(Math.round(shop.defaultRent / 100));
-                  setAdvanceDepositBDT(0); // Renter-wise custom agreed advance, not fixed
+                  setAdvanceDepositBDT(0);
                   setIsAssignTenantOpen(true);
                 }
               }}
-              className="p-4 flex flex-col justify-between hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-lg transition-all shadow-xs cursor-pointer group"
+              className="p-4 rounded-2xl bg-white border-2 border-black shadow-[4px_4px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[6px_6px_0px_#000000] transition-all cursor-pointer flex flex-col justify-between group"
             >
               <div className="flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <div className="min-w-0 flex-1">
-                      <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors flex items-center gap-2 truncate">
+                      <h3 className="text-base sm:text-lg font-black text-black group-hover:text-black flex items-center gap-2 truncate">
                         <span className="truncate">{shop.shopNumber}</span>
-                        <span className="text-xs font-normal text-slate-500 dark:text-slate-400 shrink-0">
+                        <span className="text-xs font-bold text-gray-600 shrink-0">
                           ({formatFloorName(shop.floor, locale)})
                         </span>
                       </h3>
-                      <p className="text-xs text-slate-500 truncate" title={shop.marketName}>{shop.marketName}</p>
+                      <p className="text-xs text-gray-500 font-bold truncate" title={shop.marketName}>{shop.marketName}</p>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       <StatusBadge status={shop.status} />
                       {(isAdmin || currentUser?.role === "MANAGER") && (
                         <>
@@ -679,10 +681,10 @@ export function ShopsView() {
                               e.stopPropagation();
                               openEditShop(shop);
                             }}
-                            className="p-1 rounded text-slate-400 hover:text-teal-600 dark:hover:text-teal-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border-2 border-black bg-white hover:bg-[#FED734] shadow-[1.5px_1.5px_0px_#000000] text-black transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
                             title={locale === "bn" ? "দোকান সম্পাদনা" : "Edit Shop"}
                           >
-                            <Edit className="w-3.5 h-3.5" />
+                            <Edit className="w-3.5 h-3.5 stroke-[2.5]" />
                           </button>
                           <button
                             type="button"
@@ -690,10 +692,10 @@ export function ShopsView() {
                               e.stopPropagation();
                               setDeletingShop(shop);
                             }}
-                            className="p-1 rounded text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors cursor-pointer"
+                            className="p-1.5 rounded-lg border-2 border-black bg-white hover:bg-[#FF4B55] hover:text-white shadow-[1.5px_1.5px_0px_#000000] text-black transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
                             title={locale === "bn" ? "দোকান মুছুন" : "Delete Shop"}
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
                           </button>
                         </>
                       )}
@@ -701,37 +703,37 @@ export function ShopsView() {
                   </div>
 
                   {/* Tenant Info or Vacant notice */}
-                  <div className="my-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800 text-xs">
+                  <div className="my-2.5 p-2.5 rounded-xl bg-[#FBF9F5] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] text-xs">
                     {shop.tenant ? (
                       <div className="space-y-1.5">
                         <div
-                          className="flex items-center justify-between gap-2 cursor-pointer group/t hover:text-teal-600 transition-colors"
+                          className="flex items-center justify-between gap-2 cursor-pointer group/t"
                           onClick={(e) => {
                             e.stopPropagation();
                             setActiveProfileTenantId(shop.tenant.id);
                           }}
                           title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল দেখুন" : "View Tenant Profile"}
                         >
-                          <span className="text-slate-500 group-hover/t:text-teal-600 shrink-0">{t("shops.currentTenant")}:</span>
-                          <span className="font-bold text-slate-900 dark:text-slate-100 group-hover/t:text-teal-600 flex items-center gap-1 min-w-0 truncate">
-                            <User className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+                          <span className="text-gray-600 font-bold shrink-0">{t("shops.currentTenant")}:</span>
+                          <span className="font-black text-black group-hover/t:underline flex items-center gap-1 min-w-0 truncate">
+                            <User className="w-3.5 h-3.5 text-black shrink-0 stroke-[2.5]" />
                             <span className="truncate">{shop.tenant.name}</span>
                           </span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-slate-500 shrink-0">{t("tenants.phone")}:</span>
+                          <span className="text-gray-600 font-bold shrink-0">{t("tenants.phone")}:</span>
                           <a
                             href={`tel:${shop.tenant.phone}`}
                             onClick={(e) => e.stopPropagation()}
-                            className="font-mono text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 shrink-0"
+                            className="font-mono text-black font-bold hover:underline flex items-center gap-1 shrink-0"
                           >
-                            <Phone className="w-3 h-3 shrink-0" />
+                            <Phone className="w-3 h-3 shrink-0 stroke-[2.5]" />
                             <span>{shop.tenant.phone}</span>
                           </a>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center py-2 text-slate-400">
+                      <div className="text-center py-2 text-gray-500 font-bold">
                         <span>{t("shops.noTenant")}</span>
                       </div>
                     )}
@@ -739,22 +741,22 @@ export function ShopsView() {
                 </div>
 
                 {/* Financial Rates */}
-                <div className="flex items-center justify-between text-xs py-1 mt-auto">
-                  <span className="text-slate-500">{t("shops.rentAmount")}:</span>
-                  <span className="font-bold text-base text-teal-700 dark:text-teal-400">
+                <div className="flex items-center justify-between text-xs font-bold py-1 mt-auto border-t-2 border-black/10">
+                  <span className="text-gray-600">{t("shops.rentAmount")}:</span>
+                  <span className="font-black text-base text-black">
                     {formatCurrency(shop.currentRent, locale)}
                   </span>
                 </div>
               </div>
 
               {/* Actions Footer */}
-              <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800">
+              <div className="mt-3 pt-2.5 border-t-2 border-black/10">
                 {shop.status === "VACANT" ? (
                   <div className="grid grid-cols-2 gap-2 w-full">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-8 px-2 w-full justify-center"
+                      className="text-xs h-8 px-2 w-full justify-center border-2 border-black shadow-[2px_2px_0px_#000000]"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedShop(shop);
@@ -763,13 +765,13 @@ export function ShopsView() {
                       }}
                       title={t("shops.updateRent")}
                     >
-                      <History className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <History className="w-3.5 h-3.5 mr-1 shrink-0 stroke-[2.5]" />
                       <span className="truncate">{locale === "bn" ? "ভাড়া পরিবর্তন" : "Update Rent"}</span>
                     </Button>
                     <Button
                       size="sm"
                       variant="primary"
-                      className="text-xs h-8 px-2 w-full justify-center"
+                      className="text-xs h-8 px-2 w-full justify-center bg-[#00BA88] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000000] hover:bg-[#00a87a]"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedShop(shop);
@@ -780,7 +782,7 @@ export function ShopsView() {
                       }}
                       title={t("shops.assignTenant")}
                     >
-                      <UserPlus className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <UserPlus className="w-3.5 h-3.5 mr-1 shrink-0 stroke-[2.5]" />
                       <span className="truncate">{locale === "bn" ? "বরাদ্দ দিন" : "Assign"}</span>
                     </Button>
                   </div>
@@ -790,7 +792,7 @@ export function ShopsView() {
                     <Button
                       size="sm"
                       variant="primary"
-                      className="text-xs h-8 px-2 w-full font-bold justify-center"
+                      className="text-xs h-8 px-2 w-full font-black justify-center bg-[#FED734] text-black border-2 border-black shadow-[2px_2px_0px_#000000] hover:bg-[#edd028]"
                       onClick={(e) => {
                         e.stopPropagation();
                         openQuickCollect({
@@ -801,7 +803,7 @@ export function ShopsView() {
                       }}
                       title={t("collections.quickCollect")}
                     >
-                      <Wallet className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <Wallet className="w-3.5 h-3.5 mr-1 shrink-0 stroke-[2.5]" />
                       <span className="truncate">{locale === "bn" ? "ভাড়া আদায়" : "Collect"}</span>
                     </Button>
 
@@ -809,7 +811,7 @@ export function ShopsView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-8 px-2 w-full border-teal-300 dark:border-teal-700 hover:bg-teal-50 dark:hover:bg-teal-950/40 text-teal-700 dark:text-teal-300 font-medium justify-center"
+                      className="text-xs h-8 px-2 w-full border-2 border-black bg-white hover:bg-[#FBF9F5] text-black font-bold justify-center shadow-[2px_2px_0px_#000000]"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (shop.tenant) {
@@ -818,7 +820,7 @@ export function ShopsView() {
                       }}
                       title={locale === "bn" ? "ভাড়াটিয়া প্রোফাইল ও জামানত" : "Tenant Profile & Advance"}
                     >
-                      <UserCheck className="w-3.5 h-3.5 mr-1 text-teal-600 shrink-0" />
+                      <UserCheck className="w-3.5 h-3.5 mr-1 text-black shrink-0 stroke-[2.5]" />
                       <span className="truncate">{locale === "bn" ? "প্রোফাইল/জামানত" : "Profile"}</span>
                     </Button>
 
@@ -826,7 +828,7 @@ export function ShopsView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs h-8 px-2 w-full justify-center"
+                      className="text-xs h-8 px-2 w-full justify-center border-2 border-black bg-[#FBF9F5] text-black font-bold shadow-[2px_2px_0px_#000000] hover:bg-white"
                       onClick={(e) => {
                         e.stopPropagation();
                         setSelectedShop(shop);
@@ -835,7 +837,7 @@ export function ShopsView() {
                       }}
                       title={t("shops.updateRent")}
                     >
-                      <History className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <History className="w-3.5 h-3.5 mr-1 shrink-0 stroke-[2.5]" />
                       <span className="truncate">{locale === "bn" ? "ভাড়া পরিবর্তন" : "Update Rent"}</span>
                     </Button>
 
@@ -843,7 +845,7 @@ export function ShopsView() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      className="text-xs h-8 px-2 w-full justify-center bg-rose-600 hover:bg-rose-700 text-white"
+                      className="text-xs h-8 px-2 w-full justify-center bg-[#FF4B55] hover:bg-[#e03d46] text-white font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
                       onClick={(e) => {
                         e.stopPropagation();
                         if (shop.tenant) {
@@ -852,13 +854,13 @@ export function ShopsView() {
                       }}
                       title={t("settlement.settleAndVacate")}
                     >
-                      <UserX className="w-3.5 h-3.5 mr-1 shrink-0" />
+                      <UserX className="w-3.5 h-3.5 mr-1 shrink-0 stroke-[2.5]" />
                       <span className="truncate">{locale === "bn" ? "হিসাব নিষ্পত্তি" : "Settle"}</span>
                     </Button>
                   </div>
                 )}
               </div>
-            </Card>
+            </div>
           ))}
         </div>
       )}
@@ -873,7 +875,7 @@ export function ShopsView() {
         <form onSubmit={handleAddShop} className="space-y-4">
           {/* Market Selection */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+            <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
               {t("markets.title")}
             </label>
             <SearchableSelect
@@ -890,7 +892,7 @@ export function ShopsView() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                 {t("shops.shopNumber")}
               </label>
               <Input
@@ -901,17 +903,17 @@ export function ShopsView() {
               />
               <div className="mt-2">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-black">
                     {locale === "bn" ? "অটো সিরিয়াল (মার্কেট অনুযায়ী):" : "Auto Serial (Block-wise):"}
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-1">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {STANDARD_SHOP_BLOCKS.map((sb) => (
                     <button
                       key={sb.key}
                       type="button"
                       onClick={() => handleAutoGenerateSerial(sb.key)}
-                      className="px-2 py-0.5 text-xs font-bold rounded-md bg-teal-50 hover:bg-teal-100 dark:bg-teal-950/60 dark:hover:bg-teal-900/80 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 transition-colors cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 text-xs font-black rounded-lg bg-[#FED734] hover:bg-[#ffe169] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all cursor-pointer"
                       title={locale === "bn" ? `${sb.labelBn} সিরিয়াল তৈরি করুন` : `Generate next serial for ${sb.labelEn}`}
                     >
                       +{locale === "bn" ? sb.key : sb.englishKey}
@@ -922,16 +924,16 @@ export function ShopsView() {
             </div>
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                <label className="block text-xs font-black uppercase tracking-wider text-black">
                   {t("shops.floor")}
                 </label>
                 <button
                   type="button"
                   onClick={handleIncreaseMarketFloors}
-                  className="text-[11px] font-semibold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-0.5 cursor-pointer"
+                  className="text-[11px] font-black text-black hover:underline flex items-center gap-1 cursor-pointer bg-white px-2 py-0.5 rounded-md border-2 border-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
                   title="Increase floor limit in market"
                 >
-                  <Plus className="w-3 h-3" />
+                  <Plus className="w-3 h-3 stroke-[3]" />
                   <span>{locale === "bn" ? "+ তলা বাড়ান" : "+ Floor"}</span>
                 </button>
               </div>
@@ -952,8 +954,8 @@ export function ShopsView() {
           </div>
 
           {floor === "CUSTOM" && (
-            <div className="p-3 rounded-lg bg-teal-50/50 dark:bg-teal-950/30 border border-teal-200 dark:border-teal-800">
-              <label className="block text-xs font-bold text-teal-700 dark:text-teal-300 mb-1">
+            <div className="p-3.5 rounded-xl bg-[#FBF9F5] border-2 border-black shadow-[3px_3px_0px_#000000]">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                 {t("shops.customFloor")}
               </label>
               <Input
@@ -968,7 +970,7 @@ export function ShopsView() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                 {t("shops.size")}
               </label>
               <Input
@@ -978,7 +980,7 @@ export function ShopsView() {
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                 {t("shops.defaultRent")} (৳)
               </label>
               <NumberInput
@@ -989,12 +991,12 @@ export function ShopsView() {
             </div>
           </div>
 
-          <div className="pt-2 flex justify-end gap-2">
+          <div className="pt-3 flex justify-end gap-2 border-t-2 border-black">
             <Button type="button" variant="outline" onClick={() => setIsAddShopOpen(false)}>
               {t("common.cancel")}
             </Button>
             <Button type="submit" isLoading={isSubmittingShop}>
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
               {t("common.save")}
             </Button>
           </div>
@@ -1013,8 +1015,8 @@ export function ShopsView() {
             {/* Primary Tenant Details */}
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                  {t("tenants.tenantName")} <span className="text-rose-500">*</span>
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
+                  {t("tenants.tenantName")} <span className="text-[#FF4B55]">*</span>
                 </label>
                 <Input
                   value={tenantName}
@@ -1026,8 +1028,8 @@ export function ShopsView() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                    {t("tenants.phone")} <span className="text-rose-500">*</span>
+                  <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
+                    {t("tenants.phone")} <span className="text-[#FF4B55]">*</span>
                   </label>
                   <Input
                     value={tenantPhone}
@@ -1037,7 +1039,7 @@ export function ShopsView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                     {t("tenants.nid")}
                   </label>
                   <Input
@@ -1049,8 +1051,8 @@ export function ShopsView() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-4 h-4 text-black" />
                   <span>{t("tenants.permanentAddress")}</span>
                 </label>
                 <Input
@@ -1062,15 +1064,15 @@ export function ShopsView() {
             </div>
 
             {/* Reference Person Details */}
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
-                <Users className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <div className="pt-3.5 border-t-2 border-black space-y-3">
+              <div className="flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-black">
+                <Users className="w-4 h-4 stroke-[2.5]" />
                 <span>{t("tenants.referenceInfo")}</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                     {t("tenants.referenceName")}
                   </label>
                   <Input
@@ -1080,7 +1082,7 @@ export function ShopsView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                     {t("tenants.referencePhone")}
                   </label>
                   <Input
@@ -1092,7 +1094,7 @@ export function ShopsView() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("tenants.referenceRelation")}
                 </label>
                 <Input
@@ -1104,10 +1106,10 @@ export function ShopsView() {
             </div>
 
             {/* Lease & Financial Terms */}
-            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+            <div className="pt-3.5 border-t-2 border-black space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                     {t("tenants.rentAmount")} (৳)
                   </label>
                   <NumberInput
@@ -1117,9 +1119,9 @@ export function ShopsView() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5 flex items-center justify-between">
                     <span>{t("tenants.advanceDeposit")} (৳)</span>
-                    <span className="text-[10px] font-normal text-teal-600 dark:text-teal-400">
+                    <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-[#FED734] border border-black text-black">
                       {locale === "bn" ? "ভাড়াটিয়া ভিত্তিক চুক্তি" : "Renter-specific"}
                     </span>
                   </label>
@@ -1133,12 +1135,12 @@ export function ShopsView() {
               </div>
             </div>
 
-            <div className="pt-2 flex justify-end gap-2 border-t border-slate-200 dark:border-slate-800">
+            <div className="pt-3 flex justify-end gap-2 border-t-2 border-black">
               <Button type="button" variant="outline" onClick={() => setIsAssignTenantOpen(false)}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmittingTenant}>
-                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 {t("tenants.assignAction")}
               </Button>
             </div>
@@ -1157,20 +1159,20 @@ export function ShopsView() {
         >
           <form onSubmit={handleUpdateRent} className="space-y-4">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                 {t("shops.newRent")} (৳ BDT)
               </label>
               <NumberInput
                 value={newRentBDT}
                 onChange={(val) => setNewRentBDT(val)}
                 prefix="৳"
-                className="text-lg font-bold"
+                className="text-lg font-black"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("shops.effectiveFrom")}
                 </label>
                 <Input
@@ -1180,7 +1182,7 @@ export function ShopsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("common.notes")}
                 </label>
                 <Input
@@ -1194,24 +1196,24 @@ export function ShopsView() {
             {/* Revision history table */}
             {selectedShop.rentHistory?.length > 0 && (
               <div className="pt-2">
-                <p className="text-xs font-semibold text-slate-500 mb-2">{t("shops.rentHistory")}:</p>
-                <div className="space-y-1.5 text-xs bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                <p className="text-xs font-black uppercase tracking-wider text-black mb-2">{t("shops.rentHistory")}:</p>
+                <div className="space-y-1.5 text-xs bg-[#FBF9F5] p-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000]">
                   {selectedShop.rentHistory.map((h: any) => (
-                    <div key={h.id} className="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800 last:border-none">
-                      <span className="text-slate-500">{formatDate(h.effectiveFrom, locale)}</span>
-                      <span className="font-semibold">{formatCurrency(h.rentAmount, locale)}</span>
+                    <div key={h.id} className="flex justify-between py-1.5 border-b-2 border-black/10 last:border-none font-bold text-black">
+                      <span className="text-gray-700">{formatDate(h.effectiveFrom, locale)}</span>
+                      <span className="font-black text-black">{formatCurrency(h.rentAmount, locale)}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="pt-2 flex justify-end gap-2">
+            <div className="pt-3 flex justify-end gap-2 border-t-2 border-black">
               <Button type="button" variant="outline" onClick={() => setIsUpdateRentOpen(false)}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmittingRent}>
-                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 {t("shops.updateRent")}
               </Button>
             </div>
@@ -1245,8 +1247,8 @@ export function ShopsView() {
           isOpen={isEditShopOpen}
           onClose={() => setIsEditShopOpen(false)}
           title={
-            <div className="flex items-center gap-2">
-              <Edit className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <div className="flex items-center gap-2 font-black text-black">
+              <Edit className="w-5 h-5 stroke-[2.5]" />
               <span>{locale === "bn" ? "দোকানের তথ্য সম্পাদনা" : "Edit Shop Information"}</span>
             </div>
           }
@@ -1256,7 +1258,7 @@ export function ShopsView() {
           <form onSubmit={handleSaveShopEdit} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("shops.shopNumber")}
                 </label>
                 <Input
@@ -1267,13 +1269,13 @@ export function ShopsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("shops.floor")}
                 </label>
                 <select
                   value={editFloor}
                   onChange={(e) => setEditFloor(e.target.value)}
-                  className="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-3 py-2 text-xs font-bold bg-[#FBF9F5] text-black border-2 border-black rounded-xl focus:bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000000] shadow-[2px_2px_0px_#000000] transition-all cursor-pointer"
                 >
                   {generateFloorOptions(
                     markets.find((m) => m.id === editingShop.marketId)?.totalFloors || 5,
@@ -1290,7 +1292,7 @@ export function ShopsView() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("shops.size")}
                 </label>
                 <Input
@@ -1300,7 +1302,7 @@ export function ShopsView() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+                <label className="block text-xs font-black uppercase tracking-wider text-black mb-1.5">
                   {t("shops.defaultRent")} (৳ BDT)
                 </label>
                 <NumberInput
@@ -1312,21 +1314,21 @@ export function ShopsView() {
             </div>
 
             {/* Difference Viewer Toggle */}
-            <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+            <div className="pt-3 border-t-2 border-black">
               <button
                 type="button"
                 onClick={() => setShowShopDiffPreview(!showShopDiffPreview)}
-                className="w-full flex items-center justify-between p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#FBF9F5] hover:bg-[#FED734]/20 border-2 border-black shadow-[2px_2px_0px_#000000] text-xs font-black text-black active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
               >
-                <span className="flex items-center gap-1.5">
-                  <Eye className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <span className="flex items-center gap-2">
+                  <Eye className="w-4 h-4 stroke-[2.5]" />
                   <span>
                     {locale === "bn"
                       ? "পার্থক্য প্রিভিউ দেখুন (What have ➔ What will have)"
                       : "Preview Differences (What Have vs What Will Have)"}
                   </span>
                 </span>
-                <span className="text-[11px] text-teal-600 dark:text-teal-400 underline">
+                <span className="text-[11px] font-black underline">
                   {showShopDiffPreview
                     ? locale === "bn" ? "লুকান" : "Hide"
                     : locale === "bn" ? "দেখুন" : "Show"}
@@ -1334,7 +1336,7 @@ export function ShopsView() {
               </button>
 
               {showShopDiffPreview && (
-                <div className="mt-2.5 p-3 rounded-xl bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800">
+                <div className="mt-2.5 p-3 rounded-xl bg-white border-2 border-black shadow-[3px_3px_0px_#000000]">
                   <DiffViewer
                     currentData={{
                       shopNumber: editingShop.shopNumber,
@@ -1355,12 +1357,12 @@ export function ShopsView() {
               )}
             </div>
 
-            <div className="pt-2 flex justify-end gap-2">
+            <div className="pt-3 flex justify-end gap-2 border-t-2 border-black">
               <Button type="button" variant="outline" onClick={() => setIsEditShopOpen(false)}>
                 {t("common.cancel")}
               </Button>
               <Button type="submit" isLoading={isSavingShopEdit}>
-                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 {!isAdmin
                   ? locale === "bn" ? "অনুমোদনের জন্য পাঠান" : "Submit for Approval"
                   : t("common.save")}
@@ -1376,8 +1378,8 @@ export function ShopsView() {
           isOpen={!!deletingShop}
           onClose={() => setDeletingShop(null)}
           title={
-            <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400">
-              <AlertTriangle className="w-5 h-5" />
+            <div className="flex items-center gap-2 text-[#FF4B55] font-black">
+              <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
               <span>{locale === "bn" ? "দোকান মুছে ফেলার নিশ্চিতকরণ" : "Confirm Delete Shop"}</span>
             </div>
           }
@@ -1389,12 +1391,17 @@ export function ShopsView() {
           maxWidth="sm"
         >
           <div className="space-y-4">
-            <p className="text-xs text-slate-500">
-              {locale === "bn"
-                ? "দোকান মুছে ফেললে সম্পর্কিত ইতিহাস সংরক্ষণ রাখা হতে পারে কিন্তু এটি সক্রিয় তালিকা থেকে বাদ পড়বে।"
-                : "Deleting this shop removes it from the active roster."}
-            </p>
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="p-3.5 rounded-xl bg-[#FFEBEF] border-2 border-[#FFA2B2] shadow-[2px_2px_0px_#FF4B55] flex items-start gap-3">
+              <div className="w-6 h-6 rounded-lg bg-white border-2 border-[#FF4B55] text-[#FF4B55] flex items-center justify-center font-black text-xs shrink-0 shadow-[1px_1px_0px_#FF4B55]">
+                !
+              </div>
+              <p className="text-xs text-black font-bold leading-relaxed">
+                {locale === "bn"
+                  ? "দোকান মুছে ফেললে সম্পর্কিত ইতিহাস সংরক্ষণ রাখা হতে পারে কিন্তু এটি সক্রিয় তালিকা থেকে বাদ পড়বে।"
+                  : "Deleting this shop removes it from the active roster. Related history will be retained for audit records."}
+              </p>
+            </div>
+            <div className="flex justify-end gap-2 pt-2 border-t-2 border-black">
               <Button
                 variant="outline"
                 size="sm"
@@ -1409,7 +1416,7 @@ export function ShopsView() {
                 isLoading={isDeletingShop}
                 onClick={handleDeleteShop}
               >
-                <Trash2 className="w-4 h-4 mr-1.5" />
+                <Trash2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 {locale === "bn" ? "মুছে ফেলুন" : "Delete"}
               </Button>
             </div>

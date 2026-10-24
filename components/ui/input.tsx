@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="w-full">
         <div className="relative flex items-center w-full">
           {prefixIcon && (
-            <div className="absolute left-3.5 text-slate-400 dark:text-slate-500 pointer-events-none flex items-center">
+            <div className="absolute left-3.5 text-black pointer-events-none flex items-center">
               {prefixIcon}
             </div>
           )}
@@ -23,22 +23,22 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             disabled={disabled}
             className={cn(
-              "flex h-11 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-base md:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 dark:focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow-xs",
+              "flex h-11 w-full rounded-xl border-2 border-black bg-[#FBF9F5] px-3.5 py-2 text-sm text-black font-bold placeholder:text-gray-400 focus:bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all",
               prefixIcon && "pl-10",
               suffixIcon && "pr-10",
-              error && "border-red-500 focus-visible:ring-red-500 dark:border-red-500",
+              error && "border-[#FF4B55] focus:shadow-[3px_3px_0px_#FF4B55]",
               className
             )}
             ref={ref}
             {...props}
           />
           {suffixIcon && (
-            <div className="absolute right-3.5 text-slate-400 dark:text-slate-500 flex items-center">
+            <div className="absolute right-3.5 text-black flex items-center">
               {suffixIcon}
             </div>
           )}
         </div>
-        {error && <p className="mt-1.5 text-xs text-red-600 dark:text-red-400 font-medium">{error}</p>}
+        {error && <p className="mt-1.5 text-xs text-[#FF4B55] font-black">{error}</p>}
       </div>
     );
   }

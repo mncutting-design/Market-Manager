@@ -279,8 +279,8 @@ export function DiffViewer({
 
   if (displayedItems.length === 0) {
     return (
-      <div className="p-3 sm:p-4 rounded-xl bg-slate-50 dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
-        <CheckCircle2 className="w-4 h-4 text-emerald-500 mx-auto mb-1 inline-block mr-1" />
+      <div className="p-3 sm:p-4 rounded-xl bg-[#FBF9F5] border-2 border-black shadow-[2px_2px_0px_#000000] text-center text-xs font-bold text-black">
+        <CheckCircle2 className="w-4 h-4 text-[#00BA88] mx-auto mb-1 inline-block mr-1 stroke-[2.5]" />
         <span>{locale === "bn" ? "কোনো পরিবর্তন চিহ্নিত হয়নি।" : "No differences detected."}</span>
       </div>
     );
@@ -289,11 +289,11 @@ export function DiffViewer({
   return (
     <div className="space-y-2.5 w-full max-w-full overflow-hidden">
       {title && (
-        <div className="flex items-center justify-between pb-1.5 border-b border-slate-200 dark:border-slate-800 gap-2">
-          <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 truncate">
+        <div className="flex items-center justify-between pb-2 border-b-2 border-black gap-2">
+          <span className="text-xs font-black uppercase tracking-wider text-black truncate">
             {title}
           </span>
-          <span className="text-[10px] sm:text-[11px] font-bold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/70 px-2 py-0.5 rounded-full border border-teal-200 dark:border-teal-800 shrink-0">
+          <span className="text-[10px] sm:text-[11px] font-black text-black bg-[#FED734] px-2.5 py-0.5 rounded-md border-2 border-black shadow-[1.5px_1.5px_0px_#000000] shrink-0">
             {locale === "bn"
               ? `${toBanglaDigits(displayedItems.length)}টি ফিল্ড পরিবর্তন`
               : `${displayedItems.length} fields modified`}
@@ -302,28 +302,28 @@ export function DiffViewer({
       )}
 
       {/* Side by side / Stacked comparison cards - 100% Mobile Responsive */}
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {displayedItems.map((item) => (
           <div
             key={item.key}
-            className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs w-full overflow-hidden"
+            className="p-3 rounded-xl border-2 border-black bg-white shadow-[3px_3px_0px_#000000] w-full overflow-hidden"
           >
             {/* Field header with change pill */}
-            <div className="text-xs font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center justify-between gap-2">
+            <div className="text-xs font-black text-black mb-2 flex items-center justify-between gap-2">
               <span className="truncate">{item.label}</span>
               <div className="flex items-center gap-1.5 shrink-0">
                 {item.delta !== 0 && (
                   <span
-                    className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-extrabold ${
+                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-black border-2 border-black shadow-[1px_1px_0px_#000000] ${
                       item.delta > 0
-                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700"
-                        : "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-700"
+                        ? "bg-[#00BA88] text-white"
+                        : "bg-[#FF4B55] text-white"
                     }`}
                   >
                     {item.delta > 0 ? (
-                      <TrendingUp className="w-3 h-3" />
+                      <TrendingUp className="w-3 h-3 stroke-[2.5]" />
                     ) : (
-                      <TrendingDown className="w-3 h-3" />
+                      <TrendingDown className="w-3 h-3 stroke-[2.5]" />
                     )}
                     <span>
                       {item.delta > 0 ? "+" : ""}
@@ -331,32 +331,32 @@ export function DiffViewer({
                     </span>
                   </span>
                 )}
-                <span className="text-[9px] sm:text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[#FED734] text-black border-2 border-black shadow-[1px_1px_0px_#000000]">
                   {locale === "bn" ? "পরিবর্তিত" : "Modified"}
                 </span>
               </div>
             </div>
 
             {/* WHAT HAVE vs WHAT WILL HAVE - Responsive Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full">
               {/* 🔴 WHAT HAVE (Current) */}
-              <div className="p-2 sm:p-2.5 rounded-lg bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200/90 dark:border-rose-900/60 min-w-0">
-                <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-rose-800 dark:text-rose-300 mb-0.5">
+              <div className="p-2.5 rounded-lg bg-[#FFEBEF] border-2 border-[#FFA2B2] shadow-[2px_2px_0px_#FF4B55] min-w-0">
+                <div className="flex items-center justify-between text-[11px] font-black text-[#FF4B55] mb-0.5">
                   <span className="truncate">{locale === "bn" ? "🔴 বর্তমান (What have)" : "🔴 Current Value"}</span>
-                  <MinusCircle className="w-3.5 h-3.5 text-rose-500 shrink-0 ml-1" />
+                  <MinusCircle className="w-3.5 h-3.5 text-[#FF4B55] shrink-0 ml-1 stroke-[2.5]" />
                 </div>
-                <div className="text-xs sm:text-sm font-medium text-rose-950 dark:text-rose-200 break-words line-through decoration-rose-400 dark:decoration-rose-500">
+                <div className="text-xs sm:text-sm font-bold text-black break-words line-through decoration-[#FF4B55] decoration-2">
                   {formatValue(item.currentValue, item.type)}
                 </div>
               </div>
 
               {/* 🟢 WHAT WILL HAVE (Proposed) */}
-              <div className="p-2 sm:p-2.5 rounded-lg bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200/90 dark:border-emerald-800/60 min-w-0">
-                <div className="flex items-center justify-between text-[10px] sm:text-[11px] font-bold text-emerald-800 dark:text-emerald-300 mb-0.5">
+              <div className="p-2.5 rounded-lg bg-[#E6F8F2] border-2 border-[#00BA88] shadow-[2px_2px_0px_#00BA88] min-w-0">
+                <div className="flex items-center justify-between text-[11px] font-black text-[#00BA88] mb-0.5">
                   <span className="truncate">{locale === "bn" ? "🟢 প্রস্তাবিত (What will have)" : "🟢 Proposed Value"}</span>
-                  <PlusCircle className="w-3.5 h-3.5 text-emerald-500 shrink-0 ml-1" />
+                  <PlusCircle className="w-3.5 h-3.5 text-[#00BA88] shrink-0 ml-1 stroke-[2.5]" />
                 </div>
-                <div className="text-xs sm:text-sm font-extrabold text-emerald-950 dark:text-emerald-200 break-words">
+                <div className="text-xs sm:text-sm font-black text-black break-words">
                   {formatValue(item.proposedValue, item.type)}
                 </div>
               </div>

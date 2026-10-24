@@ -79,7 +79,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <div className="relative flex items-center w-full">
         {prefix && (
-          <span className="absolute left-3 text-slate-500 dark:text-slate-400 font-medium select-none pointer-events-none">
+          <span className="absolute left-3.5 text-black font-black select-none pointer-events-none z-10 text-sm">
             {prefix}
           </span>
         )}
@@ -93,14 +93,14 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           onChange={handleChange}
           placeholder={placeholder ? (locale === "bn" ? toBanglaDigits(placeholder) : placeholder) : ""}
           className={cn(
-            "flex h-11 w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-base md:text-sm text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 dark:focus-visible:ring-teal-500 disabled:cursor-not-allowed disabled:opacity-50 transition-colors shadow-xs",
+            "flex h-11 w-full rounded-xl border-2 border-black bg-[#FBF9F5] px-3.5 py-2 text-sm text-black font-bold placeholder:text-gray-400 focus:bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all",
             prefix && "pl-8",
             suffix && "pr-8",
             className
           )}
         />
         {suffix && (
-          <span className="absolute right-3 text-slate-500 dark:text-slate-400 text-sm font-medium select-none pointer-events-none">
+          <span className="absolute right-3.5 text-black font-black text-sm select-none pointer-events-none z-10">
             {suffix}
           </span>
         )}

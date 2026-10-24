@@ -24,7 +24,7 @@ export function Tabs({
   return (
     <div
       className={cn(
-        "flex p-1 space-x-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl overflow-x-auto no-scrollbar",
+        "flex p-1.5 gap-1.5 bg-[#FBF9F5] border-2 border-black rounded-xl overflow-x-auto no-scrollbar shadow-[2px_2px_0px_#000000]",
         className
       )}
     >
@@ -36,10 +36,10 @@ export function Tabs({
             type="button"
             onClick={() => onChange(tab.id)}
             className={cn(
-              "flex items-center gap-2 px-4 py-2 text-xs md:text-sm font-medium rounded-lg transition-all shrink-0 select-none cursor-pointer min-h-[38px]",
+              "flex items-center gap-2 px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg transition-all shrink-0 select-none cursor-pointer min-h-[38px] active:translate-x-0.5 active:translate-y-0.5",
               isActive
-                ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs font-semibold"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                ? "bg-[#FED734] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+                : "text-gray-700 hover:text-black hover:bg-white border-2 border-transparent hover:border-black font-bold"
             )}
           >
             {tab.icon}
@@ -47,10 +47,10 @@ export function Tabs({
             {tab.count !== undefined && (
               <span
                 className={cn(
-                  "ml-1 px-1.5 py-0.5 text-[10px] rounded-full",
+                  "ml-1 px-1.5 py-0.5 text-[10px] font-black rounded-full border border-black",
                   isActive
-                    ? "bg-teal-100 text-teal-800 dark:bg-teal-900/60 dark:text-teal-300"
-                    : "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-300"
+                    ? "bg-black text-[#FED734]"
+                    : "bg-white text-black"
                 )}
               >
                 {tab.count}

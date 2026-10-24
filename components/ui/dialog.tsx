@@ -53,50 +53,50 @@ export function Dialog({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-hidden">
-      {/* Backdrop */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 overflow-hidden">
+      {/* Crisp Solid Pitch Black Overlay */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in no-print"
+        className="fixed inset-0 bg-black/60 transition-opacity animate-in fade-in no-print"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Dialog box - 100% viewport-fit responsive on mobile and desktop */}
+      {/* Neo-Brutalist Dialog Box */}
       <div
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white dark:bg-[#182234] rounded-2xl p-3 sm:p-5 md:p-6 shadow-2xl border border-slate-200 dark:border-[#2d3b52] animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col",
+          "relative z-50 w-full bg-white text-black rounded-2xl p-4 sm:p-6 border-2 border-black shadow-[8px_8px_0px_#000000] animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col",
           maxWidths[maxWidth] || maxWidths.lg
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between pb-2.5 sm:pb-3 border-b border-slate-100 dark:border-[#2d3b52] gap-2 shrink-0 no-print">
+          <div className="flex items-start justify-between pb-3 sm:pb-4 border-b-2 border-black gap-2 shrink-0 no-print">
             <div className="flex-1 min-w-0 pr-1">
               {title && (
-                <div className="text-sm sm:text-base md:text-lg font-bold text-slate-900 dark:text-white leading-snug truncate">
+                <div className="text-base sm:text-lg md:text-xl font-black text-black leading-snug truncate">
                   {title}
                 </div>
               )}
               {description && (
-                <div className="text-[11px] sm:text-xs md:text-sm text-slate-500 dark:text-slate-300 mt-0.5 line-clamp-2">
+                <div className="text-xs sm:text-sm text-gray-700 font-bold mt-0.5 line-clamp-2">
                   {description}
                 </div>
               )}
             </div>
             <button
               onClick={onClose}
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0 cursor-pointer active:scale-95"
+              className="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl border-2 border-black bg-white hover:bg-[#FED734] shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all shrink-0 cursor-pointer text-black"
               aria-label="Close"
             >
-              <X className="w-4 h-4 sm:w-5 sm:h-5" />
+              <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
             </button>
           </div>
         )}
 
-        {/* Scrollable Content Body with sleek custom scrollbar */}
-        <div className="overflow-y-auto py-2 sm:py-3.5 flex-1 overscroll-contain pr-0.5 sm:pr-1 custom-scrollbar min-h-0">
+        {/* Scrollable Content Body */}
+        <div className="overflow-y-auto py-3 sm:py-4 flex-1 overscroll-contain pr-1 custom-scrollbar min-h-0 text-black">
           {children}
         </div>
       </div>

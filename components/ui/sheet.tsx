@@ -41,7 +41,7 @@ export function Sheet({
     <div className="fixed inset-0 z-50 flex flex-col justify-end">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity animate-in fade-in"
+        className="fixed inset-0 bg-black/60 transition-opacity animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -51,32 +51,32 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white dark:bg-slate-900 rounded-t-3xl p-6 shadow-2xl border-t border-slate-200 dark:border-slate-800 transition-all animate-in slide-in-from-bottom duration-200 max-h-[85vh] flex flex-col",
+          "relative z-50 w-full bg-white rounded-t-3xl p-6 border-t-4 border-x-2 border-black shadow-[0px_-6px_0px_#000000] text-black transition-all animate-in slide-in-from-bottom duration-200 max-h-[85vh] flex flex-col",
           "md:max-w-xl md:mx-auto md:rounded-b-none md:bottom-0"
         )}
       >
         {/* Drag handle */}
-        <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mb-4 shrink-0" />
+        <div className="w-14 h-2 bg-black rounded-full mx-auto mb-4 shrink-0" />
 
-        <div className="flex items-start justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-start justify-between pb-3 border-b-2 border-black">
           <div>
             {title && (
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-black text-black">
                 {title}
               </h2>
             )}
             {description && (
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              <p className="text-xs font-bold text-gray-700 mt-0.5">
                 {description}
               </p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            className="p-1.5 rounded-lg border-2 border-black bg-white hover:bg-[#FED734] text-black shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer min-h-[38px] min-w-[38px] flex items-center justify-center"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 stroke-[2.5]" />
           </button>
         </div>
 
