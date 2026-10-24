@@ -161,7 +161,7 @@ export function getChangePurposeSummary({
     const def = DEFAULT_FIELD_LABELS[key];
     const fieldName = isBn ? def?.bn || key : def?.en || key;
 
-    if (key.toLowerCase().includes("rent") || key === "amount") {
+    if (key.toLowerCase().includes("rent") || key === "amount" || key === "advanceDeposit") {
       const curNum = typeof curVal === "number" ? curVal : 0;
       const propNum = typeof propVal === "number" ? propVal : 0;
       const diff = propNum - curNum;

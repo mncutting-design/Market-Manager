@@ -34,11 +34,13 @@ import {
   Users,
   Camera,
   Layers,
+  Coins,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdjustAdvanceModal } from "./adjust-advance-modal";
 import { SettlementWizardModal } from "./settlement-wizard-modal";
 import { SettlementStatementModal } from "./settlement-statement-modal";
+import { EditJamanotModal } from "./edit-jamanot-modal";
 
 interface TenantProfileModalProps {
   isOpen: boolean;
@@ -68,6 +70,7 @@ export function TenantProfileModal({
   const [isAdjustOpen, setIsAdjustOpen] = useState(false);
   const [isSettleOpen, setIsSettleOpen] = useState(false);
   const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
+  const [isEditJamanotOpen, setIsEditJamanotOpen] = useState(false);
   const [statementData, setStatementData] = useState<any | null>(null);
 
   // Edit Tenant Form State
@@ -79,6 +82,8 @@ export function TenantProfileModal({
   const [editReferencePhone, setEditReferencePhone] = useState("");
   const [editReferenceRelation, setEditReferenceRelation] = useState("");
   const [editRentAmountBDT, setEditRentAmountBDT] = useState<number>(0);
+  const [editAdvanceDepositBDT, setEditAdvanceDepositBDT] = useState<number>(0);
+  const [editAdvanceNote, setEditAdvanceNote] = useState("");
   const [editEffectiveFrom, setEditEffectiveFrom] = useState(new Date().toISOString().slice(0, 10));
   const [editStartDate, setEditStartDate] = useState("");
   const [editEndDate, setEditEndDate] = useState("");
@@ -119,6 +124,7 @@ export function TenantProfileModal({
         setEditReferencePhone(tObj.referencePhone || "");
         setEditReferenceRelation(tObj.referenceRelation || "");
         setEditRentAmountBDT(Math.round((tObj.rentAmount || 0) / 100));
+        setEditAdvanceDepositBDT(Math.round((tObj.advanceDeposit || 0) / 100));
         setEditStartDate(tObj.startDate ? new Date(tObj.startDate).toISOString().slice(0, 10) : "");
         setEditEndDate(tObj.endDate ? new Date(tObj.endDate).toISOString().slice(0, 10) : "");
       }
@@ -168,10 +174,11 @@ export function TenantProfileModal({
           referencePhone: editReferencePhone.trim() || null,
           referenceRelation: editReferenceRelation.trim() || null,
           rentAmount: Math.round(editRentAmountBDT * 100),
+          advanceDeposit: Math.round(editAdvanceDepositBDT * 100),
           effectiveFrom: editEffectiveFrom,
           startDate: editStartDate || undefined,
           endDate: editEndDate || null,
-          note: editNote.trim() || undefined,
+          note: editNote.trim() || editAdvanceNote.trim() || undefined,
         }),
       });
 
@@ -564,6 +571,23 @@ export function TenantProfileModal({
                     />
                   </div>
 
+                  <div>
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1 flex items-center justify-between">
+                      <span>{locale === "bn" ? "নিরাপত্তা জামানত (৳ BDT)" : "Advance Deposit (৳ BDT)"} *</span>
+                      {editAdvanceDepositBDT * 100 !== (tenantData.advanceDeposit || 0) && (
+                        <span className="text-[10px] font-black text-[#00BA88] dark:text-[#34D399]">
+                          {locale === "bn" ? "পরিবর্তিত" : "Changed"}
+                        </span>
+                      )}
+                    </label>
+                    <NumberInput
+                      value={editAdvanceDepositBDT}
+                      onChange={(val) => setEditAdvanceDepositBDT(val)}
+                      prefix="৳"
+                      className="font-black"
+                    />
+                  </div>
+
                   <div className="col-span-1 md:col-span-2">
                     <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.permanentAddress")}
@@ -639,6 +663,30 @@ export function TenantProfileModal({
                             placeholder="e.g. বার্ষিক চুক্তি অনুযায়ী ১০% বৃদ্ধি"
                           />
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Jamanot (Advance Deposit) altered notice */}
+                  {editAdvanceDepositBDT * 100 !== (tenantData.advanceDeposit || 0) && (
+                    <div className="col-span-1 md:col-span-2 p-3 bg-[#E0F2FE] dark:bg-[#0C4A6E] border-2 border-black shadow-[3px_3px_0px_#000000] rounded-xl space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-black text-black dark:text-[#38BDF8]">
+                        <Coins className="w-4 h-4 text-black dark:text-[#38BDF8] stroke-[2.5]" />
+                        <span>
+                          {locale === "bn"
+                            ? `জামানত পরিবর্তন: ৳${((tenantData.advanceDeposit || 0) / 100).toLocaleString()} ➔ ৳${editAdvanceDepositBDT.toLocaleString()} (${isAdmin ? "অ্যাডমিন নিশ্চিতকরণে সরাসরি সমন্বয়" : "প্রধান অ্যাডমিন অনুমোদন আবশ্যক"})`
+                            : `Security Deposit Change: ৳${((tenantData.advanceDeposit || 0) / 100).toLocaleString()} ➔ ৳${editAdvanceDepositBDT.toLocaleString()} (${isAdmin ? "Direct Sync" : "Requires Admin Approval"})`}
+                        </span>
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-black uppercase tracking-wider text-black dark:text-white mb-0.5">
+                          {locale === "bn" ? "জামানত পরিবর্তনের কারণ / রেফারেন্স নোট" : "Reason / Reference for Jamanot Edit"}
+                        </label>
+                        <Input
+                          value={editAdvanceNote}
+                          onChange={(e) => setEditAdvanceNote(e.target.value)}
+                          placeholder={locale === "bn" ? "e.g. চুক্তি নবায়ন / সিকিউরিটি বৃদ্ধি / সমঝোতা" : "e.g. Lease renewal deposit adjustment"}
+                        />
                       </div>
                     </div>
                   )}
@@ -718,6 +766,16 @@ export function TenantProfileModal({
                     <Button
                       size="sm"
                       variant="neo"
+                      onClick={() => setIsEditJamanotOpen(true)}
+                      className="text-xs bg-[#FED734] hover:bg-[#FED734]/90 text-black border-2 border-black font-black shadow-[2px_2px_0px_#000000]"
+                    >
+                      <Coins className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
+                      {locale === "bn" ? "জামানত এডিট (Approval)" : "Edit Jamanot"}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
                       onClick={() => setIsAdjustOpen(true)}
                       className="text-xs"
                     >
@@ -1088,6 +1146,25 @@ export function TenantProfileModal({
         onClose={() => setStatementData(null)}
         settlementData={statementData}
       />
+
+      {/* Edit Jamanot Modal */}
+      {isEditJamanotOpen && tenantData && (
+        <EditJamanotModal
+          isOpen={isEditJamanotOpen}
+          onClose={() => setIsEditJamanotOpen(false)}
+          tenantId={tenantData.id}
+          tenantName={tenantData.name}
+          shopNumber={tenantData.shop?.shopNumber || ""}
+          marketName={tenantData.shop?.market?.name || ""}
+          currentAdvanceDeposit={tenantData.advanceDeposit || 0}
+          currentAdvanceBalance={advanceBalance}
+          onSuccess={async () => {
+            await fetchAllData();
+            if (onRefreshNeeded) onRefreshNeeded();
+            if (onUpdated) onUpdated();
+          }}
+        />
+      )}
     </>
   );
 }

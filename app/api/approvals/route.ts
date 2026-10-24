@@ -403,6 +403,11 @@ export async function PUT(req: Request) {
           });
         }
       } else if (cr.entityType === "TENANT") {
+        const tenantBefore = await tx.tenant.findUnique({
+          where: { id: cr.entityId },
+          select: { advanceDeposit: true },
+        });
+
         await tx.tenant.update({
           where: { id: cr.entityId },
           data: {
@@ -413,6 +418,27 @@ export async function PUT(req: Request) {
             ...(proposed.advanceDeposit !== undefined && { advanceDeposit: Math.round(Number(proposed.advanceDeposit)) }),
           },
         });
+
+        if (proposed.advanceDeposit !== undefined && tenantBefore) {
+          const newAdvance = Math.round(Number(proposed.advanceDeposit));
+          const oldAdvance = tenantBefore.advanceDeposit;
+          const delta = newAdvance - oldAdvance;
+          if (delta !== 0) {
+            await tx.advanceTransaction.create({
+              data: {
+                tenantId: cr.entityId,
+                type: delta > 0 ? "TOPUP" : "DEDUCTION",
+                amount: Math.abs(delta),
+                reason: proposed.note?.trim() || (delta > 0
+                  ? `Admin approved jamanot edit: +৳${(delta / 100).toLocaleString()}`
+                  : `Admin approved jamanot deduction: -৳${(Math.abs(delta) / 100).toLocaleString()}`),
+                createdBy: session.name || "Admin",
+                createdByName: session.name || "Admin",
+                enteredById: session.id,
+              },
+            });
+          }
+        }
       } else if (cr.entityType === "BILL") {
         if (cr.actionType === "DELETE_ITEM" && proposed.itemId) {
           try {

@@ -63,6 +63,7 @@ export async function PUT(
       photoUrl,
       documentUrl,
       rentAmount,
+      advanceDeposit,
       effectiveFrom,
       startDate,
       endDate,
@@ -93,6 +94,10 @@ export async function PUT(
 
     // If Manager edits, submit as ChangeRequest for admin approval
     if (!isAdmin) {
+      const isJamanotChange =
+        advanceDeposit !== undefined &&
+        Math.round(Number(advanceDeposit)) !== existing.advanceDeposit;
+
       const cr = await prisma.changeRequest.create({
         data: {
           entityType: "TENANT",
@@ -109,16 +114,18 @@ export async function PUT(
             referencePhone: existing.referencePhone,
             referenceRelation: existing.referenceRelation,
             rentAmount: existing.rentAmount,
+            advanceDeposit: existing.advanceDeposit,
           }),
           proposedData: JSON.stringify({
-            name: name?.trim(),
-            phone: phone?.trim(),
-            nid: nid?.trim() || null,
-            permanentAddress: permanentAddress?.trim() || null,
-            referenceName: referenceName?.trim() || null,
-            referencePhone: referencePhone?.trim() || null,
-            referenceRelation: referenceRelation?.trim() || null,
+            name: name !== undefined ? name?.trim() : undefined,
+            phone: phone !== undefined ? phone?.trim() : undefined,
+            nid: nid !== undefined ? nid?.trim() || null : undefined,
+            permanentAddress: permanentAddress !== undefined ? permanentAddress?.trim() || null : undefined,
+            referenceName: referenceName !== undefined ? referenceName?.trim() || null : undefined,
+            referencePhone: referencePhone !== undefined ? referencePhone?.trim() || null : undefined,
+            referenceRelation: referenceRelation !== undefined ? referenceRelation?.trim() || null : undefined,
             rentAmount: rentAmount !== undefined ? Math.round(Number(rentAmount)) : undefined,
+            advanceDeposit: advanceDeposit !== undefined ? Math.round(Number(advanceDeposit)) : undefined,
             effectiveFrom: effectiveFrom || undefined,
             note: note?.trim() || undefined,
           }),
@@ -130,7 +137,9 @@ export async function PUT(
       return NextResponse.json({
         success: true,
         requiresApproval: true,
-        message: "ভাড়াটিয়ার তথ্য পরিবর্তনের আবেদন অনুমোদনের জন্য পাঠানো হয়েছে",
+        message: isJamanotChange
+          ? "জামানতের পরিমাণ পরিবর্তনের আবেদন প্রধান অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে"
+          : "ভাড়াটিয়ার তথ্য পরিবর্তনের আবেদন অনুমোদনের জন্য পাঠানো হয়েছে",
         changeRequest: cr,
       });
     }
@@ -207,6 +216,19 @@ export async function PUT(
       }
     }
 
+    // Check advance deposit (jamanot) changes
+    let advanceDepositChanged = false;
+    let newAdvanceDepositPaisa = existing.advanceDeposit;
+    if (advanceDeposit !== undefined) {
+      const parsed = Math.round(Number(advanceDeposit));
+      if (parsed >= 0 && parsed !== existing.advanceDeposit) {
+        advanceDepositChanged = true;
+        newAdvanceDepositPaisa = parsed;
+        diffs.advanceDeposit = { old: existing.advanceDeposit, new: newAdvanceDepositPaisa };
+        updatedData.advanceDeposit = newAdvanceDepositPaisa;
+      }
+    }
+
     const updated = await prisma.$transaction(async (tx) => {
       const resTenant = await tx.tenant.update({
         where: { id },
@@ -235,6 +257,26 @@ export async function PUT(
           where: { id: existing.shopId },
           data: { defaultRent: newRentPaisa },
         });
+      }
+
+      // Record advance ledger transaction if advance deposit was edited
+      if (advanceDepositChanged) {
+        const delta = newAdvanceDepositPaisa - existing.advanceDeposit;
+        if (delta !== 0) {
+          await tx.advanceTransaction.create({
+            data: {
+              tenantId: existing.id,
+              type: delta > 0 ? "TOPUP" : "DEDUCTION",
+              amount: Math.abs(delta),
+              reason: note?.trim() || (delta > 0
+                ? `Admin updated security deposit: +৳${(delta / 100).toLocaleString()}`
+                : `Admin adjusted security deposit: -৳${(Math.abs(delta) / 100).toLocaleString()}`),
+              createdBy: session.name || "Admin",
+              createdByName: session.name || "Admin",
+              enteredById: session.id,
+            },
+          });
+        }
       }
 
       // Write audit log entry for every edit
