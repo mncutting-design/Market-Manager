@@ -30,7 +30,7 @@ export function FloatingActionButton() {
               setIsOpen(false);
               openQuickCollect();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border-2 border-black text-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black text-black dark:text-white shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] dark:hover:bg-[#262830] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
           >
             <div className="w-8 h-8 rounded-lg border-2 border-black bg-[#00BA88] text-white flex items-center justify-center shadow-[1px_1px_0px_#000000]">
               <Wallet className="w-4 h-4 stroke-[2.5]" />
@@ -44,7 +44,7 @@ export function FloatingActionButton() {
               setIsOpen(false);
               openAddExpense();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border-2 border-black text-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black text-black dark:text-white shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] dark:hover:bg-[#262830] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
           >
             <div className="w-8 h-8 rounded-lg border-2 border-black bg-[#F59E0B] text-black flex items-center justify-center shadow-[1px_1px_0px_#000000]">
               <Wrench className="w-4 h-4 stroke-[2.5]" />
@@ -58,7 +58,7 @@ export function FloatingActionButton() {
               setIsOpen(false);
               openGenerateBills();
             }}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white border-2 border-black text-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
+            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black text-black dark:text-white shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] dark:hover:bg-[#262830] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#000000] transition-all font-black text-xs md:text-sm cursor-pointer min-h-[44px]"
           >
             <div className="w-8 h-8 rounded-lg border-2 border-black bg-[#FED734] text-black flex items-center justify-center shadow-[1px_1px_0px_#000000]">
               <Receipt className="w-4 h-4 stroke-[2.5]" />

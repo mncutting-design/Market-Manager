@@ -165,14 +165,14 @@ export function UrgentApprovalModal() {
       maxWidth="2xl"
       title={
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-500 border border-amber-500/40 flex items-center justify-center animate-bounce shrink-0">
-            <BellRing className="w-5 h-5 text-amber-500" />
+          <div className="w-9 h-9 rounded-lg bg-[#FED734] border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_#000000] shrink-0">
+            <BellRing className="w-5 h-5 text-black stroke-[2.5]" />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+            <h3 className="text-base sm:text-lg font-black text-black dark:text-white leading-tight">
               {locale === "bn" ? "জরুরি অনুমোদনের আবেদন এসেছে!" : "New Approval Request Received!"}
             </h3>
-            <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+            <p className="text-[11px] text-neutral-600 dark:text-neutral-400 font-bold">
               {locale === "bn"
                 ? "ম্যানেজার কর্তৃক পরিবর্তন প্রস্তাব — এখনই অনুমোদন, বাতিল অথবা বাদ দিন"
                 : "Manager proposed modifications — Approve, Reject, or Skip for now"}
@@ -183,13 +183,13 @@ export function UrgentApprovalModal() {
     >
       <div className="space-y-3.5 w-full">
         {/* Request Metadata Card */}
-        <div className="p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+        <div className="p-3 sm:p-4 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-[4px_4px_0px_#000000]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-base font-extrabold text-slate-900 dark:text-white">
+              <span className="text-base font-black text-black dark:text-white">
                 {activeRequest.entityTitle || `${activeRequest.entityType} ${activeRequest.entityId}`}
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+              <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#FED734] text-black border-2 border-black shadow-[1px_1px_0px_#000000]">
                 {activeRequest.actionType === "RENT_REVISION"
                   ? locale === "bn" ? "ভাড়া সংশোধন" : "Rent Revision"
                   : activeRequest.actionType === "DELETE"
@@ -197,7 +197,7 @@ export function UrgentApprovalModal() {
                   : locale === "bn" ? "সম্পাদনা আবেদন" : "Edit Request"}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold mt-1">
               {locale === "bn"
                 ? `প্রস্তাবক: ${activeRequest.requestedBy} (${activeRequest.requesterRole}) • সময়: ${formatDate(activeRequest.createdAt, locale)}`
                 : `Requested by: ${activeRequest.requestedBy} (${activeRequest.requesterRole}) • ${formatDate(activeRequest.createdAt, locale)}`}
@@ -205,21 +205,21 @@ export function UrgentApprovalModal() {
           </div>
 
           <div className="flex items-center gap-1.5 self-start sm:self-center shrink-0">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 border border-amber-500/30">
-              <Clock className="w-3.5 h-3.5 animate-spin" />
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded text-xs font-black bg-[#FED734] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]">
+              <Clock className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>{locale === "bn" ? "অনুমোদন অপেক্ষমান" : "Pending Approval"}</span>
             </span>
           </div>
         </div>
 
         {/* 🎯 PURPOSE & HIGHLIGHTS OF CHANGE BANNER */}
-        <div className="p-3.5 rounded-2xl bg-gradient-to-r from-teal-500/15 via-emerald-500/10 to-teal-500/5 border border-teal-500/30 text-xs space-y-2">
-          <div className="flex items-center gap-1.5 font-black text-teal-800 dark:text-teal-300 text-sm">
-            <Target className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-xs space-y-2 shadow-[2px_2px_0px_#000000]">
+          <div className="flex items-center gap-1.5 font-black text-black dark:text-white text-sm">
+            <Target className="w-4 h-4 text-black dark:text-[#FED734] shrink-0 stroke-[2.5]" />
             <span>{locale === "bn" ? "পরিবর্তনের উদ্দেশ্য ও সারসংক্ষেপ:" : "Purpose of Change:"}</span>
           </div>
           {purpose.bullets.length > 0 ? (
-            <ul className="space-y-1.5 pl-5 list-disc text-slate-800 dark:text-slate-100 font-semibold text-xs sm:text-sm">
+            <ul className="space-y-1.5 pl-5 list-disc text-black dark:text-white font-bold text-xs sm:text-sm">
               {purpose.bullets.map((b, idx) => (
                 <li key={idx} className="leading-snug">
                   {b}
@@ -227,7 +227,7 @@ export function UrgentApprovalModal() {
               ))}
             </ul>
           ) : (
-            <p className="text-slate-700 dark:text-slate-200 font-medium">
+            <p className="text-neutral-600 dark:text-neutral-300 font-bold">
               {locale === "bn"
                 ? "ম্যানেজার কর্তৃক তথ্য সংশোধনের আবেদন।"
                 : "Manager requested update for this record."}
@@ -236,7 +236,7 @@ export function UrgentApprovalModal() {
         </div>
 
         {/* 👁️ PREVIEW WHAT JUST CHANGED (STRICTLY MODIFIED FIELDS ONLY) */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 p-2 sm:p-3 bg-white dark:bg-slate-950 shadow-2xs">
+        <div className="rounded-xl border-2 border-black p-2 sm:p-3 bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
           <DiffViewer
             currentData={activeRequest.currentDataParsed}
             proposedData={activeRequest.proposedDataParsed}
@@ -247,8 +247,8 @@ export function UrgentApprovalModal() {
 
         {/* Rejection Note Input Box */}
         {isRejecting && (
-          <div className="p-3 rounded-xl bg-rose-50/70 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 space-y-2 animate-in fade-in">
-            <label className="block text-xs font-bold text-rose-800 dark:text-rose-300">
+          <div className="p-3 rounded-xl bg-[#FFEBEF] dark:bg-[#2F1418] border-2 border-black space-y-2 shadow-[3px_3px_0px_#000000] animate-in fade-in">
+            <label className="block text-xs font-black text-black dark:text-white">
               {locale === "bn" ? "বাতিল করার কারণ (ঐচ্ছিক):" : "Rejection Reason (Optional):"}
             </label>
             <Input
@@ -261,16 +261,16 @@ export function UrgentApprovalModal() {
         )}
 
         {/* ACTION BUTTONS: SKIP NOW, REJECT, OR APPROVE ON TIME */}
-        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-t border-slate-200 dark:border-slate-800">
+        <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-t-2 border-black">
           {/* Skip for Now button */}
           <Button
             type="button"
             variant="outline"
             onClick={handleSkip}
             disabled={isProcessing}
-            className="text-slate-600 dark:text-slate-300 border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 min-h-[44px] text-xs font-bold justify-center cursor-pointer order-3 sm:order-1"
+            className="text-black dark:text-white border-2 border-black min-h-[44px] text-xs font-black justify-center shadow-[2px_2px_0px_#000000] order-3 sm:order-1"
           >
-            <SkipForward className="w-4 h-4 mr-1.5 text-slate-400" />
+            <SkipForward className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             <span>{locale === "bn" ? "এখন বাদ দিন (Skip for Now)" : "Skip for Now"}</span>
           </Button>
 
@@ -279,12 +279,12 @@ export function UrgentApprovalModal() {
             {!isRejecting ? (
               <Button
                 type="button"
-                variant="outline"
+                variant="destructive"
                 onClick={() => setIsRejecting(true)}
                 disabled={isProcessing}
-                className="text-rose-600 dark:text-rose-400 border-rose-300 dark:border-rose-900 hover:bg-rose-50 dark:hover:bg-rose-950/40 min-h-[44px] text-xs font-bold flex-1 sm:flex-initial justify-center cursor-pointer"
+                className="min-h-[44px] text-xs font-black flex-1 sm:flex-initial justify-center shadow-[2px_2px_0px_#000000]"
               >
-                <XCircle className="w-4 h-4 mr-1" />
+                <XCircle className="w-4 h-4 mr-1 stroke-[2.5]" />
                 <span>{locale === "bn" ? "বাতিল (Reject)" : "Reject"}</span>
               </Button>
             ) : (
@@ -293,20 +293,21 @@ export function UrgentApprovalModal() {
                 variant="destructive"
                 onClick={handleReject}
                 isLoading={isProcessing}
-                className="min-h-[44px] text-xs font-bold flex-1 sm:flex-initial justify-center cursor-pointer"
+                className="min-h-[44px] text-xs font-black flex-1 sm:flex-initial justify-center shadow-[2px_2px_0px_#000000]"
               >
-                <XCircle className="w-4 h-4 mr-1" />
+                <XCircle className="w-4 h-4 mr-1 stroke-[2.5]" />
                 <span>{locale === "bn" ? "নিশ্চিত বাতিল করুন" : "Confirm Reject"}</span>
               </Button>
             )}
 
             <Button
               type="button"
+              variant="neo"
               onClick={handleApprove}
               isLoading={isProcessing}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold shadow-lg shadow-emerald-600/30 min-h-[44px] text-xs sm:text-sm flex-1 sm:flex-initial justify-center cursor-pointer"
+              className="bg-[#00BA88] hover:bg-[#009b72] text-white min-h-[44px] text-xs sm:text-sm flex-1 sm:flex-initial justify-center shadow-[3px_3px_0px_#000000] font-black"
             >
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
               <span>{locale === "bn" ? "অনুমোদন করুন (Approve Now)" : "Approve Now"}</span>
             </Button>
           </div>

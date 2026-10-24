@@ -49,7 +49,7 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F4F1EA] border-t-2 border-black shadow-[0px_-4px_0px_#000000] px-2 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#F4F1EA] dark:bg-[#121214] border-t-2 border-black shadow-[0px_-4px_0px_#000000] px-2 pb-[max(0.25rem,env(safe-area-inset-bottom,0px))]">
         <div className="flex items-center justify-around h-16 gap-1">
           {mainTabs.map((tab) => {
             const Icon = tab.icon;
@@ -63,7 +63,7 @@ export function BottomNav() {
                   "flex flex-col items-center justify-center flex-1 h-12 py-1 min-h-[44px] transition-all cursor-pointer rounded-xl",
                   isActive
                     ? "bg-[#FED734] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
-                    : "text-gray-800 hover:text-black hover:bg-white/80 font-bold border-2 border-transparent hover:border-black"
+                    : "text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-[#1E1F24] font-bold border-2 border-transparent hover:border-black"
                 )}
               >
                 <Icon className="w-4 h-4 mb-0.5 stroke-[2.5]" />
@@ -81,7 +81,7 @@ export function BottomNav() {
               "flex flex-col items-center justify-center flex-1 h-12 py-1 min-h-[44px] transition-all cursor-pointer rounded-xl",
               moreItems.some((item) => item.id === activeTab)
                 ? "bg-[#FED734] text-black font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
-                : "text-gray-800 hover:text-black hover:bg-white/80 font-bold border-2 border-transparent hover:border-black"
+                : "text-gray-800 dark:text-gray-200 hover:text-black dark:hover:text-white hover:bg-white/80 dark:hover:bg-[#1E1F24] font-bold border-2 border-transparent hover:border-black"
             )}
           >
             <Menu className="w-4 h-4 mb-0.5 stroke-[2.5]" />
@@ -110,10 +110,10 @@ export function BottomNav() {
                   "flex items-center gap-3.5 p-3 rounded-xl border-2 border-black transition-all text-left min-h-[48px] cursor-pointer shadow-[2px_2px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5",
                   isActive
                     ? "bg-[#FED734] text-black font-black"
-                    : "bg-white text-black hover:bg-[#FBF9F5] font-bold"
+                    : "bg-white dark:bg-[#1E1F24] text-black dark:text-white hover:bg-[#FBF9F5] dark:hover:bg-[#262830] font-bold"
                 )}
               >
-                <div className="w-9 h-9 rounded-lg border-2 border-black bg-white text-black flex items-center justify-center shrink-0 shadow-[1px_1px_0px_#000000]">
+                <div className="w-9 h-9 rounded-lg border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white flex items-center justify-center shrink-0 shadow-[1px_1px_0px_#000000]">
                   <Icon className="w-5 h-5 stroke-[2.5]" />
                 </div>
                 <div className="flex-1">

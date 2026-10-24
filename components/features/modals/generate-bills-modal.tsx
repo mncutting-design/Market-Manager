@@ -138,7 +138,7 @@ export function GenerateBillsModal() {
 
         {/* Payment Due Day */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
             {t("settings.billDueDay")}
           </label>
           <Input
@@ -148,20 +148,20 @@ export function GenerateBillsModal() {
             value={dueDay}
             onChange={(e) => setDueDay(Number(e.target.value))}
           />
-          <p className="text-xs text-slate-500 mt-1">{t("settings.billDueDayDesc")}</p>
+          <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold mt-1">{t("settings.billDueDayDesc")}</p>
         </div>
 
         {/* Info card - Strictly manual additional charges */}
-        <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-700 dark:text-slate-300 space-y-1.5">
-          <p className="font-semibold text-teal-700 dark:text-teal-400 flex items-center gap-1.5">
-            <CheckCircle2 className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
+        <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-xs text-black dark:text-white space-y-1.5 shadow-[2px_2px_0px_#000000]">
+          <p className="font-black text-black dark:text-white flex items-center gap-1.5">
+            <CheckCircle2 className="w-4 h-4 text-black dark:text-[#FED734] shrink-0 stroke-[2.5]" />
             <span>
               {locale === "bn"
                 ? "শুধুমাত্র নির্ধারিত ভাড়া বিল তৈরি হবে (ম্যানুয়াল চার্জ ব্যবস্থা)"
                 : "Base Rent Only (Manual Charges System)"}
             </span>
           </p>
-          <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
+          <p className="text-[11px] text-neutral-600 dark:text-neutral-300 font-bold leading-relaxed">
             {locale === "bn"
               ? "কোনো অতিরিক্ত চার্জ স্বয়ংক্রিয়ভাবে যোগ হবে না। প্রতিটি দোকানের কেবল চুক্তি অনুযায়ী নির্ধারিত মূল ভাড়া বিল তৈরি হবে। অতিরিক্ত যে কোনো খরচ (যেমন: বিদ্যুৎ, পানি, সার্ভিস, জেনারেটর ইত্যাদি) আপনি প্রয়োজন অনুযায়ী 'অতিরিক্ত খরচ' বাটনে চাপ দিয়ে সম্পূর্ণ ম্যানুয়ালি যোগ করতে পারবেন।"
               : "No charges will be added automatically. Bills will only include the agreed base rent. Any extra costs (e.g. electricity, water, service, generator) can be added manually as needed via the 'Extra Costs' button on each bill."}
@@ -177,8 +177,8 @@ export function GenerateBillsModal() {
           >
             {t("common.cancel")}
           </Button>
-          <Button type="submit" isLoading={isGenerating}>
-            <Receipt className="w-4 h-4 mr-1.5" />
+          <Button type="submit" variant="neo" isLoading={isGenerating}>
+            <Receipt className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("billing.generateAction")}
           </Button>
         </div>

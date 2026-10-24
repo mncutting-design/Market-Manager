@@ -148,12 +148,12 @@ export function Sidebar() {
             {/* Section Header */}
             {!isSidebarMini ? (
               <div className="px-2 pt-1 pb-0.5">
-                <p className="text-[10px] font-black tracking-wider uppercase text-gray-600">
+                <p className="text-[10px] font-black tracking-wider uppercase text-gray-700 dark:text-gray-300">
                   {locale === "bn" ? section.titleBn : section.titleEn}
                 </p>
               </div>
             ) : sIdx > 0 ? (
-              <div className="my-2 mx-2 h-0.5 bg-black/10" />
+              <div className="my-2 mx-2 h-0.5 bg-black/10 dark:bg-white/20" />
             ) : null}
 
             {/* Section Items */}

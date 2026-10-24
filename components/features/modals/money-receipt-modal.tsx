@@ -483,9 +483,9 @@ export function MoneyReceiptModal() {
       isOpen={!!activeReceipt}
       onClose={() => setActiveReceipt(null)}
       title={
-        <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-          <FileText className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
-          <span className="truncate">
+        <div className="flex items-center gap-2 text-black dark:text-white">
+          <FileText className="w-5 h-5 text-black dark:text-[#FED734] shrink-0" />
+          <span className="truncate font-black">
             {receiptLang === "bn"
               ? "প্রফেশনাল ডাবল কাউন্টারফয়েল মানি রিসিট"
               : "Professional 2-Part Counterfoil Money Receipt"}
@@ -501,24 +501,24 @@ export function MoneyReceiptModal() {
     >
       <div className="space-y-3 sm:space-y-4">
         {/* Top Control Bar: Language Switcher & Mobile View Toggle */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-2 bg-slate-100 dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 no-print">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-2.5 bg-white dark:bg-[#1E1F24] rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] no-print">
           {/* Language Toggle */}
           <div className="flex items-center justify-between sm:justify-start gap-2">
             <div className="flex items-center gap-1.5">
-              <Globe className="w-4 h-4 text-teal-600 dark:text-teal-400 shrink-0" />
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+              <Globe className="w-4 h-4 text-black dark:text-[#FED734] shrink-0" />
+              <span className="text-xs font-black uppercase tracking-wider text-black dark:text-white">
                 {receiptLang === "bn" ? "ভাষা:" : "Language:"}
               </span>
             </div>
 
-            <div className="flex items-center bg-white dark:bg-slate-800 rounded-md p-0.5 border border-slate-300 dark:border-slate-700 shadow-2xs">
+            <div className="flex items-center bg-[#F4F1EA] dark:bg-[#262830] rounded-lg p-0.5 border-2 border-black">
               <button
                 type="button"
                 onClick={() => setReceiptLang("bn")}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-black transition-all cursor-pointer ${
                   receiptLang === "bn"
-                    ? "bg-teal-600 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[#FED734] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]"
+                    : "text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
                 }`}
               >
                 বাংলা
@@ -526,10 +526,10 @@ export function MoneyReceiptModal() {
               <button
                 type="button"
                 onClick={() => setReceiptLang("en")}
-                className={`px-2.5 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1 rounded-md text-xs font-black transition-all cursor-pointer ${
                   receiptLang === "en"
-                    ? "bg-teal-600 text-white shadow-xs"
-                    : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[#FED734] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]"
+                    : "text-black/70 dark:text-white/70 hover:text-black dark:hover:text-white"
                 }`}
               >
                 English
@@ -538,8 +538,8 @@ export function MoneyReceiptModal() {
           </div>
 
           {/* Mobile Screen Preview Switcher (Only visible on small phones) */}
-          <div className="flex sm:hidden items-center justify-between pt-1.5 border-t sm:border-t-0 border-slate-200 dark:border-slate-800">
-            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-400 flex items-center gap-1">
+          <div className="flex sm:hidden items-center justify-between pt-1.5 border-t-2 border-black">
+            <span className="text-[11px] font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1">
               <Eye className="w-3.5 h-3.5" />
               {receiptLang === "bn" ? "মোবাইল ভিউ:" : "Mobile View:"}
             </span>
@@ -547,10 +547,10 @@ export function MoneyReceiptModal() {
               <button
                 type="button"
                 onClick={() => setMobileView("DUAL")}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-black cursor-pointer border-2 border-black ${
                   mobileView === "DUAL"
-                    ? "bg-teal-600 text-white"
-                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    ? "bg-[#FED734] text-black shadow-[1px_1px_0px_#000000]"
+                    : "bg-white dark:bg-[#262830] text-black dark:text-white"
                 }`}
               >
                 {receiptLang === "bn" ? "উভয় অংশ" : "2-Part"}
@@ -558,10 +558,10 @@ export function MoneyReceiptModal() {
               <button
                 type="button"
                 onClick={() => setMobileView("OWNER")}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-black cursor-pointer border-2 border-black ${
                   mobileView === "OWNER"
-                    ? "bg-teal-600 text-white"
-                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    ? "bg-[#FED734] text-black shadow-[1px_1px_0px_#000000]"
+                    : "bg-white dark:bg-[#262830] text-black dark:text-white"
                 }`}
               >
                 {receiptLang === "bn" ? "মালিক" : "Owner"}
@@ -569,10 +569,10 @@ export function MoneyReceiptModal() {
               <button
                 type="button"
                 onClick={() => setMobileView("TENANT")}
-                className={`px-2 py-0.5 rounded text-[11px] font-bold cursor-pointer ${
+                className={`px-2 py-0.5 rounded-md text-[11px] font-black cursor-pointer border-2 border-black ${
                   mobileView === "TENANT"
-                    ? "bg-teal-600 text-white"
-                    : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700"
+                    ? "bg-[#FED734] text-black shadow-[1px_1px_0px_#000000]"
+                    : "bg-white dark:bg-[#262830] text-black dark:text-white"
                 }`}
               >
                 {receiptLang === "bn" ? "ভাড়াটিয়া" : "Tenant"}
@@ -586,11 +586,11 @@ export function MoneyReceiptModal() {
           <div
             ref={receiptContainerRef}
             id="real-money-receipt"
-            className="real-money-receipt-voucher bg-white text-black border-2 border-black shadow-md min-w-[680px] sm:min-w-[760px] max-w-4xl mx-auto rounded-xs grid grid-cols-2 relative"
+            className="real-money-receipt-voucher bg-white text-black border-2 border-black shadow-[4px_4px_0px_#000000] min-w-[680px] sm:min-w-[760px] max-w-4xl mx-auto rounded-xl grid grid-cols-2 relative"
             style={{ fontFamily: "'Anek Bangla', 'Inter', sans-serif", backgroundColor: "#ffffff" }}
           >
             {/* Center Scissor Icon Indicator */}
-            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white px-1 z-10 hidden sm:flex items-center gap-0.5 text-[10px] text-black border border-black/20 rounded">
+            <div className="absolute top-2 left-1/2 -translate-x-1/2 bg-white px-1.5 py-0.5 z-10 hidden sm:flex items-center gap-0.5 text-[10px] text-black border-2 border-black rounded shadow-[1px_1px_0px_#000000]">
               <Scissors className="w-3 h-3 text-black" />
             </div>
 
@@ -603,8 +603,8 @@ export function MoneyReceiptModal() {
 
           {/* Single-Copy Preview for Mobile (if selected by user on small phone) */}
           {mobileView !== "DUAL" && (
-            <div className="sm:hidden mt-2 bg-white text-black border-2 border-black rounded-xs shadow-md">
-              <div className="p-1 bg-slate-900 text-white text-[10px] font-bold text-center">
+            <div className="sm:hidden mt-2 bg-white text-black border-2 border-black rounded-xl shadow-[3px_3px_0px_#000000]">
+              <div className="p-1.5 bg-[#FED734] text-black text-[10px] font-black border-b-2 border-black text-center uppercase tracking-wider">
                 {mobileView === "OWNER"
                   ? (receiptLang === "bn" ? "মোবাইল স্ক্রিন প্রিভিউ: মালিকের অংশ" : "Mobile Screen Preview: Owner's Copy")
                   : (receiptLang === "bn" ? "মোবাইল স্ক্রিন প্রিভিউ: ভাড়াটিয়ার অংশ" : "Mobile Screen Preview: Tenant's Copy")}
@@ -615,9 +615,9 @@ export function MoneyReceiptModal() {
         </div>
 
         {/* Bottom Actions Bar (Hidden during Print) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2.5 sm:pt-3 border-t border-slate-200 dark:border-slate-800 no-print">
-          <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t-2 border-black no-print">
+          <div className="flex items-center gap-2 text-xs font-black text-black dark:text-white">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#00BA88] border border-black animate-pulse"></span>
             <span>
               {receiptLang === "bn"
                 ? "ডাবল কাউন্টারফয়েল • প্রিভিউ, প্রিন্ট ও ডাউনলোড ১০০% নিখুঁত"
@@ -643,7 +643,7 @@ export function MoneyReceiptModal() {
               className="flex-1 sm:flex-none cursor-pointer"
               title={receiptLang === "bn" ? "ছবি (PNG) ডাউনলোড করুন" : "Download PNG Image"}
             >
-              <FileDown className="w-4 h-4 mr-1.5 text-blue-600 dark:text-blue-400 shrink-0" />
+              <FileDown className="w-4 h-4 mr-1.5 text-black dark:text-white shrink-0" />
               {receiptLang === "bn" ? "ছবি (PNG)" : "Image"}
             </Button>
 
@@ -655,12 +655,12 @@ export function MoneyReceiptModal() {
               className="flex-1 sm:flex-none cursor-pointer"
               title={receiptLang === "bn" ? "পিডিএফ ডাউনলোড করুন" : "Download PDF"}
             >
-              <Download className="w-4 h-4 mr-1.5 text-teal-600 dark:text-teal-400 shrink-0" />
+              <Download className="w-4 h-4 mr-1.5 text-black dark:text-white shrink-0" />
               {receiptLang === "bn" ? "পিডিএফ (PDF)" : "PDF"}
             </Button>
 
             <Button
-              variant="primary"
+              variant="neo"
               size="sm"
               onClick={handlePrintReceipt}
               className="w-full sm:w-auto cursor-pointer"
@@ -674,3 +674,4 @@ export function MoneyReceiptModal() {
     </Dialog>
   );
 }
+

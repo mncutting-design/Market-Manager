@@ -211,28 +211,28 @@ export function SettlementWizardModal({
       ) : (
         <div className="space-y-6">
           {/* Step Progress Bar */}
-          <div className="flex items-center justify-between border-b border-slate-200 dark:border-[#2d3b52] pb-4">
+          <div className="flex items-center justify-between border-b-2 border-black pb-4">
             {[1, 2, 3, 4].map((stepNum) => {
               const isActive = step === stepNum;
               const isDone = step > stepNum;
               return (
                 <div key={stepNum} className="flex items-center gap-2">
                   <div
-                    className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs transition-all ${
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-black text-xs border-2 border-black transition-all ${
                       isActive
-                        ? "bg-teal-600 text-white ring-4 ring-teal-500/20"
+                        ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000] -translate-y-0.5"
                         : isDone
-                        ? "bg-emerald-600 text-white"
-                        : "bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        ? "bg-[#00BA88] text-white shadow-[2px_2px_0px_#000000]"
+                        : "bg-white dark:bg-[#1E1F24] text-neutral-500 shadow-[1px_1px_0px_#000000]"
                     }`}
                   >
                     {isDone ? "✓" : stepNum}
                   </div>
                   <span
-                    className={`text-xs font-semibold hidden sm:inline ${
+                    className={`text-xs font-black hidden sm:inline ${
                       isActive
-                        ? "text-teal-600 dark:text-teal-400 font-bold"
-                        : "text-slate-500 dark:text-slate-400"
+                        ? "text-black dark:text-white"
+                        : "text-neutral-500 dark:text-neutral-400"
                     }`}
                   >
                     {stepNum === 1
@@ -243,7 +243,7 @@ export function SettlementWizardModal({
                       ? t("settlement.step3Title")
                       : t("settlement.step4Title")}
                   </span>
-                  {stepNum < 4 && <ChevronRight className="w-3.5 h-3.5 text-slate-400 mx-1" />}
+                  {stepNum < 4 && <ChevronRight className="w-4 h-4 text-black dark:text-white stroke-[2.5] mx-1" />}
                 </div>
               );
             })}
@@ -254,28 +254,28 @@ export function SettlementWizardModal({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-black text-black dark:text-white">
                     {t("settlement.step1Title")}
                   </h3>
-                  <p className="text-xs text-slate-500">{t("settlement.step1Desc")}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">{t("settlement.step1Desc")}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[11px] font-bold text-slate-500 uppercase">{t("adjustAdvance.totalDue")}</p>
-                  <p className="text-lg font-extrabold text-red-600 dark:text-red-400">
+                  <p className="text-[11px] font-black text-neutral-600 dark:text-neutral-400 uppercase">{t("adjustAdvance.totalDue")}</p>
+                  <p className="text-lg font-black text-[#FF4B55]">
                     {formatCurrency(unpaidBillsTotalPaisa, locale)}
                   </p>
                 </div>
               </div>
 
               {previewData.unpaidBills.length === 0 ? (
-                <div className="p-6 text-center rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs">
-                  <CheckCircle2 className="w-5 h-5 mx-auto mb-1.5" />
+                <div className="p-6 text-center rounded-xl bg-[#E6F8F2] dark:bg-[#122A20] border-2 border-black shadow-[3px_3px_0px_#000000] text-black dark:text-white font-bold text-xs">
+                  <CheckCircle2 className="w-6 h-6 text-[#00BA88] mx-auto mb-1.5 stroke-[2.5]" />
                   <span>All monthly rent bills are fully paid! No overdue rent charges.</span>
                 </div>
               ) : (
-                <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs max-h-60 overflow-y-auto">
+                <div className="rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] overflow-hidden text-xs max-h-60 overflow-y-auto">
                   <table className="w-full text-left">
-                    <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300 sticky top-0">
+                    <thead className="bg-[#FED734] border-b-2 border-black font-black text-black sticky top-0">
                       <tr>
                         <th className="p-2.5">Billing Period</th>
                         <th className="p-2.5">Aging</th>
@@ -283,27 +283,27 @@ export function SettlementWizardModal({
                         <th className="p-2.5 text-right">Due Amount</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 bg-white dark:bg-[#1E1F24]">
                       {previewData.unpaidBills.map((b: any) => (
                         <tr key={b.id}>
-                          <td className="p-2.5 font-semibold text-slate-800 dark:text-slate-200">
+                          <td className="p-2.5 font-black text-black dark:text-white">
                             {b.month}/{b.year}
                           </td>
                           <td className="p-2.5">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              className={`px-2 py-0.5 rounded text-[10px] font-black border border-black shadow-[1px_1px_0px_#000000] ${
                                 b.ageInMonths >= 3
-                                  ? "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300"
+                                  ? "bg-[#FF4B55] text-white"
                                   : b.ageInMonths >= 2
-                                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
-                                  : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                                  ? "bg-[#F59E0B] text-black"
+                                  : "bg-[#FED734] text-black"
                               }`}
                             >
                               {locale === "bn" ? toBanglaDigits(b.ageInMonths) : b.ageInMonths} mo
                             </span>
                           </td>
-                          <td className="p-2.5 text-right font-mono">{formatCurrency(b.rentAmount, locale)}</td>
-                          <td className="p-2.5 text-right font-mono font-bold text-red-600 dark:text-red-400">
+                          <td className="p-2.5 text-right font-mono font-bold text-black dark:text-white">{formatCurrency(b.rentAmount, locale)}</td>
+                          <td className="p-2.5 text-right font-mono font-black text-[#FF4B55]">
                             {formatCurrency(b.dueAmount, locale)}
                           </td>
                         </tr>
@@ -314,16 +314,16 @@ export function SettlementWizardModal({
               )}
 
               {/* Advance Balance held card */}
-              <div className="p-3.5 rounded-xl bg-teal-50/50 dark:bg-teal-950/20 border border-teal-200 dark:border-teal-800 flex justify-between items-center text-xs">
+              <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[3px_3px_0px_#000000] flex justify-between items-center text-xs">
                 <div>
-                  <span className="font-bold text-teal-900 dark:text-teal-200 block">
+                  <span className="font-black text-black dark:text-white block">
                     {t("advance.advanceBalance")} Held
                   </span>
-                  <span className="text-[11px] text-teal-700 dark:text-teal-400">
+                  <span className="text-[11px] text-neutral-600 dark:text-neutral-400 font-bold">
                     Security deposit available for offsetting liabilities
                   </span>
                 </div>
-                <span className="text-base font-extrabold text-teal-600 dark:text-teal-400 font-mono">
+                <span className="text-base font-black text-[#00BA88] font-mono">
                   {formatCurrency(advanceBalancePaisa, locale)}
                 </span>
               </div>
@@ -335,13 +335,13 @@ export function SettlementWizardModal({
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  <h3 className="text-sm font-black text-black dark:text-white">
                     {t("settlement.step2Title")}
                   </h3>
-                  <p className="text-xs text-slate-500">{t("settlement.step2Desc")}</p>
+                  <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">{t("settlement.step2Desc")}</p>
                 </div>
-                <Button size="sm" variant="outline" onClick={handleAddDeduction} className="text-xs">
-                  <Plus className="w-3.5 h-3.5 mr-1" />
+                <Button size="sm" variant="neo" onClick={handleAddDeduction} className="text-xs font-black">
+                  <Plus className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
                   {t("settlement.addDeduction")}
                 </Button>
               </div>
@@ -350,7 +350,7 @@ export function SettlementWizardModal({
                 {deductions.map((d, index) => (
                   <div
                     key={d.id || index}
-                    className="p-3 rounded-xl bg-slate-50 dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center text-xs"
+                    className="p-3 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[2px_2px_0px_#000000] grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center text-xs"
                   >
                     <div className="sm:col-span-5">
                       <Input
@@ -363,7 +363,7 @@ export function SettlementWizardModal({
                           )
                         }
                         placeholder={t("settlement.deductionLabel")}
-                        className="text-xs h-9"
+                        className="text-xs h-9 font-bold"
                       />
                     </div>
                     <div className="sm:col-span-3">
@@ -371,7 +371,7 @@ export function SettlementWizardModal({
                         value={d.amountBDT}
                         onChange={(val) => handleDeductionChange(index, "amountBDT", val)}
                         prefix="৳"
-                        className="text-xs h-9 font-bold"
+                        className="text-xs h-9 font-black"
                       />
                     </div>
                     <div className="sm:col-span-3">
@@ -379,26 +379,26 @@ export function SettlementWizardModal({
                         value={d.note}
                         onChange={(e) => handleDeductionChange(index, "note", e.target.value)}
                         placeholder="Note / remark"
-                        className="text-xs h-9"
+                        className="text-xs h-9 font-bold"
                       />
                     </div>
                     <div className="sm:col-span-1 flex justify-end">
                       <button
                         type="button"
                         onClick={() => handleRemoveDeduction(index)}
-                        className="p-1.5 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
+                        className="p-1.5 border-2 border-black rounded-md bg-white dark:bg-[#262830] text-[#FF4B55] hover:bg-[#FF4B55] hover:text-white shadow-[1px_1px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
                         title="Remove deduction"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4 stroke-[2.5]" />
                       </button>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-[#121926] border border-slate-200 dark:border-[#2d3b52] flex justify-between items-center text-xs font-bold">
+              <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] flex justify-between items-center text-xs font-black">
                 <span>{locale === "bn" ? "সর্বমোট কর্তন:" : "Total Deductions:"}</span>
-                <span className="font-mono text-slate-900 dark:text-white">
+                <span className="font-mono text-black dark:text-white">
                   {formatCurrency(calc.totalDeductions, locale)}
                 </span>
               </div>
@@ -409,31 +409,31 @@ export function SettlementWizardModal({
           {step === 3 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                <h3 className="text-sm font-black text-black dark:text-white">
                   {t("settlement.step3Title")}
                 </h3>
-                <p className="text-xs text-slate-500">{t("settlement.step3Desc")}</p>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">{t("settlement.step3Desc")}</p>
               </div>
 
               {/* Accounting Breakdown Matrix */}
-              <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52] space-y-3 text-xs">
-                <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
-                  <span>1. {locale === "bn" ? "অনাদায়ী বকেয়া ভাড়া:" : "Unpaid Rent Dues:"}</span>
-                  <span className="font-mono font-bold">{formatCurrency(calc.totalDue, locale)}</span>
+              <div className="p-4 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[3px_3px_0px_#000000] space-y-3 text-xs">
+                <div className="flex justify-between items-center text-black dark:text-white">
+                  <span className="font-bold">1. {locale === "bn" ? "অনাদায়ী বকেয়া ভাড়া:" : "Unpaid Rent Dues:"}</span>
+                  <span className="font-mono font-black">{formatCurrency(calc.totalDue, locale)}</span>
                 </div>
-                <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
-                  <span>2. {locale === "bn" ? "দোকান মেরামত ও কর্তন:" : "Property Deductions:"}</span>
-                  <span className="font-mono font-bold">{formatCurrency(calc.totalDeductions, locale)}</span>
+                <div className="flex justify-between items-center text-black dark:text-white">
+                  <span className="font-bold">2. {locale === "bn" ? "দোকান মেরামত ও কর্তন:" : "Property Deductions:"}</span>
+                  <span className="font-mono font-black">{formatCurrency(calc.totalDeductions, locale)}</span>
                 </div>
-                <div className="flex justify-between items-center font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-700 pt-2">
+                <div className="flex justify-between items-center font-black text-black dark:text-white border-t-2 border-black pt-2">
                   <span>{t("settlement.totalLiabilities")}:</span>
-                  <span className="font-mono text-red-600 dark:text-red-400">
+                  <span className="font-mono text-[#FF4B55]">
                     {formatCurrency(calc.totalLiabilities, locale)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center font-bold text-slate-900 dark:text-white border-t border-slate-200 dark:border-slate-700 pt-2">
+                <div className="flex justify-between items-center font-black text-black dark:text-white border-t-2 border-black pt-2">
                   <span>3. {t("advance.advanceBalance")}:</span>
-                  <span className="font-mono text-teal-600 dark:text-teal-400">
+                  <span className="font-mono text-[#00BA88]">
                     {formatCurrency(calc.advanceBalance, locale)}
                   </span>
                 </div>
@@ -441,50 +441,50 @@ export function SettlementWizardModal({
 
               {/* Final Result Card */}
               {calc.isRefund ? (
-                <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200 flex justify-between items-center">
+                <div className="p-4 rounded-xl bg-[#E6F8F2] dark:bg-[#122A20] border-2 border-black shadow-[4px_4px_0px_#000000] text-black dark:text-white flex justify-between items-center">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-wider block">
+                    <span className="text-xs font-black uppercase tracking-wider block">
                       🟢 {t("settlement.refundAmount")}
                     </span>
-                    <span className="text-xs opacity-80">
+                    <span className="text-xs font-bold opacity-80">
                       {locale === "bn"
                         ? "ভাড়াটিয়াকে ফেরতযোগ্য টাকা"
                         : "Refund amount returned to tenant"}
                     </span>
                   </div>
-                  <span className="text-2xl font-extrabold font-mono">
+                  <span className="text-2xl font-black font-mono text-[#00BA88]">
                     {formatCurrency(calc.refundAmount, locale)}
                   </span>
                 </div>
               ) : calc.isUnrecovered ? (
-                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-700 text-red-900 dark:text-red-200 flex justify-between items-center">
+                <div className="p-4 rounded-xl bg-[#FFEBEF] dark:bg-[#2A1417] border-2 border-black shadow-[4px_4px_0px_#000000] text-black dark:text-white flex justify-between items-center">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-wider block">
+                    <span className="text-xs font-black uppercase tracking-wider block">
                       🔴 {t("settlement.unrecoveredAmount")}
                     </span>
-                    <span className="text-xs opacity-80">
+                    <span className="text-xs font-bold opacity-80">
                       {locale === "bn"
                         ? "জামানতের চেয়ে বকেয়া বেশি হওয়ায় অবশিষ্ট অনাদায়ী পাওনা"
                         : "Liabilities exceed advance. Recorded as unrecovered receivable."}
                     </span>
                   </div>
-                  <span className="text-2xl font-extrabold font-mono">
+                  <span className="text-2xl font-black font-mono text-[#FF4B55]">
                     {formatCurrency(calc.unrecoveredAmount, locale)}
                   </span>
                 </div>
               ) : (
-                <div className="p-4 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-300 dark:border-blue-700 text-blue-900 dark:text-blue-200 flex justify-between items-center">
+                <div className="p-4 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[4px_4px_0px_#000000] text-black dark:text-white flex justify-between items-center">
                   <div>
-                    <span className="text-xs font-extrabold uppercase tracking-wider block">
+                    <span className="text-xs font-black uppercase tracking-wider block">
                       🔵 {t("settlement.exactMatch")}
                     </span>
-                    <span className="text-xs opacity-80">
+                    <span className="text-xs font-bold opacity-80">
                       {locale === "bn"
                         ? "সম্পূর্ণ সমপরিমাণ মিল, কোনো ফেরত বা বকেয়া অবশিষ্ট নেই"
                         : "Full exact settlement, zero refund balance"}
                     </span>
                   </div>
-                  <span className="text-2xl font-extrabold font-mono">৳ 0</span>
+                  <span className="text-2xl font-black font-mono">৳ 0</span>
                 </div>
               )}
             </div>
@@ -494,16 +494,16 @@ export function SettlementWizardModal({
           {step === 4 && (
             <div className="space-y-4">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                <h3 className="text-sm font-black text-black dark:text-white">
                   {t("settlement.step4Title")}
                 </h3>
-                <p className="text-xs text-slate-500">{t("settlement.step4Desc")}</p>
+                <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">{t("settlement.step4Desc")}</p>
               </div>
 
               {/* Settlement Date & Notes */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                     {t("settlement.settlementDate")}
                   </label>
                   <Input
@@ -513,7 +513,7 @@ export function SettlementWizardModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                     {t("common.notes")} ({t("common.optional")})
                   </label>
                   <Input
@@ -525,12 +525,12 @@ export function SettlementWizardModal({
               </div>
 
               {/* Consequences explanation */}
-              <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1.5">
-                <p className="font-bold flex items-center gap-1.5">
-                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+              <div className="p-3.5 rounded-xl bg-[#FEF3C7] dark:bg-[#3D2F14] border-2 border-black shadow-[3px_3px_0px_#000000] text-xs text-black dark:text-white space-y-1.5">
+                <p className="font-black flex items-center gap-1.5">
+                  <AlertTriangle className="w-4 h-4 text-black dark:text-[#FED734] stroke-[2.5]" />
                   {locale === "bn" ? "চূড়ান্ত নিষ্পত্তির ফলাফল:" : "Effects of confirming final settlement:"}
                 </p>
-                <ul className="list-disc list-inside space-y-0.5 text-[11px] opacity-90 pl-1">
+                <ul className="list-disc list-inside space-y-1 text-xs font-bold pl-1">
                   <li>
                     {locale === "bn"
                       ? "দোকানের স্ট্যাটাস 'খালি' (VACANT) করা হবে।"
@@ -550,14 +550,14 @@ export function SettlementWizardModal({
               </div>
 
               {/* Mandatory Confirmation Checkbox */}
-              <label className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50 dark:bg-[#182234] cursor-pointer text-xs select-none">
+              <label className="flex items-start gap-2.5 p-3 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[2px_2px_0px_#000000] cursor-pointer text-xs select-none">
                 <input
                   type="checkbox"
                   checked={isConfirmed}
                   onChange={(e) => setIsConfirmed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  className="mt-0.5 h-4 w-4 accent-[#FED734] rounded border-2 border-black cursor-pointer"
                 />
-                <span className="text-slate-800 dark:text-slate-200 font-medium leading-relaxed">
+                <span className="text-black dark:text-white font-black leading-relaxed">
                   {t("settlement.vacateConfirm")}
                 </span>
               </label>
@@ -565,7 +565,7 @@ export function SettlementWizardModal({
           )}
 
           {/* Navigation Buttons */}
-          <div className="pt-2 flex justify-between items-center border-t border-slate-200 dark:border-[#2d3b52]">
+          <div className="pt-2 flex justify-between items-center border-t-2 border-black">
             <Button
               type="button"
               variant="outline"
@@ -580,11 +580,12 @@ export function SettlementWizardModal({
             {step < 4 ? (
               <Button
                 type="button"
+                variant="neo"
                 onClick={() => setStep(step + 1)}
-                className="bg-teal-600 hover:bg-teal-500 text-white font-bold"
+                className="font-black"
               >
                 <span>{locale === "bn" ? "পরবর্তী ধাপ" : "Next Step"}</span>
-                <ChevronRight className="w-4 h-4 ml-1" />
+                <ChevronRight className="w-4 h-4 ml-1 stroke-[2.5]" />
               </Button>
             ) : (
               <Button
@@ -592,9 +593,10 @@ export function SettlementWizardModal({
                 disabled={!isConfirmed || isSubmitting}
                 isLoading={isSubmitting}
                 onClick={handleConfirmSettlement}
-                className="bg-red-600 hover:bg-red-500 text-white font-bold"
+                variant="destructive"
+                className="font-black"
               >
-                <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 <span>{t("settlement.settleAndVacate")}</span>
               </Button>
             )}

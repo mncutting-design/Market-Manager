@@ -15,7 +15,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <div className="w-full">
         <div className="relative flex items-center w-full">
           {prefixIcon && (
-            <div className="absolute left-3.5 text-black pointer-events-none flex items-center">
+            <div className="absolute left-3.5 text-black dark:text-white pointer-events-none flex items-center">
               {prefixIcon}
             </div>
           )}
@@ -23,7 +23,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             type={type}
             disabled={disabled}
             className={cn(
-              "flex h-11 w-full rounded-xl border-2 border-black bg-[#FBF9F5] px-3.5 py-2 text-sm text-black font-bold placeholder:text-gray-400 focus:bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all",
+              "flex h-11 w-full rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] px-3.5 py-2 text-sm text-black dark:text-white font-bold placeholder:text-gray-400 dark:placeholder:text-gray-400 focus:bg-white dark:focus:bg-[#1E1F24] focus:outline-none focus:shadow-[3px_3px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all",
               prefixIcon && "pl-10",
               suffixIcon && "pr-10",
               error && "border-[#FF4B55] focus:shadow-[3px_3px_0px_#FF4B55]",
@@ -33,7 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {suffixIcon && (
-            <div className="absolute right-3.5 text-black flex items-center">
+            <div className="absolute right-3.5 text-black dark:text-white flex items-center">
               {suffixIcon}
             </div>
           )}

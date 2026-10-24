@@ -146,28 +146,28 @@ export function AdjustAdvanceModal({
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Current State Cards */}
-          <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52]">
+          <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000]">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] font-black uppercase tracking-wider text-gray-700 dark:text-gray-400">
                 {t("adjustAdvance.totalDue")}
               </p>
-              <p className="text-base font-extrabold text-red-600 dark:text-red-400 mt-0.5">
+              <p className="text-base font-black text-[#FF4B55] mt-0.5">
                 {formatCurrency(totalDue, locale)}
               </p>
             </div>
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              <p className="text-[11px] font-black uppercase tracking-wider text-gray-700 dark:text-gray-400">
                 {t("adjustAdvance.availableAdvance")}
               </p>
-              <p className="text-base font-extrabold text-teal-600 dark:text-teal-400 mt-0.5">
+              <p className="text-base font-black text-[#00BCD4] mt-0.5">
                 {formatCurrency(advanceBalance, locale)}
               </p>
             </div>
           </div>
 
           {advanceBalance === 0 ? (
-            <div className="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
+            <div className="p-3.5 rounded-xl bg-[#FED734]/20 border-2 border-black shadow-[2px_2px_0px_#000000] text-black dark:text-white text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 stroke-[2.5]" />
               <span>This tenant currently has no available security advance balance to adjust.</span>
             </div>
           ) : (
@@ -175,7 +175,7 @@ export function AdjustAdvanceModal({
               {/* Amount to Adjust input */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-white">
+                  <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white">
                     {t("adjustAdvance.amountToAdjust")} (৳ BDT)
                   </label>
                   <button
@@ -184,7 +184,7 @@ export function AdjustAdvanceModal({
                       const maxPaisa = Math.min(totalDue, advanceBalance);
                       setAdjustAmountBDT(Math.round(maxPaisa / 100));
                     }}
-                    className="text-xs text-teal-600 dark:text-teal-400 hover:underline font-semibold cursor-pointer"
+                    className="text-xs bg-[#FED734] text-black px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000000] font-black cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition-all"
                   >
                     Max ({formatCurrency(Math.min(totalDue, advanceBalance), locale)})
                   </button>
@@ -193,22 +193,22 @@ export function AdjustAdvanceModal({
                   value={adjustAmountBDT}
                   onChange={(val) => setAdjustAmountBDT(val)}
                   prefix="৳"
-                  className="text-lg font-bold"
+                  className="text-lg font-black"
                   autoFocus
                 />
               </div>
 
               {/* Live Preview Calculation */}
-              <div className="p-3.5 rounded-xl bg-slate-100 dark:bg-[#121926] border border-slate-200 dark:border-[#2d3b52] space-y-2 text-xs">
-                <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
+              <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] space-y-2 text-xs">
+                <div className="flex justify-between items-center text-black dark:text-white font-bold">
                   <span>{t("adjustAdvance.remainingDue")}:</span>
-                  <span className="font-bold font-mono text-slate-900 dark:text-white">
+                  <span className="font-black font-mono text-[#FF4B55]">
                     {formatCurrency(remainingDuePaisa, locale)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center text-slate-700 dark:text-slate-300">
+                <div className="flex justify-between items-center text-black dark:text-white font-bold">
                   <span>{t("adjustAdvance.remainingAdvance")}:</span>
-                  <span className="font-bold font-mono text-teal-600 dark:text-teal-400">
+                  <span className="font-black font-mono text-[#00BCD4]">
                     {formatCurrency(remainingAdvancePaisa, locale)}
                   </span>
                 </div>
@@ -216,11 +216,11 @@ export function AdjustAdvanceModal({
 
               {/* Shortfall Warning Banner */}
               {willHaveShortfall && (
-                <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 text-xs flex items-start gap-2.5">
-                  <ShieldAlert className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="p-3.5 rounded-xl bg-[#FFEBEF] dark:bg-[#2C1417] border-2 border-[#FF4B55] shadow-[2px_2px_0px_#FF4B55] text-black dark:text-white text-xs flex items-start gap-2.5">
+                  <ShieldAlert className="w-4 h-4 text-[#FF4B55] shrink-0 mt-0.5 stroke-[2.5]" />
                   <div>
-                    <p className="font-bold">{t("adjustAdvance.shortfallWarning")}</p>
-                    <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5">
+                    <p className="font-black text-[#FF4B55]">{t("adjustAdvance.shortfallWarning")}</p>
+                    <p className="text-[11px] text-gray-800 dark:text-gray-300 font-bold mt-0.5">
                       Required advance: {formatCurrency(requiredAdvance, locale)} • Remaining:{" "}
                       {formatCurrency(remainingAdvancePaisa, locale)} (Shortfall:{" "}
                       {formatCurrency(requiredAdvance - remainingAdvancePaisa, locale)})
@@ -231,41 +231,43 @@ export function AdjustAdvanceModal({
 
               {/* Note */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+                <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-gray-200 mb-1">
                   {t("common.notes")} ({t("common.optional")})
                 </label>
                 <Input
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="e.g. ২ মাসের বকেয়া জামানত থেকে সমন্বয়"
+                  className="font-bold"
                 />
               </div>
 
               {/* Confirmation Checkbox */}
-              <label className="flex items-start gap-2.5 p-3 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50 dark:bg-[#182234] cursor-pointer text-xs select-none">
+              <label className="flex items-start gap-2.5 p-3.5 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] bg-white dark:bg-[#1E1F24] cursor-pointer text-xs select-none">
                 <input
                   type="checkbox"
                   checked={isConfirmed}
                   onChange={(e) => setIsConfirmed(e.target.checked)}
-                  className="mt-0.5 h-4 w-4 rounded border-slate-300 text-teal-600 focus:ring-teal-500"
+                  className="mt-0.5 h-4 w-4 rounded accent-black cursor-pointer"
                 />
-                <span className="text-slate-700 dark:text-white font-medium leading-relaxed">
+                <span className="text-black dark:text-white font-bold leading-relaxed">
                   {t("adjustAdvance.confirmCheckbox")}
                 </span>
               </label>
 
               {/* Modal Actions */}
-              <div className="pt-2 flex justify-end gap-2">
-                <Button type="button" variant="outline" onClick={onClose}>
+              <div className="pt-2 flex justify-end gap-2 border-t-2 border-black">
+                <Button type="button" variant="outline" className="font-black" onClick={onClose}>
                   {t("common.cancel")}
                 </Button>
                 <Button
                   type="submit"
+                  variant="neo"
                   disabled={!isConfirmed || adjustAmountPaisa <= 0 || isSubmitting}
                   isLoading={isSubmitting}
-                  className="bg-teal-600 hover:bg-teal-500 text-white font-bold"
+                  className="font-black cursor-pointer"
                 >
-                  <CheckCircle2 className="w-4 h-4 mr-1.5" />
+                  <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                   {t("adjustAdvance.adjustButton")}
                 </Button>
               </div>

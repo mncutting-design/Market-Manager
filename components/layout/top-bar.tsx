@@ -177,7 +177,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               className="w-full h-10 pl-6 pr-6 text-xs md:text-sm font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2.5px_2.5px_0px_#000000] cursor-pointer"
             >
               {months.map((m) => (
-                <option key={m.value} value={m.value}>
+                <option key={m.value} value={m.value} className="bg-white dark:bg-[#1E1F24] text-black dark:text-white font-bold">
                   {m.label}
                 </option>
               ))}
@@ -195,7 +195,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
               className="w-full h-10 pl-3 pr-6 text-xs md:text-sm font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2.5px_2.5px_0px_#000000] cursor-pointer"
             >
               {years.map((y) => (
-                <option key={y} value={y}>
+                <option key={y} value={y} className="bg-white dark:bg-[#1E1F24] text-black dark:text-white font-bold">
                   {locale === "bn" ? toBanglaDigits(y) : y}
                 </option>
               ))}
@@ -393,7 +393,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             className="w-full h-10 pl-5 pr-5 text-[11px] font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2px_2px_0px_#000000] cursor-pointer"
           >
             {months.map((m) => (
-              <option key={m.value} value={m.value}>
+              <option key={m.value} value={m.value} className="bg-white dark:bg-[#1E1F24] text-black dark:text-white font-bold">
                 {m.label}
               </option>
             ))}
@@ -411,7 +411,7 @@ export function TopBar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             className="w-full h-10 pl-2 pr-4 text-[11px] font-bold bg-white dark:bg-[#262830] border-2 border-black rounded-xl text-black dark:text-white appearance-none focus:outline-none shadow-[2px_2px_0px_#000000] cursor-pointer"
           >
             {years.map((y) => (
-              <option key={y} value={y}>
+              <option key={y} value={y} className="bg-white dark:bg-[#1E1F24] text-black dark:text-white font-bold">
                 {locale === "bn" ? toBanglaDigits(y) : y}
               </option>
             ))}

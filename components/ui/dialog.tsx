@@ -66,7 +66,7 @@ export function Dialog({
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-50 w-full bg-white text-black rounded-2xl p-4 sm:p-6 border-2 border-black shadow-[8px_8px_0px_#000000] animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col",
+          "relative z-50 w-full bg-white dark:bg-[#1E1F24] text-black dark:text-white rounded-2xl p-4 sm:p-6 border-2 border-black shadow-[8px_8px_0px_#000000] animate-in zoom-in-95 duration-150 max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] flex flex-col",
           maxWidths[maxWidth] || maxWidths.lg
         )}
       >
@@ -75,19 +75,19 @@ export function Dialog({
           <div className="flex items-start justify-between pb-3 sm:pb-4 border-b-2 border-black gap-2 shrink-0 no-print">
             <div className="flex-1 min-w-0 pr-1">
               {title && (
-                <div className="text-base sm:text-lg md:text-xl font-black text-black leading-snug truncate">
+                <div className="text-base sm:text-lg md:text-xl font-black text-black dark:text-white leading-snug truncate">
                   {title}
                 </div>
               )}
               {description && (
-                <div className="text-xs sm:text-sm text-gray-700 font-bold mt-0.5 line-clamp-2">
+                <div className="text-xs sm:text-sm text-gray-700 dark:text-gray-300 font-bold mt-0.5 line-clamp-2">
                   {description}
                 </div>
               )}
             </div>
             <button
               onClick={onClose}
-              className="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl border-2 border-black bg-white hover:bg-[#FED734] shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all shrink-0 cursor-pointer text-black"
+              className="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] text-black dark:text-white dark:hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all shrink-0 cursor-pointer"
               aria-label="Close"
             >
               <X className="w-4 h-4 sm:w-5 sm:h-5 stroke-[2.5]" />
@@ -96,7 +96,7 @@ export function Dialog({
         )}
 
         {/* Scrollable Content Body */}
-        <div className="overflow-y-auto py-3 sm:py-4 flex-1 overscroll-contain pr-1 custom-scrollbar min-h-0 text-black">
+        <div className="overflow-y-auto py-3 sm:py-4 flex-1 overscroll-contain pr-1 custom-scrollbar min-h-0 text-black dark:text-white">
           {children}
         </div>
       </div>

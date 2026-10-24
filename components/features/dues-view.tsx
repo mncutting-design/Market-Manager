@@ -73,64 +73,64 @@ export function DuesView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white flex items-center gap-2">
+            <AlertCircle className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
             <span>{t("dues.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-bold mt-1">
             {t("dues.subtitle")}
           </p>
         </div>
 
-        <Button variant="outline" onClick={handleExportCSV} disabled={dues.length === 0}>
-          <Download className="w-4 h-4 mr-1.5" />
+        <Button variant="outline" onClick={handleExportCSV} disabled={dues.length === 0} className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+          <Download className="w-4 h-4 mr-1.5 stroke-[2.5]" />
           {t("dues.exportDueList")}
         </Button>
       </div>
 
       {/* KPI Cards: Total Outstanding & Aging Breakdown */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-        <Card className="p-4 border-red-200 dark:border-red-900/60 bg-red-50/20 dark:bg-red-950/20">
-          <p className="text-xs font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+        <Card className="p-4 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000]">
+          <p className="text-xs font-black text-[#FF4B55] dark:text-[#FF6B75] uppercase tracking-wider">
             {t("dues.totalOutstanding")}
           </p>
-          <p className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+          <p className="text-xl font-black text-[#FF4B55] dark:text-[#FF6B75] mt-1 font-mono">
             {formatCurrency(totalOutstanding, locale)}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-[11px] text-gray-700 dark:text-gray-300 font-bold mt-0.5">
             {locale === "bn" ? toBanglaDigits(overdueShopsCount) : overdueShopsCount}{" "}
             {t("reports.shopCount")}
           </p>
         </Card>
 
-        <Card className="p-4">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-wider">
+        <Card className="p-4 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+          <p className="text-xs font-black text-gray-600 dark:text-gray-400 uppercase tracking-wider">
             {t("dues.currentMonth")}
           </p>
-          <p className="text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">
+          <p className="text-lg font-black text-black dark:text-white mt-1 font-mono">
             {formatCurrency(agingBreakdown.current, locale)}
           </p>
-          <p className="text-[11px] text-slate-400">0 - 30 days</p>
+          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold">0 - 30 days</p>
         </Card>
 
-        <Card className="p-4 border-amber-200/80 dark:border-amber-900/60">
-          <p className="text-xs font-medium text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+        <Card className="p-4 rounded-xl border-2 border-black bg-[#FFF8D6] dark:bg-[#2C2405] shadow-[3px_3px_0px_#000000]">
+          <p className="text-xs font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
             {t("dues.oneMonthOverdue")}
           </p>
-          <p className="text-lg font-bold text-amber-700 dark:text-amber-400 mt-1">
+          <p className="text-lg font-black text-amber-800 dark:text-amber-300 mt-1 font-mono">
             {formatCurrency(agingBreakdown.oneMonth, locale)}
           </p>
-          <p className="text-[11px] text-slate-400">31 - 60 days</p>
+          <p className="text-[11px] text-gray-600 dark:text-gray-400 font-bold">31 - 60 days</p>
         </Card>
 
-        <Card className="p-4 border-red-300 dark:border-red-800">
-          <p className="text-xs font-medium text-red-700 dark:text-red-400 uppercase tracking-wider">
+        <Card className="p-4 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000]">
+          <p className="text-xs font-black text-[#FF4B55] dark:text-[#FF6B75] uppercase tracking-wider">
             {t("dues.threePlusMonthsOverdue")}
           </p>
-          <p className="text-lg font-bold text-red-700 dark:text-red-400 mt-1">
+          <p className="text-lg font-black text-[#FF4B55] dark:text-[#FF6B75] mt-1 font-mono">
             {formatCurrency(agingBreakdown.threePlusMonths, locale)}
           </p>
-          <p className="text-[11px] text-slate-400">90+ days</p>
+          <p className="text-[11px] text-gray-600 dark:text-gray-400 font-bold">90+ days</p>
         </Card>
       </div>
 
@@ -146,9 +146,9 @@ export function DuesView() {
 
       {/* Overdue Shops List */}
       {dues.length === 0 ? (
-        <Card className="p-12 text-center">
-          <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
-          <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
+        <Card className="p-12 text-center bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000]">
+          <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto mb-3 stroke-[2.5]" />
+          <p className="text-base font-black text-black dark:text-white">
             {t("dues.noDues")}
           </p>
         </Card>
@@ -178,26 +178,26 @@ export function DuesView() {
                     dueAmount: d.totalDue,
                   })
                 }
-                className="p-5 hover:border-teal-500/60 dark:hover:border-teal-500/60 hover:shadow-md transition-all shadow-xs cursor-pointer group"
+                className="p-5 rounded-2xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[6px_6px_0px_#000000] transition-all cursor-pointer group"
               >
                 <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                   {/* Shop, Tenant and Aging Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2.5">
-                      <span className="text-base font-bold text-slate-900 dark:text-slate-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                      <span className="text-base font-black text-black dark:text-white">
                         {d.shopNumber}
                       </span>
-                      <span className="text-xs text-slate-500">•</span>
-                      <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                      <span className="text-xs text-black/40 dark:text-white/40 font-black">•</span>
+                      <span className="text-sm font-black text-black dark:text-white">
                         {d.tenantName}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border-2 border-black shadow-[1px_1px_0px_#000000] ${
                           d.maxAgingCategory === "THREE_PLUS_MONTHS"
-                            ? "bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300 border border-red-200"
+                            ? "bg-[#FF4B55] text-white"
                             : d.maxAgingCategory === "TWO_MONTHS"
-                            ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200"
-                            : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                            ? "bg-[#FED734] text-black"
+                            : "bg-[#FFF8D6] text-black"
                         }`}
                       >
                         {d.maxAgingCategory === "THREE_PLUS_MONTHS"
@@ -210,12 +210,12 @@ export function DuesView() {
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-500 mt-1">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-bold mt-1">
                       {d.marketName} • {d.floor}
                     </p>
 
-                    <div className="flex items-center gap-3 text-xs text-slate-500 mt-2">
-                      <span className="font-mono text-slate-700 dark:text-slate-300 font-medium">
+                    <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400 font-bold mt-2">
+                      <span className="font-mono text-black dark:text-white font-bold">
                         {d.phone}
                       </span>
                       <span>•</span>
@@ -226,23 +226,23 @@ export function DuesView() {
                   </div>
 
                   {/* Due amount and Communication Links */}
-                  <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
+                  <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t-2 lg:border-t-0 border-black/10 dark:border-white/10">
                     <div className="text-left lg:text-right">
-                      <p className="text-xs text-slate-400">{t("dues.totalOutstanding")}</p>
-                      <p className="text-lg font-bold text-red-600 dark:text-red-400">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">{t("dues.totalOutstanding")}</p>
+                      <p className="text-xl font-black text-[#FF4B55] dark:text-[#FF6B75] font-mono">
                         {formatCurrency(d.totalDue, locale)}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-2">
                       {/* Call */}
                       <a
                         href={`tel:${d.phone}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+                        className="p-2 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] text-black dark:text-white hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] min-h-[40px] min-w-[40px] flex items-center justify-center transition-all cursor-pointer"
                         title={t("tenants.call")}
                       >
-                        <Phone className="w-4 h-4 text-emerald-600" />
+                        <Phone className="w-4 h-4 stroke-[2.5]" />
                       </a>
 
                       {/* WhatsApp */}
@@ -251,27 +251,27 @@ export function DuesView() {
                         onClick={(e) => e.stopPropagation()}
                         target="_blank"
                         rel="noreferrer"
-                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+                        className="p-2 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] text-black dark:text-white hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] min-h-[40px] min-w-[40px] flex items-center justify-center transition-all cursor-pointer"
                         title={t("tenants.whatsapp")}
                       >
-                        <MessageSquare className="w-4 h-4 text-emerald-600" />
+                        <MessageSquare className="w-4 h-4 stroke-[2.5]" />
                       </a>
 
                       {/* SMS */}
                       <a
                         href={`sms:${d.phone}?body=${reminderMessage}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="p-2 rounded-lg border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 min-h-[40px] min-w-[40px] flex items-center justify-center transition-colors"
+                        className="p-2 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] text-black dark:text-white hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] min-h-[40px] min-w-[40px] flex items-center justify-center transition-all cursor-pointer"
                         title={t("tenants.sms")}
                       >
-                        <Mail className="w-4 h-4 text-teal-600" />
+                        <Mail className="w-4 h-4 stroke-[2.5]" />
                       </a>
 
                       {/* Adjust from Advance */}
                       <Button
                         size="sm"
                         variant="outline"
-                        className="h-10 px-3 text-xs border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-950/40 text-amber-700 dark:text-amber-300"
+                        className="h-10 px-3 text-xs font-black border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelectedAdjustTenant({
@@ -283,7 +283,7 @@ export function DuesView() {
                           });
                         }}
                       >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1 text-amber-600" />
+                        <RotateCcw className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
                         {t("advance.adjustedToDue")}
                       </Button>
 
@@ -291,7 +291,7 @@ export function DuesView() {
                       <Button
                         size="sm"
                         variant="primary"
-                        className="h-10 px-3 text-xs"
+                        className="h-10 px-3 text-xs font-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
                         onClick={(e) => {
                           e.stopPropagation();
                           openQuickCollect({
@@ -302,7 +302,7 @@ export function DuesView() {
                           });
                         }}
                       >
-                        <Wallet className="w-3.5 h-3.5 mr-1" />
+                        <Wallet className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
                         {t("dashboard.quickCollect")}
                       </Button>
                     </div>

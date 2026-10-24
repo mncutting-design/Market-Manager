@@ -133,18 +133,18 @@ export function BillingView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Receipt className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white flex items-center gap-2">
+            <Receipt className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
             <span>{t("billing.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-bold mt-1">
             {formatMonth(selectedMonth, locale, selectedYear)} — {t("billing.subtitle")}
           </p>
         </div>
 
         {!isOperator && (
-          <Button onClick={openGenerateBills} className="shadow-xs">
-            <Receipt className="w-4 h-4 mr-1.5" />
+          <Button onClick={openGenerateBills}>
+            <Receipt className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("billing.generateBills")}
           </Button>
         )}
@@ -157,20 +157,20 @@ export function BillingView() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("common.searchShopsPlaceholder")}
-            prefixIcon={<Search className="w-4 h-4" />}
+            prefixIcon={<Search className="w-4 h-4 stroke-[2.5]" />}
           />
         </div>
 
         {/* Status filters - Scrollable on mobile */}
-        <div className="flex gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl shrink-0 overflow-x-auto no-scrollbar">
+        <div className="flex gap-1.5 bg-white dark:bg-[#1E1F24] p-1 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] shrink-0 overflow-x-auto no-scrollbar">
           {["ALL", "DUE", "PARTIAL", "PAID"].map((status) => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
+              className={`px-3 py-1.5 text-xs font-black rounded-lg transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
                 statusFilter === status
-                  ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900"
+                  ? "bg-[#FED734] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+                  : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-[#FBF9F5] dark:hover:bg-[#262830]"
               }`}
             >
               {status === "ALL"
@@ -190,8 +190,8 @@ export function BillingView() {
         <TableSkeleton rows={6} />
       ) : bills.length === 0 ? (
         <Card className="p-12 text-center">
-          <Receipt className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
+          <Receipt className="w-12 h-12 text-black dark:text-white mx-auto mb-3 stroke-[2]" />
+          <p className="text-base font-black text-black dark:text-white">
             {t("billing.alreadyGenerated")}
           </p>
           <Button onClick={openGenerateBills} variant="outline" className="mt-4">
@@ -203,33 +203,33 @@ export function BillingView() {
           {bills.map((bill) => (
             <Card
               key={bill.id}
-              className="p-5 hover:border-slate-300 dark:hover:border-slate-700 transition-all shadow-xs"
+              className="p-5 border-2 border-black shadow-[4px_4px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[6px_6px_0px_#000000] transition-all"
             >
               <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                 {/* Shop and Tenant details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3">
-                    <span className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    <span className="text-lg font-black text-black dark:text-white">
                       {bill.shop.shopNumber}
                     </span>
-                    <span className="text-xs text-slate-500">({bill.shop.floor})</span>
+                    <span className="text-xs font-bold text-gray-600 dark:text-gray-400">({bill.shop.floor})</span>
                     <StatusBadge status={bill.status} />
                   </div>
-                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200 mt-1">
-                    {bill.tenant.name} • <span className="font-mono text-slate-500">{bill.tenant.phone}</span>
+                  <p className="text-xs font-bold text-black dark:text-white mt-1">
+                    {bill.tenant.name} • <span className="font-mono text-gray-600 dark:text-gray-400">{bill.tenant.phone}</span>
                   </p>
-                  <p className="text-xs text-slate-400 truncate">{bill.shop.market.name}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-bold truncate">{bill.shop.market.name}</p>
 
                   {/* Bill Items chips */}
                   {bill.billItems?.length > 0 && (
                     <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-[11px] text-slate-600 dark:text-slate-300">
+                      <span className="px-2 py-0.5 rounded-md bg-[#FBF9F5] dark:bg-[#262830] text-[11px] text-black dark:text-white border-2 border-black font-black shadow-[1px_1px_0px_#000000]">
                         {t("billing.rentAmount")}: {formatCurrency(bill.rentAmount, locale)}
                       </span>
                       {bill.billItems.map((item: any) => (
                         <span
                           key={item.id}
-                          className="px-2 py-0.5 rounded-md bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800 text-[11px]"
+                          className="px-2 py-0.5 rounded-md bg-[#FED734] text-black border-2 border-black text-[11px] font-black shadow-[1px_1px_0px_#000000]"
                         >
                           {item.description}: {formatCurrency(item.amount, locale)}
                         </span>
@@ -239,26 +239,26 @@ export function BillingView() {
 
                   {/* Previous Due Carry-Forward Alert */}
                   {bill.carryForwardDue > 0 && (
-                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 text-xs">
+                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FFEBEF] text-[#FF4B55] border-2 border-black text-xs font-black shadow-[1.5px_1.5px_0px_#000000]">
                       <span>{t("billing.previousDue")}:</span>
-                      <span className="font-bold">{formatCurrency(bill.carryForwardDue, locale)}</span>
+                      <span className="font-black">{formatCurrency(bill.carryForwardDue, locale)}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Amount breakdown and Action Buttons - 100% Mobile Responsive */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t lg:border-t-0 border-slate-100 dark:border-slate-800">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t-2 lg:border-t-0 border-black/10 dark:border-white/10">
                   <div className="text-left sm:text-right">
-                    <p className="text-xs text-slate-400">{t("billing.totalBill")}</p>
-                    <p className="text-base font-extrabold text-slate-900 dark:text-slate-100">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-bold">{t("billing.totalBill")}</p>
+                    <p className="text-base font-black text-black dark:text-white">
                       {formatCurrency(bill.totalAmount, locale)}
                     </p>
                     {bill.dueAmount > 0 ? (
-                      <p className="text-xs font-bold text-red-600 dark:text-red-400 mt-0.5">
+                      <p className="text-xs font-black text-[#FF4B55] mt-0.5">
                         {t("billing.dueAmount")}: {formatCurrency(bill.dueAmount, locale)}
                       </p>
                     ) : (
-                      <p className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                      <p className="text-xs font-black text-[#00BA88] mt-0.5">
                         {t("status.paid")}
                       </p>
                     )}
@@ -277,7 +277,7 @@ export function BillingView() {
                         }}
                         title={locale === "bn" ? "অতিরিক্ত খরচ পরিচালনা করুন" : "Manage Additional Costs"}
                       >
-                        <Plus className="w-3.5 h-3.5 mr-1 text-teal-600 dark:text-teal-400" />
+                        <Plus className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
                         {locale === "bn" ? "অতিরিক্ত খরচ" : "Extra Costs"}
                       </Button>
                     )}
@@ -297,7 +297,7 @@ export function BillingView() {
                           })
                         }
                       >
-                        <Wallet className="w-3.5 h-3.5 mr-1.5" />
+                        <Wallet className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
                         {t("dashboard.quickCollect")}
                       </Button>
                     )}

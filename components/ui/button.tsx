@@ -29,11 +29,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       primary:
         "bg-[#FED734] text-black font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#000000]",
       secondary:
-        "bg-white text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
+        "bg-white dark:bg-[#262830] text-black dark:text-white font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] dark:hover:bg-[#323540] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
       outline:
-        "bg-white text-black font-bold border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
+        "bg-white dark:bg-[#262830] text-black dark:text-white font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#FBF9F5] dark:hover:bg-[#323540] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
       ghost:
-        "bg-transparent text-black font-bold border-2 border-transparent hover:border-black hover:bg-[#FED734]/30 active:translate-x-[1px] active:translate-y-[1px]",
+        "bg-transparent text-black dark:text-white font-black border-2 border-transparent hover:border-black hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black active:translate-x-[1px] active:translate-y-[1px]",
       destructive:
         "bg-[#FF4B55] text-white font-black border-2 border-black shadow-[3px_3px_0px_#000000] hover:bg-[#e03d46] hover:-translate-x-[1px] hover:-translate-y-[1px] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_#000000]",
       accent:

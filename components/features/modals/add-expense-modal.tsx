@@ -136,7 +136,7 @@ export function AddExpenseModal() {
 
         {/* Amount */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-gray-200 mb-1.5">
             {t("expenses.amount")} (৳ BDT)
           </label>
           <NumberInput
@@ -144,30 +144,32 @@ export function AddExpenseModal() {
             onChange={(val) => setAmountBDT(val)}
             prefix="৳"
             placeholder="0"
-            className="text-lg font-bold"
+            className="text-lg font-black"
           />
         </div>
 
         {/* Date and Payment Method */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-black text-black dark:text-gray-200 mb-1">
               {t("expenses.date")}
             </label>
             <Input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
+              className="font-bold"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-black text-black dark:text-gray-200 mb-1">
               {t("expenses.paymentMethod")}
             </label>
             <Select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
+              className="font-bold"
             >
               <option value="CASH">{t("collections.cash")}</option>
               <option value="BKASH">{t("collections.bkash")}</option>
@@ -180,39 +182,42 @@ export function AddExpenseModal() {
 
         {/* Description */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <label className="block text-xs font-black text-black dark:text-gray-200 mb-1">
             {t("expenses.description")}
           </label>
           <Input
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="e.g. জেনারেটর মেরামত / Guard salary"
+            className="font-bold"
           />
         </div>
 
         {/* Voucher / Receipt reference */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <label className="block text-xs font-black text-black dark:text-gray-200 mb-1">
             {t("expenses.receiptAttachment")}
           </label>
           <Input
             value={attachmentUrl}
             onChange={(e) => setAttachmentUrl(e.target.value)}
             placeholder="Voucher no #4092 or receipt notes"
+            className="font-bold"
           />
         </div>
 
         {/* Actions */}
-        <div className="pt-2 flex justify-end gap-2">
+        <div className="pt-2 flex justify-end gap-2 border-t-2 border-black">
           <Button
             type="button"
             variant="outline"
+            className="font-black"
             onClick={() => setIsAddExpenseOpen(false)}
           >
             {t("common.cancel")}
           </Button>
-          <Button type="submit" isLoading={isSubmitting}>
-            <CheckCircle2 className="w-4 h-4 mr-1.5" />
+          <Button type="submit" variant="neo" className="font-black" isLoading={isSubmitting}>
+            <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("expenses.addExpense")}
           </Button>
         </div>

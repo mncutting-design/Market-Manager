@@ -202,30 +202,30 @@ export function ReportsView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <FileSpreadsheet className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white flex items-center gap-2">
+            <FileSpreadsheet className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
             <span>{t("reports.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-bold mt-1">
             {t("reports.subtitle")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExportExcel} disabled={isLoading || !data}>
-            <Download className="w-4 h-4 mr-1.5" />
+          <Button variant="outline" onClick={handleExportExcel} disabled={isLoading || !data} className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+            <Download className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("reports.exportExcel")}
           </Button>
 
-          <Button variant="outline" onClick={handlePrint} disabled={isLoading || !data}>
-            <Printer className="w-4 h-4 mr-1.5" />
+          <Button variant="outline" onClick={handlePrint} disabled={isLoading || !data} className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+            <Printer className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("reports.exportPdf")}
           </Button>
         </div>
       </div>
 
       {/* Report Navigation Tabs */}
-      <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto no-scrollbar no-print">
+      <div className="flex p-1.5 bg-[#FBF9F5] dark:bg-[#1E1F24] border-2 border-black shadow-[3px_3px_0px_#000000] rounded-xl overflow-x-auto no-scrollbar no-print gap-1">
         {[
           { id: "monthly_collection", labelKey: "reports.monthlyCollection" },
           { id: "month_wise_summary", labelKey: "reports.monthWiseSummary" },
@@ -240,10 +240,10 @@ export function ReportsView() {
           <button
             key={tab.id}
             onClick={() => setReportType(tab.id)}
-            className={`px-4 py-2 text-xs md:text-sm font-semibold rounded-lg shrink-0 transition-all cursor-pointer ${
+            className={`px-3.5 py-2 text-xs md:text-sm font-black rounded-lg shrink-0 transition-all cursor-pointer border-2 ${
               reportType === tab.id
-                ? "bg-white dark:bg-slate-900 text-teal-700 dark:text-teal-400 shadow-xs"
-                : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200"
+                ? "bg-[#FED734] text-black border-black shadow-[2px_2px_0px_#000000]"
+                : "border-transparent text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-black/5 dark:hover:bg-white/10"
             }`}
           >
             {tab.customLabel || t(tab.labelKey)}
@@ -252,7 +252,7 @@ export function ReportsView() {
       </div>
 
       {/* Filter Bar (Consistent 3-Column Across ALL Report Types: [Market / Tenant] [Month] [Year]) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 no-print">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-4 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000] no-print">
         {reportType !== "tenant_ledger" ? (
           <SearchableSelect
             label={t("collections.selectMarket")}
@@ -340,11 +340,11 @@ export function ReportsView() {
         <div className="space-y-4">
           {/* 1. Monthly Collection Report Table */}
           {reportType === "monthly_collection" && data.rows && (
-            <Card className="overflow-hidden">
+            <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                    <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                       <th className="p-3.5">{t("shops.shopNumber")}</th>
                       <th className="p-3.5">{t("tenants.tenantName")}</th>
                       <th className="p-3.5">{t("markets.marketName")}</th>
@@ -354,27 +354,27 @@ export function ReportsView() {
                       <th className="p-3.5 text-center">{t("common.status")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                     {data.rows.map((row: any, idx: number) => (
                       <tr
                         key={idx}
-                        className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
+                        className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15 transition-colors"
                       >
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                        <td className="p-3.5 font-black text-black dark:text-white">
                           {row.shopNumber}
                         </td>
-                        <td className="p-3.5 font-medium">
+                        <td className="p-3.5 font-bold text-black dark:text-white">
                           <p>{row.tenantName}</p>
-                          <p className="text-[11px] text-slate-400 font-mono">{row.phone}</p>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
                         </td>
-                        <td className="p-3.5 text-slate-500">{row.marketName}</td>
-                        <td className="p-3.5 text-right font-semibold">
+                        <td className="p-3.5 text-gray-600 dark:text-gray-400 font-bold">{row.marketName}</td>
+                        <td className="p-3.5 text-right font-bold text-black dark:text-white">
                           {formatCurrency(row.totalAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                        <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400">
                           {formatCurrency(row.paidAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-bold text-red-600 dark:text-red-400">
+                        <td className="p-3.5 text-right font-black text-red-600 dark:text-red-400">
                           {row.dueAmount > 0 ? formatCurrency(row.dueAmount, locale) : "—"}
                         </td>
                         <td className="p-3.5 text-center">
@@ -394,47 +394,47 @@ export function ReportsView() {
               {/* Yearly KPI Summary Cards */}
               {data.summary && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-                  <Card className="p-3.5 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
-                    <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  <Card className="p-3.5 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+                    <p className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-wider">
                       {locale === "bn" ? "বার্ষিক মোট দাবি" : "Yearly Total Billed"}
                     </p>
-                    <p className="text-base md:text-xl font-bold text-slate-900 dark:text-slate-100 mt-1">
+                    <p className="text-base md:text-xl font-black text-black dark:text-white mt-1 font-mono">
                       {formatCurrency(data.summary.yearlyBilled, locale)}
                     </p>
                   </Card>
 
-                  <Card className="p-3.5 bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/60">
-                    <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">
+                  <Card className="p-3.5 rounded-xl border-2 border-black bg-[#E8F8F0] dark:bg-[#132A1E] shadow-[3px_3px_0px_#000000]">
+                    <p className="text-[11px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
                       {locale === "bn" ? "বার্ষিক আদায়" : "Yearly Collected"}
                     </p>
-                    <p className="text-base md:text-xl font-bold text-emerald-700 dark:text-emerald-400 mt-1">
+                    <p className="text-base md:text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1 font-mono">
                       {formatCurrency(data.summary.yearlyCollected, locale)}
                     </p>
                   </Card>
 
-                  <Card className="p-3.5 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-900/60">
-                    <p className="text-[11px] font-semibold text-red-600 dark:text-red-400 uppercase tracking-wider">
+                  <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000]">
+                    <p className="text-[11px] font-black text-[#FF4B55] dark:text-[#FF6B75] uppercase tracking-wider">
                       {locale === "bn" ? "বার্ষিক বকেয়া" : "Yearly Total Due"}
                     </p>
-                    <p className="text-base md:text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+                    <p className="text-base md:text-xl font-black text-[#FF4B55] dark:text-[#FF6B75] mt-1 font-mono">
                       {formatCurrency(data.summary.yearlyDue, locale)}
                     </p>
                   </Card>
 
-                  <Card className="p-3.5 bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60">
-                    <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+                  <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FFF8D6] dark:bg-[#2C2405] shadow-[3px_3px_0px_#000000]">
+                    <p className="text-[11px] font-black text-amber-800 dark:text-amber-300 uppercase tracking-wider">
                       {locale === "bn" ? "বার্ষিক পরিচালন ব্যয়" : "Yearly Expenses"}
                     </p>
-                    <p className="text-base md:text-xl font-bold text-amber-700 dark:text-amber-400 mt-1">
+                    <p className="text-base md:text-xl font-black text-amber-800 dark:text-amber-300 mt-1 font-mono">
                       {formatCurrency(data.summary.yearlyExpense, locale)}
                     </p>
                   </Card>
 
-                  <Card className="p-3.5 bg-teal-50/50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-900/60 col-span-2 sm:col-span-1">
-                    <p className="text-[11px] font-semibold text-teal-700 dark:text-teal-400 uppercase tracking-wider">
+                  <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FED734]/25 shadow-[3px_3px_0px_#000000] col-span-2 sm:col-span-1">
+                    <p className="text-[11px] font-black text-black dark:text-white uppercase tracking-wider">
                       {locale === "bn" ? "বার্ষিক নিট লাভ" : "Yearly Net Profit"}
                     </p>
-                    <p className="text-base md:text-xl font-bold text-teal-700 dark:text-teal-400 mt-1">
+                    <p className="text-base md:text-xl font-black text-black dark:text-white mt-1 font-mono">
                       {formatCurrency(data.summary.yearlyNetProfit, locale)}
                     </p>
                   </Card>
@@ -442,11 +442,11 @@ export function ReportsView() {
               )}
 
               {/* Monthly Statement Table */}
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs md:text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                         <th className="p-3.5">{locale === "bn" ? "মাস" : "Month"}</th>
                         <th className="p-3.5 text-right">{t("billing.totalBill")}</th>
                         <th className="p-3.5 text-right">{t("billing.paidAmount")}</th>
@@ -457,7 +457,7 @@ export function ReportsView() {
                         <th className="p-3.5 text-center">{locale === "bn" ? "পরিশোধ / বকেয়া" : "Paid / Due"}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                       {data.rows.map((row: any) => {
                         const isSelectedMonth = reportMonth > 0 && row.month === reportMonth;
                         return (
@@ -465,61 +465,61 @@ export function ReportsView() {
                             key={row.month}
                             className={`transition-colors ${
                               isSelectedMonth
-                                ? "bg-teal-50/80 dark:bg-teal-950/40 ring-1 ring-inset ring-teal-500/40 font-medium"
-                                : "hover:bg-slate-50 dark:hover:bg-slate-800/40"
+                                ? "bg-[#FED734]/25 font-bold"
+                                : "hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15"
                             }`}
                           >
-                            <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                            <td className="p-3.5 font-black text-black dark:text-white flex items-center gap-2">
                               <span
-                                className={`w-6 h-6 rounded-full font-semibold text-[11px] flex items-center justify-center shrink-0 ${
+                                className={`w-6 h-6 rounded-md border-2 border-black font-black text-[11px] flex items-center justify-center shrink-0 shadow-[1px_1px_0px_#000000] ${
                                   isSelectedMonth
-                                    ? "bg-teal-600 text-white shadow-xs"
-                                    : "bg-teal-100 dark:bg-teal-950/80 text-teal-800 dark:text-teal-300"
+                                    ? "bg-[#FED734] text-black"
+                                    : "bg-white dark:bg-[#262830] text-black dark:text-white"
                                 }`}
                               >
                                 {locale === "bn" ? toBanglaDigits(row.month) : row.month}
                               </span>
                               <span>{formatMonth(row.month, locale, reportYear)}</span>
                               {isSelectedMonth && (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-teal-600 text-white font-bold ml-1">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded-md border border-black bg-[#FED734] text-black font-black ml-1 shadow-[1px_1px_0px_#000000]">
                                   {locale === "bn" ? "নির্বাচিত" : "Selected"}
                                 </span>
                               )}
                             </td>
-                            <td className="p-3.5 text-right font-semibold text-slate-900 dark:text-slate-100">
+                            <td className="p-3.5 text-right font-bold text-black dark:text-white">
                               {formatCurrency(row.totalBilled, locale)}
                             </td>
-                            <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                            <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400">
                               {formatCurrency(row.totalCollected, locale)}
                             </td>
-                            <td className="p-3.5 text-right font-bold text-red-600 dark:text-red-400">
+                            <td className="p-3.5 text-right font-black text-red-600 dark:text-red-400">
                               {row.totalDue > 0 ? formatCurrency(row.totalDue, locale) : "—"}
                             </td>
-                            <td className="p-3.5 text-right font-semibold text-amber-600 dark:text-amber-400">
+                            <td className="p-3.5 text-right font-bold text-amber-600 dark:text-amber-400">
                               {formatCurrency(row.totalExpense, locale)}
                             </td>
-                            <td className={`p-3.5 text-right font-bold ${row.netProfit >= 0 ? "text-teal-700 dark:text-teal-400" : "text-red-600 dark:text-red-400"}`}>
+                            <td className={`p-3.5 text-right font-black ${row.netProfit >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
                               {formatCurrency(row.netProfit, locale)}
                             </td>
                             <td className="p-3.5 text-right">
                               <div className="flex items-center justify-end gap-2">
-                                <span className="font-semibold text-xs">
+                                <span className="font-black text-xs text-black dark:text-white">
                                   {formatPercent(row.collectionRate, locale)}
                                 </span>
-                                <div className="w-12 bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden hidden sm:block">
+                                <div className="w-12 bg-white dark:bg-[#262830] border border-black h-2 rounded-full overflow-hidden hidden sm:block">
                                   <div
-                                    className="h-full bg-teal-500 rounded-full"
+                                    className="h-full bg-[#FED734]"
                                     style={{ width: `${Math.min(100, Math.round(row.collectionRate))}%` }}
                                   />
                                 </div>
                               </div>
                             </td>
-                            <td className="p-3.5 text-center text-xs">
-                              <span className="inline-flex items-center gap-1 font-semibold text-emerald-600">
+                            <td className="p-3.5 text-center text-xs font-black">
+                              <span className="inline-flex items-center gap-1 font-black text-emerald-600">
                                 {locale === "bn" ? toBanglaDigits(row.paidCount) : row.paidCount}
                               </span>
-                              <span className="text-slate-400 mx-1">/</span>
-                              <span className="inline-flex items-center gap-1 font-semibold text-red-500">
+                              <span className="text-black/40 dark:text-white/40 mx-1 font-black">/</span>
+                              <span className="inline-flex items-center gap-1 font-black text-red-500">
                                 {locale === "bn" ? toBanglaDigits(row.dueCount + row.partialCount) : row.dueCount + row.partialCount}
                               </span>
                             </td>
@@ -529,11 +529,11 @@ export function ReportsView() {
                     </tbody>
                     {data.summary && (
                       <tfoot>
-                        <tr className="bg-slate-100/80 dark:bg-slate-800/80 font-bold border-t-2 border-slate-300 dark:border-slate-700">
-                          <td className="p-3.5 text-slate-900 dark:text-white">
+                        <tr className="bg-[#FBF9F5] dark:bg-[#262830] font-black border-t-2 border-black">
+                          <td className="p-3.5 text-black dark:text-white">
                             {locale === "bn" ? "বার্ষিক মোট (Yearly Total)" : "Yearly Total"}
                           </td>
-                          <td className="p-3.5 text-right text-slate-900 dark:text-white">
+                          <td className="p-3.5 text-right text-black dark:text-white">
                             {formatCurrency(data.summary.yearlyBilled, locale)}
                           </td>
                           <td className="p-3.5 text-right text-emerald-700 dark:text-emerald-400">
@@ -545,13 +545,13 @@ export function ReportsView() {
                           <td className="p-3.5 text-right text-amber-700 dark:text-amber-400">
                             {formatCurrency(data.summary.yearlyExpense, locale)}
                           </td>
-                          <td className={`p-3.5 text-right ${data.summary.yearlyNetProfit >= 0 ? "text-teal-700 dark:text-teal-300" : "text-red-600"}`}>
+                          <td className={`p-3.5 text-right ${data.summary.yearlyNetProfit >= 0 ? "text-emerald-700 dark:text-emerald-300" : "text-red-600"}`}>
                             {formatCurrency(data.summary.yearlyNetProfit, locale)}
                           </td>
-                          <td className="p-3.5 text-right text-teal-700 dark:text-teal-300">
+                          <td className="p-3.5 text-right text-black dark:text-white">
                             {formatPercent(data.summary.yearlyCollectionRate, locale)}
                           </td>
-                          <td className="p-3.5 text-center text-slate-500">
+                          <td className="p-3.5 text-center text-gray-500">
                             —
                           </td>
                         </tr>
@@ -565,24 +565,24 @@ export function ReportsView() {
 
           {/* 2. Market Profit & Loss Statement */}
           {reportType === "market_pnl" && data.rows && (
-            <Card className="overflow-hidden">
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <TrendingUp className="w-4 h-4 text-teal-600" />
+            <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+              <div className="p-3.5 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black flex items-center justify-between">
+                <span className="text-xs font-black text-black dark:text-white flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4 text-black dark:text-white stroke-[2.5]" />
                   <span>
                     {reportMonth > 0
                       ? `${formatMonth(reportMonth, locale, reportYear)} — ${t("reports.marketProfitLoss")}`
                       : `${reportYear} — ${t("reports.marketProfitLoss")} (${locale === "bn" ? "পুরো বছর" : "Full Year"})`}
                   </span>
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-100 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300">
+                <span className="text-xs font-black px-2.5 py-0.5 rounded-md border border-black bg-[#FED734] text-black shadow-[1px_1px_0px_#000000]">
                   {reportMonth > 0 ? formatMonth(reportMonth, locale) : (locale === "bn" ? "১২ মাস" : "12 Months")}
                 </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                    <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                       <th className="p-3.5">{t("markets.marketName")}</th>
                       <th className="p-3.5 text-center">{t("markets.totalShops")}</th>
                       <th className="p-3.5 text-right">{t("reports.totalRevenue")}</th>
@@ -591,25 +591,25 @@ export function ReportsView() {
                       <th className="p-3.5 text-right">{t("reports.collectionEfficiency")}</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                     {data.rows.map((row: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                      <tr key={idx} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                        <td className="p-3.5 font-black text-black dark:text-white">
                           {row.marketName}
                         </td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-3.5 text-center font-bold">
                           {locale === "bn" ? toBanglaDigits(row.totalShops) : row.totalShops}
                         </td>
-                        <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                        <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400">
                           {formatCurrency(row.totalCollected, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-semibold text-amber-600 dark:text-amber-400">
+                        <td className="p-3.5 text-right font-black text-amber-600 dark:text-amber-400">
                           {formatCurrency(row.totalExpenses, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-bold text-teal-700 dark:text-teal-400">
+                        <td className="p-3.5 text-right font-black text-emerald-700 dark:text-emerald-400">
                           {formatCurrency(row.netProfit, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-semibold">
+                        <td className="p-3.5 text-right font-black text-black dark:text-white">
                           {formatPercent(row.collectionRate, locale)}
                         </td>
                       </tr>
@@ -622,14 +622,14 @@ export function ReportsView() {
 
           {/* 3. Expense Breakdown by Category */}
           {reportType === "expense_by_category" && data.rows && (
-            <Card className="overflow-hidden">
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+              <div className="p-3.5 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black flex items-center justify-between">
+                <span className="text-xs font-black text-black dark:text-white">
                   {reportMonth > 0
                     ? `${formatMonth(reportMonth, locale, reportYear)} — ${t("reports.expenseByCategory")}`
                     : `${reportYear} — ${t("reports.expenseByCategory")} (${locale === "bn" ? "পুরো বছর" : "Full Year"})`}
                 </span>
-                <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
+                <span className="text-xs font-black text-black dark:text-white font-mono">
                   {locale === "bn" ? "মোট খরচ: " : "Total: "}
                   {formatCurrency(data.totalAllExpenses || 0, locale)}
                 </span>
@@ -637,32 +637,32 @@ export function ReportsView() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                    <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                       <th className="p-3.5">{t("expenses.category")}</th>
                       <th className="p-3.5 text-center">Transactions</th>
                       <th className="p-3.5 text-right">{t("expenses.amount")}</th>
                       <th className="p-3.5 text-right">Share (%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                     {data.rows.map((row: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                      <tr key={idx} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                        <td className="p-3.5 font-black text-black dark:text-white flex items-center gap-2">
                           <span
-                            className="w-2.5 h-2.5 rounded-full"
+                            className="w-2.5 h-2.5 rounded-full border border-black"
                             style={{ backgroundColor: row.color || "#0d9488" }}
                           />
                           <span>
                             {locale === "bn" ? row.name_bn || row.name_en : row.name_en || row.name_bn}
                           </span>
                         </td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-3.5 text-center font-bold">
                           {locale === "bn" ? toBanglaDigits(row.count) : row.count}
                         </td>
-                        <td className="p-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
+                        <td className="p-3.5 text-right font-black text-black dark:text-white font-mono">
                           {formatCurrency(row.totalAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-semibold">
+                        <td className="p-3.5 text-right font-black text-black dark:text-white">
                           {formatPercent(row.percentage, locale)}
                         </td>
                       </tr>
@@ -675,19 +675,19 @@ export function ReportsView() {
 
           {/* 5. Collector & Staff Summary Report */}
           {reportType === "collector_summary" && data.rows && (
-            <Card className="overflow-hidden">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+              <div className="p-4 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs font-black text-black dark:text-white">
                   {locale === "bn" ? "কালেকশন স্টাফদের মোট আদায়:" : "Total Staff Collections:"}
                 </span>
-                <span className="text-base font-extrabold text-emerald-600 dark:text-emerald-400 font-mono">
+                <span className="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
                   {formatCurrency(data.totalCollected || 0, locale)}
                 </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                    <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                       <th className="p-3.5">কালেকশন স্টাফ (Collector)</th>
                       <th className="p-3.5">রোল (Role)</th>
                       <th className="p-3.5 text-center">মোট রিসিট</th>
@@ -697,30 +697,30 @@ export function ReportsView() {
                       <th className="p-3.5 text-right">অংশ (%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                     {data.rows.map((row: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                      <tr key={idx} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                        <td className="p-3.5 font-black text-black dark:text-white">
                           {row.collectorName}
                         </td>
                         <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black border border-black bg-[#FBF9F5] dark:bg-[#262830] text-black dark:text-white shadow-[1px_1px_0px_#000000]">
                             {row.role}
                           </span>
                         </td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-3.5 text-center font-bold">
                           {locale === "bn" ? toBanglaDigits(row.count) : row.count}
                         </td>
-                        <td className="p-3.5 text-right font-medium">
+                        <td className="p-3.5 text-right font-bold text-black dark:text-white">
                           {formatCurrency(row.cashAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-medium">
+                        <td className="p-3.5 text-right font-bold text-black dark:text-white">
                           {formatCurrency(row.bkashAmount + row.nagadAmount + row.bankAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                        <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 font-mono">
                           {formatCurrency(row.totalAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-semibold">
+                        <td className="p-3.5 text-right font-black text-black dark:text-white">
                           {formatPercent(row.percentage, locale)}
                         </td>
                       </tr>
@@ -733,19 +733,19 @@ export function ReportsView() {
 
           {/* 6. Payment Channel & Account Breakdown */}
           {reportType === "channel_summary" && data.rows && (
-            <Card className="overflow-hidden">
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 border-b border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3">
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+            <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+              <div className="p-4 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs font-black text-black dark:text-white">
                   {locale === "bn" ? "পেমেন্ট চ্যানেলে মোট জমা:" : "Total Channel Receipts:"}
                 </span>
-                <span className="text-base font-extrabold text-teal-600 dark:text-teal-400 font-mono">
+                <span className="text-base font-black text-emerald-600 dark:text-emerald-400 font-mono">
                   {formatCurrency(data.totalCollected || 0, locale)}
                 </span>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
-                    <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                    <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                       <th className="p-3.5">পেমেন্ট চ্যানেল / একাউন্ট</th>
                       <th className="p-3.5">মাধ্যম (Method)</th>
                       <th className="p-3.5 text-center">মোট লেনদেন সংখ্যা</th>
@@ -753,24 +753,24 @@ export function ReportsView() {
                       <th className="p-3.5 text-right">অংশ (%)</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                  <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                     {data.rows.map((row: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                        <td className="p-3.5 font-bold text-slate-900 dark:text-slate-100">
+                      <tr key={idx} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                        <td className="p-3.5 font-black text-black dark:text-white">
                           {row.channelName}
                         </td>
                         <td className="p-3.5">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                          <span className="px-2 py-0.5 rounded-md text-[10px] font-black border border-black bg-[#FED734] text-black shadow-[1px_1px_0px_#000000]">
                             {row.method}
                           </span>
                         </td>
-                        <td className="p-3.5 text-center">
+                        <td className="p-3.5 text-center font-bold">
                           {locale === "bn" ? toBanglaDigits(row.count) : row.count}
                         </td>
-                        <td className="p-3.5 text-right font-bold text-teal-600 dark:text-teal-400">
+                        <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 font-mono">
                           {formatCurrency(row.totalAmount, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-semibold">
+                        <td className="p-3.5 text-right font-black text-black dark:text-white">
                           {formatPercent(row.percentage, locale)}
                         </td>
                       </tr>
@@ -785,19 +785,19 @@ export function ReportsView() {
           {reportType === "tenant_ledger" && data.tenant && (
             <div className="space-y-4">
               {/* Tenant Header card */}
-              <Card className="p-5 bg-teal-50/50 dark:bg-teal-950/20 border-teal-200 dark:border-teal-800">
+              <Card className="p-5 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    <h3 className="text-lg font-black text-black dark:text-white">
                       {data.tenant.name}
                     </h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 font-bold mt-0.5">
                       {data.tenant.shopNumber} • {data.tenant.marketName} • Phone: {data.tenant.phone}
                     </p>
                   </div>
                   <div className="text-left sm:text-right">
-                    <p className="text-xs text-slate-500">{t("collections.totalDue")}</p>
-                    <p className="text-xl font-bold text-red-600 dark:text-red-400">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">{t("collections.totalDue")}</p>
+                    <p className="text-2xl font-black text-[#FF4B55] dark:text-[#FF6B75] font-mono">
                       {formatCurrency(data.currentOutstandingDue, locale)}
                     </p>
                   </div>
@@ -805,11 +805,11 @@ export function ReportsView() {
               </Card>
 
               {/* Transactions Table */}
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs md:text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                         <th className="p-3.5">{t("common.date")}</th>
                         <th className="p-3.5">{t("common.details")}</th>
                         <th className="p-3.5 text-right">Debit (ভাড়া দাবি)</th>
@@ -817,20 +817,20 @@ export function ReportsView() {
                         <th className="p-3.5 text-right">Balance (অবশিষ্ট বকেয়া)</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                       {data.transactions?.map((tr: any) => (
-                        <tr key={tr.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                          <td className="p-3.5 font-mono text-slate-500">
+                        <tr key={tr.id} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                          <td className="p-3.5 font-mono text-gray-600 dark:text-gray-400 font-bold">
                             {formatDate(tr.date, locale)}
                           </td>
-                          <td className="p-3.5 font-medium">{tr.description}</td>
-                          <td className="p-3.5 text-right font-semibold text-slate-800 dark:text-slate-200">
+                          <td className="p-3.5 font-bold text-black dark:text-white">{tr.description}</td>
+                          <td className="p-3.5 text-right font-bold text-black dark:text-white">
                             {tr.debit > 0 ? formatCurrency(tr.debit, locale) : "—"}
                           </td>
-                          <td className="p-3.5 text-right font-semibold text-emerald-600 dark:text-emerald-400">
+                          <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400">
                             {tr.credit > 0 ? formatCurrency(tr.credit, locale) : "—"}
                           </td>
-                          <td className="p-3.5 text-right font-bold text-slate-900 dark:text-slate-100">
+                          <td className="p-3.5 text-right font-black text-black dark:text-white font-mono">
                             {formatCurrency(tr.balance, locale)}
                           </td>
                         </tr>
@@ -846,25 +846,25 @@ export function ReportsView() {
           {reportType === "settlements" && data.rows && (
             <div className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card className="p-4 bg-purple-50/50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800">
-                  <p className="text-xs text-purple-700 dark:text-purple-300 font-semibold uppercase">{t("settlement.totalRefunds")}</p>
-                  <p className="text-xl font-bold text-purple-700 dark:text-purple-300 mt-1">
+                <Card className="p-4 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-black uppercase tracking-wider">{t("settlement.totalRefunds")}</p>
+                  <p className="text-2xl font-black text-black dark:text-white mt-1 font-mono">
                     {formatCurrency(data.totalRefunded || 0, locale)}
                   </p>
                 </Card>
-                <Card className="p-4 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800">
-                  <p className="text-xs text-red-700 dark:text-red-300 font-semibold uppercase">{t("settlement.unrecoveredReceivables")}</p>
-                  <p className="text-xl font-bold text-red-600 dark:text-red-400 mt-1">
+                <Card className="p-4 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000]">
+                  <p className="text-xs text-[#FF4B55] dark:text-[#FF6B75] font-black uppercase tracking-wider">{t("settlement.unrecoveredReceivables")}</p>
+                  <p className="text-2xl font-black text-[#FF4B55] dark:text-[#FF6B75] mt-1 font-mono">
                     {formatCurrency(data.totalUnrecovered || 0, locale)}
                   </p>
                 </Card>
               </div>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs md:text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                         <th className="p-3.5">{t("common.date")}</th>
                         <th className="p-3.5">{t("shops.shopNumber")}</th>
                         <th className="p-3.5">{t("tenants.tenantName")}</th>
@@ -875,40 +875,40 @@ export function ReportsView() {
                         <th className="p-3.5 text-right">Confirmed By</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                       {data.rows.map((row: any) => (
-                        <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                          <td className="p-3.5 font-mono text-slate-500">{formatDate(row.settledAt, locale)}</td>
-                          <td className="p-3.5 font-bold text-slate-900 dark:text-white">
+                        <tr key={row.id} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                          <td className="p-3.5 font-mono text-gray-500 font-bold">{formatDate(row.settledAt, locale)}</td>
+                          <td className="p-3.5 font-black text-black dark:text-white">
                             {row.shopNumber} ({row.marketName})
                           </td>
-                          <td className="p-3.5 font-medium">
+                          <td className="p-3.5 font-bold text-black dark:text-white">
                             <p>{row.tenantName}</p>
-                            <p className="text-[11px] text-slate-400 font-mono">{row.phone}</p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
                           </td>
-                          <td className="p-3.5 text-right font-semibold text-teal-600 dark:text-teal-400">
+                          <td className="p-3.5 text-right font-black text-black dark:text-white">
                             {formatCurrency(row.advanceBalance, locale)}
                           </td>
-                          <td className="p-3.5 text-right font-semibold text-red-600 dark:text-red-400">
+                          <td className="p-3.5 text-right font-black text-red-600 dark:text-red-400">
                             {formatCurrency(row.totalDue, locale)}
                           </td>
-                          <td className="p-3.5 text-right text-slate-500">
+                          <td className="p-3.5 text-right text-gray-600 dark:text-gray-400 font-bold">
                             {row.totalDeductions > 0 ? formatCurrency(row.totalDeductions, locale) : "—"}
                           </td>
-                          <td className="p-3.5 text-right font-bold">
+                          <td className="p-3.5 text-right font-black">
                             {row.refundAmount > 0 ? (
-                              <span className="text-emerald-600 dark:text-emerald-400">
+                              <span className="text-emerald-600 dark:text-emerald-400 font-bold">
                                 Refund: {formatCurrency(row.refundAmount, locale)}
                               </span>
                             ) : row.unrecoveredAmount > 0 ? (
-                              <span className="text-red-600 dark:text-red-400">
+                              <span className="text-[#FF4B55] dark:text-[#FF6B75] font-bold">
                                 Unrecovered: {formatCurrency(row.unrecoveredAmount, locale)}
                               </span>
                             ) : (
-                              <span className="text-slate-500">Exact Match</span>
+                              <span className="text-gray-500 font-bold">Exact Match</span>
                             )}
                           </td>
-                          <td className="p-3.5 text-right text-slate-500 text-xs">{row.confirmedBy}</td>
+                          <td className="p-3.5 text-right text-gray-600 dark:text-gray-400 font-bold text-xs">{row.confirmedBy}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -921,29 +921,29 @@ export function ReportsView() {
           {/* 6. Unrecovered Receivables Report */}
           {reportType === "unrecovered_receivables" && data.rows && (
             <div className="space-y-4">
-              <Card className="p-5 bg-red-50/50 dark:bg-red-950/20 border-red-200 dark:border-red-800 flex items-center justify-between">
+              <Card className="p-5 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000] flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-red-700 dark:text-red-400 flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5" />
+                  <h3 className="text-base font-black text-[#FF4B55] dark:text-[#FF6B75] flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 stroke-[2.5]" />
                     <span>{t("settlement.unrecoveredReceivables")}</span>
                   </h3>
-                  <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-bold mt-0.5">
                     Total unpaid rent loss after advance adjustment and vacating
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs text-slate-500">Total Unrecovered</p>
-                  <p className="text-2xl font-extrabold text-red-600 dark:text-red-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-bold">Total Unrecovered</p>
+                  <p className="text-2xl font-black text-[#FF4B55] dark:text-[#FF6B75] font-mono">
                     {formatCurrency(data.totalUnrecovered || 0, locale)}
                   </p>
                 </div>
               </Card>
 
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs md:text-sm border-collapse">
                     <thead>
-                      <tr className="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/60 text-slate-600 dark:text-slate-400 font-semibold">
+                      <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                         <th className="p-3.5">{t("shops.shopNumber")}</th>
                         <th className="p-3.5">{t("tenants.tenantName")}</th>
                         <th className="p-3.5">{t("markets.marketName")}</th>
@@ -953,25 +953,25 @@ export function ReportsView() {
                         <th className="p-3.5 text-right">{t("common.date")}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
                       {data.rows.map((row: any) => (
-                        <tr key={row.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
-                          <td className="p-3.5 font-bold text-slate-900 dark:text-white">{row.shopNumber}</td>
-                          <td className="p-3.5 font-medium">
+                        <tr key={row.id} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
+                          <td className="p-3.5 font-black text-black dark:text-white">{row.shopNumber}</td>
+                          <td className="p-3.5 font-bold text-black dark:text-white">
                             <p>{row.tenantName}</p>
-                            <p className="text-[11px] text-slate-400 font-mono">{row.phone}</p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
                           </td>
-                          <td className="p-3.5 text-slate-500">{row.marketName}</td>
-                          <td className="p-3.5 text-right font-semibold text-slate-700 dark:text-slate-300">
+                          <td className="p-3.5 text-gray-600 dark:text-gray-400 font-bold">{row.marketName}</td>
+                          <td className="p-3.5 text-right font-bold text-black dark:text-white">
                             {formatCurrency(row.totalDue, locale)}
                           </td>
-                          <td className="p-3.5 text-right font-semibold text-teal-600 dark:text-teal-400">
+                          <td className="p-3.5 text-right font-black text-black dark:text-white">
                             {formatCurrency(row.advanceBalance, locale)}
                           </td>
-                          <td className="p-3.5 text-right font-extrabold text-red-600 dark:text-red-400">
+                          <td className="p-3.5 text-right font-black text-[#FF4B55] dark:text-[#FF6B75] font-mono">
                             {formatCurrency(row.unrecoveredAmount, locale)}
                           </td>
-                          <td className="p-3.5 text-right font-mono text-slate-500">{formatDate(row.settledAt, locale)}</td>
+                          <td className="p-3.5 text-right font-mono text-gray-500 font-bold">{formatDate(row.settledAt, locale)}</td>
                         </tr>
                       ))}
                     </tbody>

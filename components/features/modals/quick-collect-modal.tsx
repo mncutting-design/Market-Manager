@@ -395,7 +395,7 @@ export function QuickCollectModal() {
         {/* Multi-Invoice Selector if shop has multiple bills */}
         {bills.length > 1 && (
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               {locale === "bn" ? "মাসের বিল / ইনভয়েস নির্বাচন" : "Select Due Bill Month"}
             </label>
             <Select
@@ -409,7 +409,7 @@ export function QuickCollectModal() {
                   setAmountBDT(Math.round(found.dueAmount / 100));
                 }
               }}
-              className="text-xs font-semibold"
+              className="text-xs font-bold"
             >
               {bills.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -429,31 +429,31 @@ export function QuickCollectModal() {
         ) : activeBill ? (
           <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-xs md:text-sm space-y-1.5 shadow-[2px_2px_0px_#000000]">
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400 font-bold">{t("billing.billDetails")}:</span>
+              <span className="text-neutral-600 dark:text-neutral-400 font-bold">{t("billing.billDetails")}:</span>
               <span className="font-black text-black dark:text-white">
                 {locale === "bn" ? toBanglaDigits(activeBill.month) : activeBill.month}/
                 {locale === "bn" ? toBanglaDigits(activeBill.year) : activeBill.year}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400 font-bold">{t("billing.totalBill")}:</span>
+              <span className="text-neutral-600 dark:text-neutral-400 font-bold">{t("billing.totalBill")}:</span>
               <span className="font-black text-black dark:text-white">{formatCurrency(activeBill.totalAmount, locale)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600 dark:text-gray-400 font-bold">{t("billing.paidAmount")}:</span>
+              <span className="text-neutral-600 dark:text-neutral-400 font-bold">{t("billing.paidAmount")}:</span>
               <span className="font-black text-[#00BA88]">
                 {formatCurrency(activeBill.paidAmount, locale)}
               </span>
             </div>
             {activeBill.billItems && activeBill.billItems.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1.5 pb-0.5 border-t border-black/10 dark:border-white/10 text-[11px]">
-                <span className="bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-slate-800 dark:text-slate-200 font-bold">
+              <div className="flex flex-wrap gap-1.5 pt-1.5 pb-0.5 border-t-2 border-black/10 dark:border-white/10 text-[11px]">
+                <span className="bg-white dark:bg-[#1E1F24] px-2 py-0.5 rounded text-black dark:text-white font-black border border-black shadow-[1px_1px_0px_#000000]">
                   {locale === "bn" ? "মূল ভাড়া" : "Rent"}: {formatCurrency(activeBill.rentAmount, locale)}
                 </span>
                 {activeBill.billItems.map((item: any) => (
                   <span
                     key={item.id}
-                    className="bg-amber-100 dark:bg-amber-950/80 px-1.5 py-0.5 rounded text-amber-900 dark:text-amber-200 font-bold border border-amber-300 dark:border-amber-800"
+                    className="bg-[#FED734] px-2 py-0.5 rounded text-black font-black border border-black shadow-[1px_1px_0px_#000000]"
                   >
                     {item.description}: {formatCurrency(item.amount, locale)}
                   </span>
@@ -471,7 +471,7 @@ export function QuickCollectModal() {
           <div className="p-3.5 rounded-xl bg-[#FFEBEF] dark:bg-[#2A1417] text-black dark:text-white text-xs flex items-center justify-between border-2 border-black shadow-[2px_2px_0px_#000000]">
             <span className="font-bold">{locale === "bn" ? "এই দোকানের কোনো অপরিশোধিত বকেয়া ইনভয়েস নেই।" : "No pending due invoice for this shop."}</span>
             {selectedShopId && (
-              <span className="font-black text-[11px] bg-[#00BA88] text-white px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000000]">
+              <span className="font-black text-[11px] bg-[#00BA88] text-white px-2 py-0.5 rounded-md border-2 border-black shadow-[1px_1px_0px_#000000]">
                 {locale === "bn" ? "পরিশোধিত" : "Settled"}
               </span>
             )}
@@ -497,7 +497,7 @@ export function QuickCollectModal() {
             <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5 flex items-center justify-between">
               <span>{locale === "bn" ? "আদায়কারী (Received by) *" : "Received by *"}</span>
               {isCollectorOnly && (
-                <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold lowercase">(only self)</span>
+                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-bold lowercase">(only self)</span>
               )}
             </label>
             <Select
@@ -552,15 +552,15 @@ export function QuickCollectModal() {
 
         {/* Conditional Channel Details: bKash / Nagad */}
         {(paymentMethod === "BKASH" || paymentMethod === "NAGAD") && (
-          <div className="p-3.5 rounded-xl border border-pink-200 dark:border-pink-900/60 bg-pink-50/50 dark:bg-pink-950/20 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-pink-900 dark:text-pink-300">
-              <Smartphone className="w-4 h-4 text-pink-600" />
+          <div className="p-3.5 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] space-y-3 shadow-[3px_3px_0px_#000000]">
+            <div className="flex items-center gap-2 text-xs font-black text-black dark:text-white">
+              <Smartphone className="w-4 h-4 text-black dark:text-[#FED734] stroke-[2.5]" />
               <span>{paymentMethod} একাউন্ট ও লেনদেনের বিবরণ</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div className="col-span-1 sm:col-span-2">
-                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                   গ্রহীতা একাউন্ট (Receiving Account) *
                 </label>
                 {paymentAccounts.length > 0 ? (
@@ -576,14 +576,14 @@ export function QuickCollectModal() {
                     ))}
                   </Select>
                 ) : (
-                  <div className="p-2 text-[11px] text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 rounded border border-amber-200 dark:border-amber-900">
+                  <div className="p-2 text-[11px] font-bold text-black dark:text-white bg-[#FEF3C7] dark:bg-[#3D2F14] rounded-lg border-2 border-black shadow-[1.5px_1.5px_0px_#000000]">
                     সেটিংস &gt; পেমেন্ট অ্যাকাউন্ট থেকে {paymentMethod} নম্বর কনফিগার করুন
                   </div>
                 )}
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                   ট্রানজেকশন আইডি (TrxID)
                 </label>
                 <Input
@@ -595,7 +595,7 @@ export function QuickCollectModal() {
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                   প্রেরকের মোবাইল নম্বর (Sender Number)
                 </label>
                 <Input
@@ -611,15 +611,15 @@ export function QuickCollectModal() {
 
         {/* Conditional Channel Details: Bank or Cheque */}
         {(paymentMethod === "BANK" || paymentMethod === "CHEQUE") && (
-          <div className="p-3.5 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 space-y-3">
-            <div className="flex items-center gap-2 text-xs font-bold text-blue-900 dark:text-blue-300">
-              <Landmark className="w-4 h-4 text-blue-600" />
+          <div className="p-3.5 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] space-y-3 shadow-[3px_3px_0px_#000000]">
+            <div className="flex items-center gap-2 text-xs font-black text-black dark:text-white">
+              <Landmark className="w-4 h-4 text-black dark:text-[#FED734] stroke-[2.5]" />
               <span>{paymentMethod === "BANK" ? "ব্যাংক ট্রান্সফার" : "চেক পেমেন্ট"} বিবরণ</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                   ব্যাংকের নাম (Bank) *
                 </label>
                 <Select
@@ -637,7 +637,7 @@ export function QuickCollectModal() {
 
               {selectedBank === "Other" && (
                 <div>
-                  <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                     অন্য ব্যাংকের নাম *
                   </label>
                   <Input
@@ -650,7 +650,7 @@ export function QuickCollectModal() {
               )}
 
               <div>
-                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                   শাখা বা একাউন্ট (Branch / Account)
                 </label>
                 <Input
@@ -661,7 +661,7 @@ export function QuickCollectModal() {
               </div>
 
               <div className={selectedBank === "Other" ? "col-span-1 sm:col-span-2" : ""}>
-                <label className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-[11px] font-black text-black dark:text-white mb-1">
                   {paymentMethod === "CHEQUE" ? "চেক নম্বর (Cheque No.) *" : "রেফারেন্স নম্বর (Ref No.)"}
                 </label>
                 <Input
@@ -677,7 +677,7 @@ export function QuickCollectModal() {
 
         {/* Optional Notes */}
         <div>
-          <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
             {t("common.notes")} ({t("common.optional")})
           </label>
           <Input
@@ -698,11 +698,12 @@ export function QuickCollectModal() {
           </Button>
           <Button
             type="submit"
+            variant="neo"
             isLoading={isSubmitting}
             disabled={isLoadingData || isSubmitting || !selectedBillId}
-            className="bg-teal-600 hover:bg-teal-500 text-white font-bold cursor-pointer"
+            className="font-black"
           >
-            <CheckCircle2 className="w-4 h-4 mr-1.5" />
+            <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("collections.collectPayment")}
           </Button>
         </div>

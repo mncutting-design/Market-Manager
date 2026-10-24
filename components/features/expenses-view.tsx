@@ -133,11 +133,11 @@ export function ExpensesView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Wrench className="w-6 h-6 text-amber-500" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white flex items-center gap-2">
+            <Wrench className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
             <span>{t("expenses.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-bold mt-1">
             {t("expenses.subtitle")}
           </p>
         </div>
@@ -145,14 +145,14 @@ export function ExpensesView() {
         {!isOperator && (
           <div className="flex items-center gap-2">
             {isAdmin && (
-              <Button variant="outline" onClick={() => setIsCategoryModalOpen(true)}>
-                <Plus className="w-4 h-4 mr-1.5" />
+              <Button variant="outline" onClick={() => setIsCategoryModalOpen(true)} className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+                <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
                 {t("expenses.addCategory")}
               </Button>
             )}
 
-            <Button onClick={() => openAddExpense()}>
-              <Plus className="w-4 h-4 mr-1.5" />
+            <Button onClick={() => openAddExpense()} className="font-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+              <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
               {t("expenses.addExpense")}
             </Button>
           </div>
@@ -161,14 +161,14 @@ export function ExpensesView() {
 
       {/* Summary KPI & Category Filter bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="p-4 sm:col-span-1 bg-amber-50/30 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/60">
-          <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">
+        <Card className="p-4 sm:col-span-1 rounded-xl bg-[#FED734]/20 border-2 border-black shadow-[3px_3px_0px_#000000]">
+          <p className="text-xs font-black text-black dark:text-white uppercase tracking-wider">
             {t("expenses.totalExpenses")}
           </p>
-          <p className="text-2xl font-bold text-amber-700 dark:text-amber-400 mt-1">
+          <p className="text-2xl font-black text-black dark:text-white mt-1 font-mono">
             {formatCurrency(totalAmount, locale)}
           </p>
-          <p className="text-[11px] text-slate-500 mt-0.5">
+          <p className="text-[11px] text-gray-600 dark:text-gray-400 font-bold mt-0.5">
             {locale === "bn" ? toBanglaDigits(expenses.length) : expenses.length} items recorded
           </p>
         </Card>
@@ -177,10 +177,10 @@ export function ExpensesView() {
         <div className="sm:col-span-2 flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
           <button
             onClick={() => setSelectedCategory("ALL")}
-            className={`px-3 py-2 rounded-xl text-xs font-semibold shrink-0 transition-all cursor-pointer border ${
+            className={`px-3.5 py-2 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border-2 border-black ${
               selectedCategory === "ALL"
-                ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-xs"
-                : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
+                : "bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/20"
             }`}
           >
             {t("common.all")}
@@ -190,14 +190,14 @@ export function ExpensesView() {
             <button
               key={c.id}
               onClick={() => setSelectedCategory(c.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-medium shrink-0 transition-all cursor-pointer border flex items-center gap-1.5 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-black shrink-0 transition-all cursor-pointer border-2 border-black flex items-center gap-1.5 ${
                 selectedCategory === c.id
-                  ? "bg-teal-50 dark:bg-teal-950/80 text-teal-800 dark:text-teal-200 border-teal-300 dark:border-teal-700 font-semibold shadow-xs"
-                  : "bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                  ? "bg-[#FED734] text-black shadow-[2px_2px_0px_#000000]"
+                  : "bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[2px_2px_0px_#000000] hover:bg-[#FED734]/20"
               }`}
             >
               <span
-                className="w-2 h-2 rounded-full shrink-0"
+                className="w-2.5 h-2.5 rounded-full shrink-0 border border-black"
                 style={{ backgroundColor: c.color || "#0d9488" }}
               />
               <span>{locale === "bn" ? c.name_bn || c.name_en : c.name_en || c.name_bn}</span>
@@ -208,9 +208,9 @@ export function ExpensesView() {
 
       {/* Filter Notice Banner when Active Filter matches zero records */}
       {selectedCategory !== "ALL" && expenses.length === 0 && !isLoading && (
-        <div className="p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200 shadow-xs">
-          <div className="flex items-center gap-2 font-medium">
-            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+        <div className="p-3 rounded-xl bg-[#FFF8D6] dark:bg-[#2C2405] border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-between text-xs text-black dark:text-white font-bold">
+          <div className="flex items-center gap-2 font-black">
+            <AlertCircle className="w-4 h-4 text-black dark:text-white shrink-0 stroke-[2.5]" />
             <span>
               {locale === "bn"
                 ? "রেকর্ড সংরক্ষিত রয়েছে, কিন্তু বর্তমান ক্যাটাগরি ফিল্টারের কারণে প্রদর্শিত হচ্ছে না।"
@@ -221,7 +221,7 @@ export function ExpensesView() {
             size="sm"
             variant="outline"
             onClick={() => setSelectedCategory("ALL")}
-            className="h-7 text-xs bg-white dark:bg-slate-900 border-amber-300 dark:border-amber-700"
+            className="h-7 text-xs font-black border-2 border-black bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[1.5px_1.5px_0px_#000000]"
           >
             {locale === "bn" ? "ফিল্টার মুছুন" : "Clear filter"}
           </Button>
@@ -232,12 +232,12 @@ export function ExpensesView() {
       {isLoading ? (
         <TableSkeleton rows={6} />
       ) : expenses.length === 0 ? (
-        <Card className="p-12 text-center">
-          <Wrench className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
-          <p className="text-base font-semibold text-slate-700 dark:text-slate-300">
+        <Card className="p-12 text-center bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000]">
+          <Wrench className="w-12 h-12 text-black dark:text-white mx-auto mb-3 stroke-[2]" />
+          <p className="text-base font-black text-black dark:text-white">
             {t("expenses.noExpensesFound")}
           </p>
-          <Button onClick={() => openAddExpense()} className="mt-4">
+          <Button onClick={() => openAddExpense()} className="mt-4 font-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
             {t("expenses.addExpense")}
           </Button>
         </Card>
@@ -246,40 +246,39 @@ export function ExpensesView() {
           {expenses.map((e) => (
             <Card
               key={e.id}
-              className="p-4 md:p-5 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xs"
+              className="p-4 md:p-5 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_#000000] transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2.5">
                   <span
-                    className="px-2.5 py-1 rounded-lg text-xs font-semibold"
+                    className="px-2.5 py-1 rounded-md text-xs font-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]"
                     style={{
-                      backgroundColor: `${e.category.color}20`,
-                      color: e.category.color,
-                      borderColor: `${e.category.color}40`,
+                      backgroundColor: `${e.category.color}25`,
+                      color: "#000000",
                     }}
                   >
                     {locale === "bn"
                       ? e.category.name_bn || e.category.name_en
                       : e.category.name_en || e.category.name_bn}
                   </span>
-                  <span className="text-xs text-slate-400">•</span>
-                  <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  <span className="text-xs text-black/40 dark:text-white/40 font-black">•</span>
+                  <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
                     {e.market.name}
                   </span>
                 </div>
 
-                <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mt-2">
+                <p className="text-sm font-black text-black dark:text-white mt-2">
                   {e.description || "রক্ষণাবেক্ষণ ব্যয়"}
                 </p>
 
                 <div className="flex items-center gap-2 flex-wrap mt-1.5">
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">
                     {formatDate(e.date, locale)} • {t("expenses.paymentMethod")}: {e.paymentMethod}
                     {e.attachmentUrl && ` • Voucher: ${e.attachmentUrl}`}
                   </p>
                   {(e.enteredByUser?.name || e.createdByName) && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
-                      <Users className="w-3 h-3 text-slate-400" />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-bold text-black dark:text-white bg-[#FBF9F5] dark:bg-[#262830] border border-black px-2 py-0.5 rounded-md shadow-[1px_1px_0px_#000000]">
+                      <Users className="w-3 h-3 text-black dark:text-white stroke-[2.5]" />
                       <span>
                         {locale === "bn" ? "এন্ট্রি করেছেন" : "Entered by"}: {e.enteredByUser?.name || e.createdByName}
                       </span>
@@ -288,18 +287,18 @@ export function ExpensesView() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between md:justify-end gap-4 pt-3 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
-                <span className="text-lg font-bold text-slate-900 dark:text-slate-100">
+              <div className="flex items-center justify-between md:justify-end gap-4 pt-3 md:pt-0 border-t-2 md:border-t-0 border-black/10 dark:border-white/10">
+                <span className="text-xl font-black text-black dark:text-white font-mono">
                   {formatCurrency(e.amount, locale)}
                 </span>
 
                 {!isOperator && (
                   <button
                     onClick={() => handleDeleteExpense(e.id)}
-                    className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                    className="p-2 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FF4B55] hover:text-white text-black dark:text-white shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                     title={t("common.delete")}
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-4 h-4 stroke-[2.5]" />
                   </button>
                 )}
               </div>
@@ -317,7 +316,7 @@ export function ExpensesView() {
       >
         <form onSubmit={handleCreateCategory} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
               {t("expenses.categoryNameBn")}
             </label>
             <Input
@@ -329,7 +328,7 @@ export function ExpensesView() {
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
               {t("expenses.categoryNameEn")}
             </label>
             <Input
@@ -341,7 +340,7 @@ export function ExpensesView() {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
                 {t("expenses.categoryColor")}
               </label>
               <div className="flex items-center gap-2">
@@ -349,14 +348,14 @@ export function ExpensesView() {
                   type="color"
                   value={catColor}
                   onChange={(e) => setCatColor(e.target.value)}
-                  className="w-10 h-10 rounded-lg cursor-pointer border border-slate-200"
+                  className="w-10 h-10 rounded-lg cursor-pointer border-2 border-black shadow-[2px_2px_0px_#000000]"
                 />
                 <Input value={catColor} onChange={(e) => setCatColor(e.target.value)} />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+              <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
                 {t("expenses.categoryIcon")}
               </label>
               <Select value={catIcon} onChange={(e) => setCatIcon(e.target.value)}>
@@ -375,7 +374,7 @@ export function ExpensesView() {
               {t("common.cancel")}
             </Button>
             <Button type="submit" isLoading={isSavingCategory}>
-              <CheckCircle2 className="w-4 h-4 mr-1.5" />
+              <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
               {t("common.save")}
             </Button>
           </div>

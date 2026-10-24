@@ -312,88 +312,88 @@ export function TenantProfileModal({
         maxWidth="3xl"
       >
         {isLoading || !tenantData ? (
-          <div className="py-20 flex flex-col items-center justify-center min-h-[380px] text-slate-500 space-y-3">
-            <div className="w-8 h-8 rounded-full border-2 border-teal-500 border-t-transparent animate-spin" />
-            <p className="text-xs font-semibold">{t("common.loading")}</p>
+          <div className="py-20 flex flex-col items-center justify-center min-h-[380px] space-y-3">
+            <div className="w-8 h-8 rounded-full border-3 border-black border-t-[#FED734] animate-spin" />
+            <p className="text-xs font-black uppercase tracking-wider text-black dark:text-white">{t("common.loading")}</p>
           </div>
         ) : (
           <div className="space-y-4">
             {/* Top Header Card */}
-            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-[#182234] border border-slate-200 dark:border-[#2d3b52] text-xs">
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[3px_3px_0px_#000000] text-xs">
               <div className="flex flex-wrap items-center gap-3">
-                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-teal-600" />
+                <span className="font-black text-black dark:text-white flex items-center gap-1.5">
+                  <Phone className="w-3.5 h-3.5 text-black dark:text-[#FED734] stroke-[2.5]" />
                   {tenantData.phone}
                 </span>
                 <span>•</span>
-                <span className="text-slate-600 dark:text-slate-300">
-                  {t("tenants.rentAmount")}: <strong>{formatCurrency(tenantData.rentAmount, locale)}</strong>
+                <span className="text-neutral-600 dark:text-neutral-400 font-bold">
+                  {t("tenants.rentAmount")}: <strong className="text-black dark:text-white font-black">{formatCurrency(tenantData.rentAmount, locale)}</strong>
                 </span>
                 <span>•</span>
-                <span className="text-slate-600 dark:text-slate-300">
-                  {t("advance.advanceBalance")}: <strong className="text-teal-600 font-mono">{formatCurrency(advanceBalance, locale)}</strong>
+                <span className="text-neutral-600 dark:text-neutral-400 font-bold">
+                  {t("advance.advanceBalance")}: <strong className="text-[#00BA88] font-mono font-black">{formatCurrency(advanceBalance, locale)}</strong>
                 </span>
               </div>
               <StatusBadge status={tenantData.status} />
             </div>
 
-            {/* Navigation Tabs - Hidden scrollbar with smooth touch scrolling */}
-            <div className="flex border-b border-slate-200 dark:border-slate-800 text-xs font-semibold overflow-x-auto no-scrollbar">
+            {/* Navigation Tabs - Neo-Brutalist Pill Tabs */}
+            <div className="flex border-b-2 border-black pb-1 gap-1 text-xs font-black overflow-x-auto no-scrollbar">
               <button
                 type="button"
                 onClick={() => setActiveTab("profile")}
-                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg border-2 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === "profile"
-                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "bg-[#FED734] text-black border-black shadow-[2px_2px_0px_#000000] -translate-y-0.5"
+                    : "border-transparent text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                 }`}
               >
-                <User className="w-4 h-4" />
+                <User className="w-4 h-4 stroke-[2.5]" />
                 <span>{t("tenants.profileDetails")}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("edit")}
-                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg border-2 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === "edit"
-                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "bg-[#FED734] text-black border-black shadow-[2px_2px_0px_#000000] -translate-y-0.5"
+                    : "border-transparent text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                 }`}
               >
-                <Edit3 className="w-4 h-4" />
+                <Edit3 className="w-4 h-4 stroke-[2.5]" />
                 <span>{t("tenants.editProfile")}</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("advance")}
-                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg border-2 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === "advance"
-                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "bg-[#FED734] text-black border-black shadow-[2px_2px_0px_#000000] -translate-y-0.5"
+                    : "border-transparent text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                 }`}
               >
-                <Wallet className="w-4 h-4" />
+                <Wallet className="w-4 h-4 stroke-[2.5]" />
                 <span>{t("tenants.advanceLedger")}</span>
                 {shortfall > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-amber-500 ml-0.5" />
+                  <span className="w-2 h-2 rounded-full bg-[#FF4B55] border border-black ml-0.5" />
                 )}
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("topups")}
-                className={`px-3.5 py-2.5 border-b-2 transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                className={`px-3.5 py-2 rounded-lg border-2 transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
                   activeTab === "topups"
-                    ? "border-teal-600 text-teal-600 dark:text-teal-400 font-bold"
-                    : "border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                    ? "bg-[#FED734] text-black border-black shadow-[2px_2px_0px_#000000] -translate-y-0.5"
+                    : "border-transparent text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white"
                 }`}
               >
-                <PlusCircle className="w-4 h-4" />
+                <PlusCircle className="w-4 h-4 stroke-[2.5]" />
                 <span>{t("tenants.topUpRequests")}</span>
                 {topUpRequests.filter((r) => r.status === "PENDING").length > 0 && (
-                  <span className="px-1.5 py-0.2 rounded-full bg-amber-500 text-white text-[10px] font-bold">
+                  <span className="px-1.5 py-0.2 rounded text-black bg-[#FED734] border border-black text-[10px] font-black">
                     {topUpRequests.filter((r) => r.status === "PENDING").length}
                   </span>
                 )}
@@ -405,29 +405,29 @@ export function TenantProfileModal({
               <div className="space-y-5 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Basic Personal Details Card */}
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50/60 dark:bg-[#182234]/60 space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 border-b border-slate-200/80 dark:border-slate-800 pb-2">
-                      <User className="w-4 h-4 text-teal-600" />
+                  <div className="p-4 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000] space-y-3">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5 border-b-2 border-black pb-2">
+                      <User className="w-4 h-4 text-black dark:text-[#FED734] stroke-[2.5]" />
                       <span>{t("tenants.title")}</span>
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-slate-400">{t("tenants.tenantName")}</span>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{tenantData.name}</p>
+                        <span className="text-neutral-500 font-bold">{t("tenants.tenantName")}</span>
+                        <p className="font-black text-black dark:text-white mt-0.5">{tenantData.name}</p>
                       </div>
                       <div>
-                        <span className="text-slate-400">{t("tenants.phone")}</span>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 font-mono mt-0.5">{tenantData.phone}</p>
+                        <span className="text-neutral-500 font-bold">{t("tenants.phone")}</span>
+                        <p className="font-black text-black dark:text-white font-mono mt-0.5">{tenantData.phone}</p>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-slate-400">{t("tenants.nid")}</span>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 font-mono mt-0.5">
+                        <span className="text-neutral-500 font-bold">{t("tenants.nid")}</span>
+                        <p className="font-black text-black dark:text-white font-mono mt-0.5">
                           {tenantData.nid || "—"}
                         </p>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-slate-400">{t("tenants.permanentAddress")}</span>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5 whitespace-pre-wrap">
+                        <span className="text-neutral-500 font-bold">{t("tenants.permanentAddress")}</span>
+                        <p className="font-bold text-neutral-800 dark:text-neutral-200 mt-0.5 whitespace-pre-wrap">
                           {tenantData.permanentAddress || "—"}
                         </p>
                       </div>
@@ -435,37 +435,37 @@ export function TenantProfileModal({
                   </div>
 
                   {/* Reference Person Card */}
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50/60 dark:bg-[#182234]/60 space-y-3">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5 border-b border-slate-200/80 dark:border-slate-800 pb-2">
-                      <Users className="w-4 h-4 text-teal-600" />
+                  <div className="p-4 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000] space-y-3">
+                    <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5 border-b-2 border-black pb-2">
+                      <Users className="w-4 h-4 text-black dark:text-[#FED734] stroke-[2.5]" />
                       <span>রেফারেন্স ব্যক্তির তথ্য (Reference Person)</span>
                     </h4>
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-slate-400">{t("tenants.referenceName")}</span>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                        <span className="text-neutral-500 font-bold">{t("tenants.referenceName")}</span>
+                        <p className="font-black text-black dark:text-white mt-0.5">
                           {tenantData.referenceName || "—"}
                         </p>
                       </div>
                       <div>
-                        <span className="text-slate-400">{t("tenants.referencePhone")}</span>
-                        <p className="font-bold text-slate-800 dark:text-slate-200 font-mono mt-0.5">
+                        <span className="text-neutral-500 font-bold">{t("tenants.referencePhone")}</span>
+                        <p className="font-black text-black dark:text-white font-mono mt-0.5">
                           {tenantData.referencePhone || "—"}
                         </p>
                       </div>
                       <div className="col-span-2">
-                        <span className="text-slate-400">{t("tenants.referenceRelation")}</span>
-                        <p className="font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
+                        <span className="text-neutral-500 font-bold">{t("tenants.referenceRelation")}</span>
+                        <p className="font-bold text-neutral-800 dark:text-neutral-200 mt-0.5">
                           {tenantData.referenceRelation || "—"}
                         </p>
                       </div>
-                      <div className="col-span-2 pt-2 border-t border-slate-200/50 dark:border-slate-800 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">{t("tenants.startDate")}:</span>
-                        <span className="font-semibold">{formatDate(tenantData.startDate, locale)}</span>
+                      <div className="col-span-2 pt-2 border-t-2 border-black/10 dark:border-white/10 flex items-center justify-between text-xs">
+                        <span className="text-neutral-500 font-bold">{t("tenants.startDate")}:</span>
+                        <span className="font-black text-black dark:text-white">{formatDate(tenantData.startDate, locale)}</span>
                       </div>
                       <div className="col-span-2 flex items-center justify-between text-xs">
-                        <span className="text-slate-400">{t("tenants.endDate")}:</span>
-                        <span className="font-semibold">{tenantData.endDate ? formatDate(tenantData.endDate, locale) : "অনির্দিষ্ট (Ongoing)"}</span>
+                        <span className="text-neutral-500 font-bold">{t("tenants.endDate")}:</span>
+                        <span className="font-black text-black dark:text-white">{tenantData.endDate ? formatDate(tenantData.endDate, locale) : "অনির্দিষ্ট (Ongoing)"}</span>
                       </div>
                     </div>
                   </div>
@@ -473,34 +473,34 @@ export function TenantProfileModal({
 
                 {/* Rent History Table */}
                 <div className="space-y-2 pt-1">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <History className="w-4 h-4 text-teal-600" />
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5">
+                    <History className="w-4 h-4 text-black dark:text-[#FED734] stroke-[2.5]" />
                     <span>{t("tenants.rentHistory")}</span>
                   </h4>
                   {(!tenantData.rentHistory || tenantData.rentHistory.length === 0) ? (
-                    <p className="text-xs text-slate-400 py-3 text-center border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+                    <p className="text-xs text-neutral-500 font-bold py-3 text-center border-2 border-dashed rounded-xl border-black dark:border-neutral-700 bg-white dark:bg-[#1E1F24]">
                       ভাড়া পরিবর্তনের কোনো পূর্ববর্তী ইতিহাস নেই
                     </p>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs">
+                    <div className="rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] overflow-hidden text-xs">
                       <table className="w-full text-left">
-                        <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300">
+                        <thead className="bg-[#FED734] border-b-2 border-black font-black text-black">
                           <tr>
                             <th className="p-2.5">কার্যকরের তারিখ</th>
                             <th className="p-2.5 text-right">নির্ধারিত ভাড়া</th>
                             <th className="p-2.5">নোট ও বিবরণ</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 bg-white dark:bg-[#1E1F24]">
                           {tenantData.rentHistory.map((rh: any) => (
-                            <tr key={rh.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
-                              <td className="p-2.5 text-slate-500 whitespace-nowrap">
+                            <tr key={rh.id} className="hover:bg-[#FED734]/10 transition-colors">
+                              <td className="p-2.5 text-neutral-600 dark:text-neutral-400 font-bold whitespace-nowrap">
                                 {formatDate(rh.effectiveFrom, locale)}
                               </td>
-                              <td className="p-2.5 text-right font-mono font-bold text-teal-600 dark:text-teal-400 whitespace-nowrap">
+                              <td className="p-2.5 text-right font-mono font-black text-[#00BA88] whitespace-nowrap">
                                 {formatCurrency(rh.rentAmount, locale)}
                               </td>
-                              <td className="p-2.5 text-slate-700 dark:text-slate-300">
+                              <td className="p-2.5 text-black dark:text-white font-bold">
                                 {rh.note || "ভাড়া পরিবর্তন"}
                               </td>
                             </tr>
@@ -518,7 +518,7 @@ export function TenantProfileModal({
               <form onSubmit={handleSaveEdit} className="space-y-4 pt-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.tenantName")} *
                     </label>
                     <Input
@@ -530,7 +530,7 @@ export function TenantProfileModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.phone")} *
                     </label>
                     <Input
@@ -542,7 +542,7 @@ export function TenantProfileModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.nid")}
                     </label>
                     <Input
@@ -553,32 +553,32 @@ export function TenantProfileModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.rentAmount")} (৳ BDT) *
                     </label>
                     <NumberInput
                       value={editRentAmountBDT}
                       onChange={(val) => setEditRentAmountBDT(val)}
                       prefix="৳"
-                      className="font-bold"
+                      className="font-black"
                     />
                   </div>
 
                   <div className="col-span-1 md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.permanentAddress")}
                     </label>
                     <textarea
                       value={editPermanentAddress}
                       onChange={(e) => setEditPermanentAddress(e.target.value)}
                       placeholder="গ্রাম/রোড, ডাকঘর, থানা, জেলা (বাংলা ও ইংরেজি উভয় ভাষায় গ্রহণযোগ্য)"
-                      className="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#182234] text-slate-800 dark:text-slate-100 min-h-[64px]"
+                      className="w-full px-3 py-2 text-xs font-bold rounded-xl border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white shadow-[2px_2px_0px_#000000] focus:outline-none min-h-[64px]"
                     />
                   </div>
 
                   {/* Reference Person fields */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.referenceName")}
                     </label>
                     <Input
@@ -589,7 +589,7 @@ export function TenantProfileModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.referencePhone")}
                     </label>
                     <Input
@@ -600,7 +600,7 @@ export function TenantProfileModal({
                   </div>
 
                   <div className="col-span-1 md:col-span-2">
-                    <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                    <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                       {t("tenants.referenceRelation")}
                     </label>
                     <Input
@@ -612,14 +612,14 @@ export function TenantProfileModal({
 
                   {/* Effective Month if Rent is altered */}
                   {editRentAmountBDT * 100 !== tenantData.rentAmount && (
-                    <div className="col-span-1 md:col-span-2 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 rounded-xl space-y-2">
-                      <div className="flex items-center gap-2 text-xs font-bold text-amber-900 dark:text-amber-200">
-                        <AlertCircle className="w-4 h-4 text-amber-600" />
+                    <div className="col-span-1 md:col-span-2 p-3 bg-[#FEF3C7] dark:bg-[#3D2F14] border-2 border-black shadow-[3px_3px_0px_#000000] rounded-xl space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-black text-black dark:text-[#FBBF24]">
+                        <AlertCircle className="w-4 h-4 text-black dark:text-[#FBBF24]" />
                         <span>ভাড়া পরিবর্তন শনাক্ত হয়েছে — কার্যকরের তারিখ আবশ্যক</span>
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         <div>
-                          <label className="block text-[11px] text-slate-600 dark:text-slate-300 mb-0.5">
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-black dark:text-white mb-0.5">
                             {t("tenants.effectiveFrom")}
                           </label>
                           <Input
@@ -630,7 +630,7 @@ export function TenantProfileModal({
                           />
                         </div>
                         <div>
-                          <label className="block text-[11px] text-slate-600 dark:text-slate-300 mb-0.5">
+                          <label className="block text-[11px] font-black uppercase tracking-wider text-black dark:text-white mb-0.5">
                             ভাড়া পরিবর্তনের কারণ
                           </label>
                           <Input
@@ -648,7 +648,7 @@ export function TenantProfileModal({
                   <Button type="button" variant="outline" onClick={() => setActiveTab("profile")}>
                     {t("common.cancel")}
                   </Button>
-                  <Button type="submit" isLoading={isSavingEdit} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
+                  <Button type="submit" variant="neo" isLoading={isSavingEdit}>
                     <CheckCircle2 className="w-4 h-4 mr-1.5" />
                     {isAdmin ? "সংরক্ষণ করুন (Save Profile)" : "অনুমোদনের জন্য পাঠান (Submit for Approval)"}
                   </Button>
@@ -661,52 +661,52 @@ export function TenantProfileModal({
               <div className="space-y-5 pt-2">
                 {/* 3 Summary Cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  <div className="p-4 rounded-xl border border-teal-200 dark:border-teal-800/80 bg-teal-50/40 dark:bg-teal-950/20">
+                  <div className="p-4 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] bg-[#E6F8F2] dark:bg-[#122A20]">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-teal-800 dark:text-teal-300">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-black dark:text-[#00BA88]">
                         {t("advance.advanceBalance")}
                       </span>
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-black text-[#00BA88] border border-black">
                         Liability
                       </span>
                     </div>
-                    <p className="text-xl font-extrabold text-teal-600 dark:text-teal-300 font-mono mt-1">
+                    <p className="text-2xl font-black text-black dark:text-[#00BA88] font-mono mt-1">
                       {formatCurrency(advanceBalance, locale)}
                     </p>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50 dark:bg-[#182234]">
+                  <div className="p-4 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] bg-white dark:bg-[#1E1F24]">
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-black dark:text-white">
                         {t("advance.requiredAdvance")}
                       </span>
-                      <span className="text-[10px] font-semibold text-slate-400">
+                      <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-black text-white">
                         {advanceData?.policy?.requiredAdvanceMonths || 3} months
                       </span>
                     </div>
-                    <p className="text-xl font-extrabold text-slate-800 dark:text-slate-100 font-mono mt-1">
+                    <p className="text-2xl font-black text-black dark:text-white font-mono mt-1">
                       {formatCurrency(requiredAdvance, locale)}
                     </p>
                   </div>
 
                   <div
-                    className={`p-4 rounded-xl border ${
+                    className={`p-4 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] ${
                       shortfall > 0
-                        ? "border-amber-300 dark:border-amber-700/80 bg-amber-50/50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200"
-                        : "border-emerald-200 dark:border-emerald-800 bg-emerald-50/30 dark:bg-emerald-950/20 text-emerald-900 dark:text-emerald-200"
+                        ? "bg-[#FFEBEF] dark:bg-[#2A1417] text-black dark:text-[#FF4B55]"
+                        : "bg-[#E6F8F2] dark:bg-[#122A20] text-black dark:text-[#00BA88]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
-                      <span className="text-[11px] font-bold uppercase tracking-wider">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-black dark:text-white">
                         {t("advance.shortfall")}
                       </span>
                       {shortfall > 0 && (
-                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200">
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-black text-[#FF4B55] border border-black">
                           Deficit
                         </span>
                       )}
                     </div>
-                    <p className="text-xl font-extrabold font-mono mt-1">
+                    <p className={`text-2xl font-black font-mono mt-1 ${shortfall > 0 ? "text-[#FF4B55]" : "text-[#00BA88]"}`}>
                       {shortfall > 0 ? formatCurrency(shortfall, locale) : "৳ 0"}
                     </p>
                   </div>
@@ -714,11 +714,12 @@ export function TenantProfileModal({
 
                 {/* Quick Action Toolbar */}
                 {tenantData.status !== "SETTLED" && tenantData.status !== "ARCHIVED" && (
-                  <div className="flex flex-wrap items-center gap-2 pt-1 border-b border-slate-100 dark:border-[#2d3b52] pb-4">
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-b-2 border-black pb-4">
                     <Button
                       size="sm"
+                      variant="neo"
                       onClick={() => setIsAdjustOpen(true)}
-                      className="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs"
+                      className="text-xs"
                     >
                       <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                       {t("adjustAdvance.title")}
@@ -733,7 +734,7 @@ export function TenantProfileModal({
                       }}
                       className="text-xs"
                     >
-                      <PlusCircle className="w-3.5 h-3.5 mr-1.5 text-teal-600" />
+                      <PlusCircle className="w-3.5 h-3.5 mr-1.5 text-black dark:text-white" />
                       {isAdmin ? t("tenants.directTopUp") : t("tenants.requestTopUp")}
                     </Button>
 
@@ -741,7 +742,7 @@ export function TenantProfileModal({
                       size="sm"
                       variant="destructive"
                       onClick={() => setIsSettleOpen(true)}
-                      className="text-xs ml-auto"
+                      className="text-xs ml-auto border-2 border-black shadow-[2px_2px_0px_#000000]"
                     >
                       <DoorOpen className="w-3.5 h-3.5 mr-1.5" />
                       {t("settlement.settleAndVacate")}
@@ -752,21 +753,21 @@ export function TenantProfileModal({
                 {/* Advance Ledger Timeline */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <History className="w-4 h-4 text-teal-600" />
+                    <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5">
+                      <History className="w-4 h-4 text-black dark:text-[#FED734]" />
                       <span>{t("advance.timeline")}</span>
                     </h4>
-                    <span className="text-[11px] text-slate-400">
+                    <span className="text-[11px] font-bold text-black/60 dark:text-white/60">
                       {locale === "bn" ? toBanglaDigits(transactions.length) : transactions.length} entries
                     </span>
                   </div>
 
                   {transactions.length === 0 ? (
-                    <p className="text-xs text-slate-400 py-4 text-center">{t("advance.noTransactions")}</p>
+                    <p className="text-xs font-bold text-black/60 dark:text-white/60 py-4 text-center">{t("advance.noTransactions")}</p>
                   ) : (
-                    <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs max-h-64 overflow-y-auto">
+                    <div className="rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] overflow-hidden text-xs max-h-64 overflow-y-auto bg-white dark:bg-[#1E1F24]">
                       <table className="w-full text-left">
-                        <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300 sticky top-0">
+                        <thead className="bg-[#FED734] border-b-2 border-black font-black text-black sticky top-0 uppercase tracking-wider text-[11px]">
                           <tr>
                             <th className="p-2.5">Date</th>
                             <th className="p-2.5">Type</th>
@@ -776,26 +777,26 @@ export function TenantProfileModal({
                             <th className="p-2.5 text-right">{t("advance.runningBalance")}</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 font-bold">
                           {transactions.map((tx: any) => {
                             const isCredit = tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP";
                             return (
-                              <tr key={tx.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-900/40">
-                                <td className="p-2.5 text-slate-500 whitespace-nowrap">
+                              <tr key={tx.id} className="hover:bg-black/5 dark:hover:bg-white/5">
+                                <td className="p-2.5 text-black/70 dark:text-white/70 whitespace-nowrap">
                                   {formatDate(tx.createdAt, locale)}
                                 </td>
                                 <td className="p-2.5 whitespace-nowrap">
                                   <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                                    className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border border-black shadow-[1px_1px_0px_#000000] ${
                                       tx.type === "DEPOSIT_RECEIVED"
-                                        ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                        ? "bg-[#E6F8F2] text-[#00875A] dark:bg-[#122A20] dark:text-[#00BA88]"
                                         : tx.type === "TOPUP"
-                                        ? "bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300"
+                                        ? "bg-[#E0F2FE] text-[#0369A1] dark:bg-[#082F49] dark:text-[#38BDF8]"
                                         : tx.type === "ADJUSTED_TO_DUE"
-                                        ? "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                        ? "bg-[#FEF3C7] text-[#92400E] dark:bg-[#3D2F14] dark:text-[#FBBF24]"
                                         : tx.type === "DEDUCTION"
-                                        ? "bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300"
-                                        : "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+                                        ? "bg-[#FFEDD5] text-[#9A3412] dark:bg-[#3E1B0E] dark:text-[#FB923C]"
+                                        : "bg-[#E0E7FF] text-[#3730A3] dark:bg-[#1E1B4B] dark:text-[#818CF8]"
                                     }`}
                                   >
                                     {tx.type === "DEPOSIT_RECEIVED"
@@ -809,20 +810,20 @@ export function TenantProfileModal({
                                       : t("advance.refund")}
                                   </span>
                                 </td>
-                                <td className="p-2.5 text-slate-700 dark:text-slate-300 max-w-xs truncate">
+                                <td className="p-2.5 text-black dark:text-white max-w-xs truncate font-bold">
                                   {tx.reason}
                                 </td>
-                                <td className="p-2.5 text-slate-500 text-[11px] whitespace-nowrap">
+                                <td className="p-2.5 text-black/70 dark:text-white/70 text-[11px] whitespace-nowrap">
                                   {tx.createdByName || tx.createdBy || "Admin"}
                                 </td>
                                 <td
-                                  className={`p-2.5 text-right font-mono font-bold whitespace-nowrap ${
-                                    isCredit ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                                  className={`p-2.5 text-right font-mono font-black whitespace-nowrap ${
+                                    isCredit ? "text-[#00BA88]" : "text-[#FF4B55]"
                                   }`}
                                 >
                                   {isCredit ? "+" : "-"} {formatCurrency(tx.amount, locale)}
                                 </td>
-                                <td className="p-2.5 text-right font-mono font-bold text-slate-900 dark:text-white whitespace-nowrap">
+                                <td className="p-2.5 text-right font-mono font-black text-black dark:text-white whitespace-nowrap">
                                   {formatCurrency(tx.runningBalance, locale)}
                                 </td>
                               </tr>
@@ -840,17 +841,18 @@ export function TenantProfileModal({
             {activeTab === "topups" && (
               <div className="space-y-4 pt-2">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                    <PlusCircle className="w-4 h-4 text-teal-600" />
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5">
+                    <PlusCircle className="w-4 h-4 text-black dark:text-[#FED734]" />
                     <span>জামানত টপ-আপ আবেদন তালিকা</span>
                   </h4>
                   <Button
                     size="sm"
+                    variant="neo"
                     onClick={() => {
                       setTopupAmountBDT(Math.round(shortfall / 100) || 10000);
                       setIsTopupModalOpen(true);
                     }}
-                    className="text-xs bg-teal-600 hover:bg-teal-500 text-white"
+                    className="text-xs"
                   >
                     <PlusCircle className="w-3.5 h-3.5 mr-1" />
                     {isAdmin ? "নতুন টপ-আপ জমা (Direct)" : "টপ-আপের আবেদন করুন"}
@@ -858,7 +860,7 @@ export function TenantProfileModal({
                 </div>
 
                 {topUpRequests.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-6 text-center border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+                  <p className="text-xs font-bold text-black/60 dark:text-white/60 py-6 text-center border-2 border-dashed border-black/30 dark:border-white/20 rounded-xl">
                     কোনো টপ-আপ আবেদন পাওয়া যায়নি
                   </p>
                 ) : (
@@ -868,34 +870,34 @@ export function TenantProfileModal({
                       return (
                         <div
                           key={req.id}
-                          className="p-3.5 rounded-xl border border-slate-200 dark:border-[#2d3b52] bg-slate-50/60 dark:bg-[#182234]/60 space-y-2 text-xs"
+                          className="p-3.5 rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] bg-white dark:bg-[#1E1F24] space-y-2 text-xs"
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                              <span className="font-bold text-base font-mono text-teal-700 dark:text-teal-400">
+                              <span className="font-black text-base font-mono text-black dark:text-[#FED734]">
                                 {formatCurrency(req.amount, locale)}
                               </span>
-                              <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                              <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-black text-white border border-black">
                                 {req.method}
                               </span>
                             </div>
                             <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                              className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border-2 border-black shadow-[1.5px_1.5px_0px_#000000] ${
                                 req.status === "APPROVED"
-                                  ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                                  ? "bg-[#E6F8F2] text-[#00875A] dark:bg-[#122A20] dark:text-[#00BA88]"
                                   : req.status === "REJECTED"
-                                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
-                                  : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                  ? "bg-[#FFEBEF] text-[#CC0000] dark:bg-[#2A1417] dark:text-[#FF4B55]"
+                                  : "bg-[#FEF3C7] text-[#92400E] dark:bg-[#3D2F14] dark:text-[#FBBF24]"
                               }`}
                             >
                               {req.status === "APPROVED" ? "অনুমোদিত" : req.status === "REJECTED" ? "প্রত্যাখ্যাত" : "অপেক্ষমাণ (Pending)"}
                             </span>
                           </div>
 
-                          <div className="text-slate-600 dark:text-slate-300">
-                            {req.note && <p className="italic">"{req.note}"</p>}
-                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 mt-1">
-                              <span>আবেদনকারী: <strong className="text-slate-700 dark:text-slate-300">{req.requestedBy}</strong></span>
+                          <div className="text-black dark:text-white font-bold">
+                            {req.note && <p className="italic text-black/80 dark:text-white/80">"{req.note}"</p>}
+                            <div className="flex flex-wrap items-center gap-3 text-[11px] text-black/60 dark:text-white/60 mt-1">
+                              <span>আবেদনকারী: <strong className="text-black dark:text-white">{req.requestedBy}</strong></span>
                               <span>•</span>
                               <span>তারিখ: {formatDate(req.createdAt, locale)}</span>
                               {req.decidedBy && (
@@ -906,7 +908,7 @@ export function TenantProfileModal({
                               )}
                             </div>
                             {req.decisionNote && (
-                              <p className="mt-1 text-rose-600 dark:text-rose-400 font-semibold text-[11px]">
+                              <p className="mt-1 text-[#FF4B55] font-black text-[11px]">
                                 সিদ্ধান্তের কারণ: {req.decisionNote}
                               </p>
                             )}
@@ -914,7 +916,7 @@ export function TenantProfileModal({
 
                           {/* Admin Action Buttons for Pending Top-Up Request */}
                           {isAdmin && isPending && (
-                            <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex items-center justify-end gap-2">
+                            <div className="pt-2 border-t-2 border-black/20 dark:border-white/10 flex items-center justify-end gap-2">
                               {decidingTopUpId === req.id ? (
                                 <div className="flex items-center gap-2 w-full">
                                   <Input
@@ -927,7 +929,7 @@ export function TenantProfileModal({
                                   <Button
                                     size="sm"
                                     variant="destructive"
-                                    className="h-8 text-xs font-bold"
+                                    className="h-8 text-xs font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
                                     disabled={!rejectReason.trim() || isDecidingTopup}
                                     onClick={() => handleDecideTopUp(req.id, "REJECT", rejectReason)}
                                   >
@@ -949,8 +951,8 @@ export function TenantProfileModal({
                                 <>
                                   <Button
                                     size="sm"
-                                    variant="outline"
-                                    className="h-8 text-xs text-rose-600 border-rose-200 hover:bg-rose-50"
+                                    variant="destructive"
+                                    className="h-8 text-xs border-2 border-black shadow-[2px_2px_0px_#000000]"
                                     onClick={() => setDecidingTopUpId(req.id)}
                                   >
                                     <XCircle className="w-3.5 h-3.5 mr-1" />
@@ -958,7 +960,8 @@ export function TenantProfileModal({
                                   </Button>
                                   <Button
                                     size="sm"
-                                    className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                                    variant="neo"
+                                    className="h-8 text-xs bg-[#00BA88] hover:bg-[#00BA88]/90 text-black font-black"
                                     disabled={isDecidingTopup}
                                     onClick={() => handleDecideTopUp(req.id, "APPROVE")}
                                   >
@@ -977,7 +980,7 @@ export function TenantProfileModal({
               </div>
             )}
 
-            <div className="pt-3 flex justify-end border-t border-slate-100 dark:border-[#2d3b52]">
+            <div className="pt-3 flex justify-end border-t-2 border-black">
               <Button variant="outline" onClick={onClose}>
                 {t("common.close")}
               </Button>
@@ -996,7 +999,7 @@ export function TenantProfileModal({
       >
         <form onSubmit={handleRecordTopup} className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               পেমেন্ট চ্যানেল (Payment Channel)
             </label>
             <Select
@@ -1012,20 +1015,20 @@ export function TenantProfileModal({
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               {t("common.amount")} (৳ BDT) *
             </label>
             <NumberInput
               value={topupAmountBDT}
               onChange={(val) => setTopupAmountBDT(val)}
               prefix="৳"
-              className="text-lg font-bold"
+              className="text-lg font-black"
               autoFocus
             />
           </div>
 
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               {t("common.notes")} ({t("common.optional")})
             </label>
             <Input
@@ -1039,7 +1042,7 @@ export function TenantProfileModal({
             <Button type="button" variant="outline" onClick={() => setIsTopupModalOpen(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmittingTopup} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
+            <Button type="submit" variant="neo" isLoading={isSubmittingTopup}>
               {isAdmin ? "জমা সম্পন্ন করুন" : "আবেদন পাঠান"}
             </Button>
           </div>

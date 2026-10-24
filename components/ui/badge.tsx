@@ -97,9 +97,9 @@ export function Badge({
     danger:
       "bg-[#FF4B55] text-white border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     neutral:
-      "bg-white text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
+      "bg-white dark:bg-[#262830] text-black dark:text-white border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     outline:
-      "bg-transparent text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
+      "bg-transparent text-black dark:text-white border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     teal:
       "bg-[#FED734] text-black border-2 border-black shadow-[1.5px_1.5px_0px_#000000]",
     cyan:

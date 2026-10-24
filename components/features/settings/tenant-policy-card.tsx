@@ -93,22 +93,22 @@ export function TenantPolicyCard() {
   };
 
   return (
-    <Card className="p-6 border-slate-200 dark:border-slate-800">
-      <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
+    <Card className="p-6">
+      <CardHeader className="p-0 pb-4 border-b-2 border-black">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <CardTitle className="text-base font-black text-black dark:text-white flex items-center gap-2">
+              <ShieldCheck className="w-5 h-5 text-black dark:text-white stroke-[2.5]" />
               <span>{t("policy.title")}</span>
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <CardDescription className="text-xs text-gray-700 dark:text-gray-300 font-bold mt-1">
               {t("policy.subtitle")}
             </CardDescription>
           </div>
 
           <Button
             size="sm"
-            variant={isEditing ? "outline" : "accent"}
+            variant={isEditing ? "outline" : "neo"}
             onClick={() => setIsEditing(!isEditing)}
             className="text-xs shrink-0"
           >
@@ -120,36 +120,36 @@ export function TenantPolicyCard() {
       <CardContent className="p-0 pt-4 space-y-6">
         {/* Active Policy Summary Badges */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("policy.requiredAdvanceMonths")}</p>
-            <p className="text-lg font-extrabold text-slate-900 dark:text-white mt-0.5">
+          <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] text-center">
+            <p className="text-[11px] font-black uppercase text-gray-700 dark:text-gray-300">{t("policy.requiredAdvanceMonths")}</p>
+            <p className="text-lg font-black text-black dark:text-white mt-0.5">
               {locale === "bn"
                 ? `${toBanglaDigits(activePolicy?.requiredAdvanceMonths || 3)} মাস`
                 : `${activePolicy?.requiredAdvanceMonths || 3} Mos`}
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("policy.maxAdjustmentMonths")}</p>
-            <p className="text-lg font-extrabold text-slate-900 dark:text-white mt-0.5">
+          <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] text-center">
+            <p className="text-[11px] font-black uppercase text-gray-700 dark:text-gray-300">{t("policy.maxAdjustmentMonths")}</p>
+            <p className="text-lg font-black text-black dark:text-white mt-0.5">
               {locale === "bn"
                 ? `${toBanglaDigits(activePolicy?.maxAdvanceAdjustmentMonths || 2)} মাস`
                 : `${activePolicy?.maxAdvanceAdjustmentMonths || 2} Mos`}
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("policy.gracePeriodDays")}</p>
-            <p className="text-lg font-extrabold text-slate-900 dark:text-white mt-0.5">
+          <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] text-center">
+            <p className="text-[11px] font-black uppercase text-gray-700 dark:text-gray-300">{t("policy.gracePeriodDays")}</p>
+            <p className="text-lg font-black text-black dark:text-white mt-0.5">
               {locale === "bn"
                 ? `${toBanglaDigits(activePolicy?.gracePeriodDays || 10)} দিন`
                 : `${activePolicy?.gracePeriodDays || 10} Days`}
             </p>
           </div>
 
-          <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center">
-            <p className="text-[11px] text-slate-500 dark:text-slate-400">{t("policy.lateFeeType")}</p>
-            <p className="text-lg font-extrabold text-teal-600 dark:text-teal-400 mt-0.5">
+          <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[2px_2px_0px_#000000] text-center">
+            <p className="text-[11px] font-black uppercase text-gray-700 dark:text-gray-300">{t("policy.lateFeeType")}</p>
+            <p className="text-lg font-black text-black dark:text-white mt-0.5">
               {activePolicy?.lateFeeType === "PERCENTAGE"
                 ? `${locale === "bn" ? toBanglaDigits(activePolicy?.lateFeeValue || 5) : activePolicy?.lateFeeValue || 5}%`
                 : activePolicy?.lateFeeType === "FIXED"
@@ -163,16 +163,16 @@ export function TenantPolicyCard() {
         {isEditing && (
           <form
             onSubmit={handleSaveNewVersion}
-            className="p-4 rounded-xl border border-teal-300 dark:border-teal-700 bg-teal-50/20 dark:bg-teal-950/20 space-y-4 animate-in fade-in duration-150"
+            className="p-4 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] shadow-[4px_4px_0px_#000000] space-y-4 animate-in fade-in duration-150"
           >
-            <div className="flex items-center gap-2 text-xs font-bold text-teal-800 dark:text-teal-300">
-              <Plus className="w-4 h-4" />
+            <div className="flex items-center gap-2 text-xs font-black text-black dark:text-white uppercase tracking-wider">
+              <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>{t("policy.createNewVersion")}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {t("policy.requiredAdvanceMonths")}
                 </label>
                 <NumberInput
@@ -183,7 +183,7 @@ export function TenantPolicyCard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {t("policy.maxAdjustmentMonths")}
                 </label>
                 <NumberInput
@@ -194,7 +194,7 @@ export function TenantPolicyCard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {t("policy.gracePeriodDays")}
                 </label>
                 <NumberInput
@@ -207,7 +207,7 @@ export function TenantPolicyCard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {t("policy.lateFeeType")}
                 </label>
                 <Select value={lateFeeType} onChange={(e) => setLateFeeType(e.target.value)}>
@@ -218,7 +218,7 @@ export function TenantPolicyCard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {lateFeeType === "PERCENTAGE" ? "Late Fee Rate (%)" : "Late Fee Amount (৳)"}
                 </label>
                 <NumberInput
@@ -230,7 +230,7 @@ export function TenantPolicyCard() {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                 Version Notes / বিবরণ
               </label>
               <Input
@@ -254,8 +254,8 @@ export function TenantPolicyCard() {
 
         {/* Version History */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center gap-1.5">
-            <History className="w-3.5 h-3.5" />
+          <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white mb-2.5 flex items-center gap-1.5">
+            <History className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>{t("policy.versionHistory")}</span>
           </h4>
 
@@ -263,33 +263,33 @@ export function TenantPolicyCard() {
             {versionHistory.map((v, i) => (
               <div
                 key={v.id}
-                className={`p-3 rounded-lg border text-xs flex items-center justify-between transition-colors ${
+                className={`p-3 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] text-xs flex items-center justify-between transition-colors ${
                   i === 0
-                    ? "border-teal-300 dark:border-teal-700/80 bg-teal-50/40 dark:bg-teal-950/20 text-slate-900 dark:text-white"
-                    : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300"
+                    ? "bg-[#FED734]/20 dark:bg-[#FED734]/10 text-black dark:text-white"
+                    : "bg-white dark:bg-[#262830] text-black dark:text-white"
                 }`}
               >
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-extrabold text-sm text-teal-700 dark:text-teal-300">
+                    <span className="font-black text-sm text-black dark:text-white">
                       v{v.version}
                     </span>
                     {i === 0 && (
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase bg-[#FED734] text-black border border-black shadow-[1px_1px_0px_#000000]">
                         Active
                       </span>
                     )}
-                    <span className="text-slate-400">•</span>
-                    <span className="text-slate-500">
+                    <span className="text-gray-400">•</span>
+                    <span className="text-gray-700 dark:text-gray-300 font-bold">
                       {v.requiredAdvanceMonths} mos advance • {v.gracePeriodDays} days grace
                     </span>
                   </div>
-                  {v.notes && <p className="text-[11px] text-slate-400 mt-0.5">{v.notes}</p>}
+                  {v.notes && <p className="text-[11px] text-gray-600 dark:text-gray-400 font-medium mt-0.5">{v.notes}</p>}
                 </div>
 
-                <div className="text-right text-[11px] text-slate-400">
+                <div className="text-right text-[11px] text-gray-700 dark:text-gray-300 font-bold">
                   <p>{formatDate(v.effectiveFrom, locale)}</p>
-                  <p className="text-[10px] text-slate-500">by {v.createdBy}</p>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400 font-medium">by {v.createdBy}</p>
                 </div>
               </div>
             ))}

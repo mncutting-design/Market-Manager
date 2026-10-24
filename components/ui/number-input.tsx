@@ -79,7 +79,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
     return (
       <div className="relative flex items-center w-full">
         {prefix && (
-          <span className="absolute left-3.5 text-black font-black select-none pointer-events-none z-10 text-sm">
+          <span className="absolute left-3.5 text-black dark:text-white font-black select-none pointer-events-none z-10 text-sm">
             {prefix}
           </span>
         )}
@@ -93,7 +93,7 @@ export const NumberInput = forwardRef<HTMLInputElement, NumberInputProps>(
           onChange={handleChange}
           placeholder={placeholder ? (locale === "bn" ? toBanglaDigits(placeholder) : placeholder) : ""}
           className={cn(
-            "flex h-11 w-full rounded-xl border-2 border-black bg-[#FBF9F5] px-3.5 py-2 text-sm text-black font-bold placeholder:text-gray-400 focus:bg-white focus:outline-none focus:shadow-[3px_3px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all",
+            "flex h-11 w-full rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] px-3.5 py-2 text-sm text-black dark:text-white font-bold placeholder:text-gray-400 dark:placeholder:text-gray-400 focus:bg-white dark:focus:bg-[#1E1F24] focus:outline-none focus:shadow-[3px_3px_0px_#000000] disabled:cursor-not-allowed disabled:opacity-50 transition-all",
             prefix && "pl-8",
             suffix && "pr-8",
             className

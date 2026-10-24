@@ -185,96 +185,96 @@ export function SettlementStatementModal({
         {/* Printable Paper View */}
         <div
           ref={printRef}
-          className="p-6 md:p-8 bg-white dark:bg-[#0c121e] rounded-2xl border border-slate-200 dark:border-[#2d3b52] shadow-sm text-slate-900 dark:text-white space-y-6"
+          className="p-6 md:p-8 bg-white dark:bg-[#1E1F24] rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] text-black dark:text-white space-y-6"
         >
           {/* Header */}
-          <div className="text-center border-b border-slate-200 dark:border-slate-800 pb-4">
+          <div className="text-center border-b-2 border-black pb-4">
             <div className="inline-flex items-center gap-2 mb-1">
-              <Building2 className="w-5 h-5 text-teal-600" />
-              <h3 className="text-xl font-bold tracking-tight">{marketName}</h3>
+              <Building2 className="w-5 h-5 text-black dark:text-[#FED734]" />
+              <h3 className="text-xl font-black tracking-tight text-black dark:text-white">{marketName}</h3>
             </div>
             {marketAddress && (
-              <p className="text-xs text-slate-500 dark:text-slate-400">{marketAddress}</p>
+              <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold">{marketAddress}</p>
             )}
-            <div className="inline-block mt-3 px-4 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-xs font-extrabold uppercase tracking-widest text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+            <div className="inline-block mt-3 px-4 py-1 rounded-full bg-[#FED734] text-xs font-black uppercase tracking-widest text-black border-2 border-black shadow-[2px_2px_0px_#000000]">
               {t("settlement.finalStatement")}
             </div>
           </div>
 
           {/* Meta Info Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-slate-50 dark:bg-[#141d2c] border border-slate-200 dark:border-[#2d3b52] text-xs">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[3px_3px_0px_#000000] text-xs">
             <div>
-              <p className="text-slate-500 text-[11px] font-bold">{t("tenants.tenantName")}</p>
-              <p className="font-bold text-slate-900 dark:text-white mt-0.5">{tenantName}</p>
+              <p className="text-neutral-600 dark:text-neutral-400 text-[11px] font-black uppercase">{t("tenants.tenantName")}</p>
+              <p className="font-black text-black dark:text-white mt-0.5">{tenantName}</p>
             </div>
             <div>
-              <p className="text-slate-500 text-[11px] font-bold">{t("shops.shopNumber")}</p>
-              <p className="font-bold text-slate-900 dark:text-white mt-0.5">{shopNumber} ({floor})</p>
+              <p className="text-neutral-600 dark:text-neutral-400 text-[11px] font-black uppercase">{t("shops.shopNumber")}</p>
+              <p className="font-black text-black dark:text-white mt-0.5">{shopNumber} ({floor})</p>
             </div>
             <div>
-              <p className="text-slate-500 text-[11px] font-bold">{t("settlement.settlementDate")}</p>
-              <p className="font-bold text-slate-900 dark:text-white mt-0.5">{formatDate(settledAt, locale)}</p>
+              <p className="text-neutral-600 dark:text-neutral-400 text-[11px] font-black uppercase">{t("settlement.settlementDate")}</p>
+              <p className="font-black text-black dark:text-white mt-0.5">{formatDate(settledAt, locale)}</p>
             </div>
             <div>
-              <p className="text-slate-500 text-[11px] font-bold">{t("settlement.policyVersionUsed")}</p>
-              <p className="font-bold text-teal-600 dark:text-teal-400 mt-0.5">Version {locale === "bn" ? toBanglaDigits(policyVersionNumber) : policyVersionNumber}</p>
+              <p className="text-neutral-600 dark:text-neutral-400 text-[11px] font-black uppercase">{t("settlement.policyVersionUsed")}</p>
+              <p className="font-black text-black dark:text-[#FED734] mt-0.5">Version {locale === "bn" ? toBanglaDigits(policyVersionNumber) : policyVersionNumber}</p>
             </div>
           </div>
 
           {/* Detailed Calculations Breakdown Table */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+            <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white">
               {locale === "bn" ? "হিসাব ও দায় বিবরণী" : "Account & Liability Breakdown"}
             </h4>
 
-            <div className="rounded-xl border border-slate-200 dark:border-[#2d3b52] overflow-hidden text-xs">
+            <div className="rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] overflow-hidden text-xs">
               <table className="w-full text-left">
-                <thead className="bg-slate-100 dark:bg-[#182234] border-b border-slate-200 dark:border-[#2d3b52] font-bold text-slate-700 dark:text-slate-300">
+                <thead className="bg-[#FED734] border-b-2 border-black font-black text-black">
                   <tr>
                     <th className="p-3">#</th>
                     <th className="p-3">{t("common.details")}</th>
                     <th className="p-3 text-right">{t("common.amount")}</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 bg-white dark:bg-[#1E1F24]">
                   <tr>
-                    <td className="p-3 text-slate-500">1</td>
-                    <td className="p-3 font-semibold text-slate-800 dark:text-slate-200">
+                    <td className="p-3 text-neutral-500 font-bold">1</td>
+                    <td className="p-3 font-bold text-black dark:text-white">
                       {locale === "bn" ? "অনাদায়ী বকেয়া ভাড়া ও চার্জ" : "Unpaid Rent & Utility Dues"}
                     </td>
-                    <td className="p-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                    <td className="p-3 text-right font-mono font-black text-black dark:text-white">
                       {formatCurrency(totalDue, locale)}
                     </td>
                   </tr>
 
                   {/* Deduction items */}
                   {deductions.map((d, i) => (
-                    <tr key={i} className="bg-slate-50/50 dark:bg-slate-900/30">
-                      <td className="p-3 text-slate-500">2.{i + 1}</td>
-                      <td className="p-3 text-slate-700 dark:text-slate-300">
-                        <span className="font-medium">{locale === "bn" ? d.label_bn : d.label_en}</span>
-                        {d.note && <span className="text-slate-400 text-[11px] block">{d.note}</span>}
+                    <tr key={i} className="bg-[#FBF9F5] dark:bg-[#262830]">
+                      <td className="p-3 text-neutral-500 font-bold">2.{i + 1}</td>
+                      <td className="p-3 text-black dark:text-white">
+                        <span className="font-bold">{locale === "bn" ? d.label_bn : d.label_en}</span>
+                        {d.note && <span className="text-neutral-500 text-[11px] block">{d.note}</span>}
                       </td>
-                      <td className="p-3 text-right font-mono text-slate-800 dark:text-slate-200">
+                      <td className="p-3 text-right font-mono font-black text-black dark:text-white">
                         {formatCurrency(d.amount, locale)}
                       </td>
                     </tr>
                   ))}
 
-                  <tr className="bg-slate-100/80 dark:bg-slate-800/60 font-bold border-t border-slate-200 dark:border-slate-700">
+                  <tr className="bg-[#FFEBEF] dark:bg-[#2A1417] font-black border-t-2 border-black">
                     <td className="p-3" colSpan={2}>
                       {t("settlement.totalLiabilities")}
                     </td>
-                    <td className="p-3 text-right font-mono text-red-600 dark:text-red-400">
+                    <td className="p-3 text-right font-mono text-[#FF4B55]">
                       {formatCurrency(totalLiabilities, locale)}
                     </td>
                   </tr>
 
-                  <tr className="bg-teal-50/40 dark:bg-teal-950/20 font-bold">
+                  <tr className="bg-[#E6F8F2] dark:bg-[#122A20] font-black border-t-2 border-black/10 dark:border-white/10">
                     <td className="p-3" colSpan={2}>
                       {t("advance.advanceBalance")} ({locale === "bn" ? "প্রদত্ত জামানত" : "Security Advance"})
                     </td>
-                    <td className="p-3 text-right font-mono text-teal-600 dark:text-teal-400">
+                    <td className="p-3 text-right font-mono text-[#00BA88]">
                       {formatCurrency(advanceBalance, locale)}
                     </td>
                   </tr>
@@ -285,23 +285,23 @@ export function SettlementStatementModal({
 
           {/* Final Outcome Banner */}
           <div
-            className={`p-4 rounded-xl border flex flex-col sm:flex-row items-center justify-between gap-3 ${
+            className={`p-4 rounded-xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col sm:flex-row items-center justify-between gap-3 ${
               isRefund
-                ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-700 text-emerald-900 dark:text-emerald-200"
+                ? "bg-[#E6F8F2] dark:bg-[#122A20] text-black dark:text-white"
                 : isUnrecovered
-                ? "bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-700 text-red-900 dark:text-red-200"
-                : "bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100"
+                ? "bg-[#FFEBEF] dark:bg-[#2A1417] text-black dark:text-white"
+                : "bg-[#FBF9F5] dark:bg-[#262830] text-black dark:text-white"
             }`}
           >
             <div>
-              <p className="text-xs uppercase tracking-wider font-extrabold">
+              <p className="text-xs uppercase tracking-wider font-black">
                 {isRefund
                   ? t("settlement.refundAmount")
                   : isUnrecovered
                   ? t("settlement.unrecoveredAmount")
                   : t("settlement.exactMatch")}
               </p>
-              <p className="text-[11px] opacity-80 mt-0.5">
+              <p className="text-[11px] font-bold opacity-80 mt-0.5">
                 {isRefund
                   ? locale === "bn"
                     ? "মার্কেট কর্তৃপক্ষ কর্তৃক ভাড়াটিয়াকে ফেরতযোগ্য টাকা"
@@ -315,7 +315,7 @@ export function SettlementStatementModal({
                     : "Total liabilities exactly matched advance balance"}
               </p>
             </div>
-            <p className="text-2xl font-extrabold font-mono shrink-0">
+            <p className={`text-2xl font-black font-mono shrink-0 ${isRefund ? "text-[#00BA88]" : isUnrecovered ? "text-[#FF4B55]" : "text-black dark:text-white"}`}>
               {isRefund
                 ? formatCurrency(refundAmount, locale)
                 : isUnrecovered
@@ -325,23 +325,23 @@ export function SettlementStatementModal({
           </div>
 
           {notes && (
-            <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs text-slate-600 dark:text-slate-400">
-              <span className="font-bold text-slate-800 dark:text-slate-200">{t("common.notes")}: </span>
-              {notes}
+            <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-xs text-black dark:text-white shadow-[2px_2px_0px_#000000]">
+              <span className="font-black text-black dark:text-white">{t("common.notes")}: </span>
+              <span className="font-bold">{notes}</span>
             </div>
           )}
 
           {/* Signature Lines */}
           <div className="pt-12 grid grid-cols-2 gap-8 text-center text-xs">
             <div className="space-y-1.5">
-              <div className="border-t border-slate-400 dark:border-slate-600 mx-auto w-3/4"></div>
-              <p className="font-bold text-slate-800 dark:text-slate-200">{t("settlement.ownerSignature")}</p>
-              <p className="text-[10px] text-slate-400">Verified by: {confirmedBy}</p>
+              <div className="border-t-2 border-black dark:border-white mx-auto w-3/4"></div>
+              <p className="font-black text-black dark:text-white">{t("settlement.ownerSignature")}</p>
+              <p className="text-[10px] text-neutral-500 font-bold">Verified by: {confirmedBy}</p>
             </div>
             <div className="space-y-1.5">
-              <div className="border-t border-slate-400 dark:border-slate-600 mx-auto w-3/4"></div>
-              <p className="font-bold text-slate-800 dark:text-slate-200">{t("settlement.tenantSignature")}</p>
-              <p className="text-[10px] text-slate-400">{tenantName}</p>
+              <div className="border-t-2 border-black dark:border-white mx-auto w-3/4"></div>
+              <p className="font-black text-black dark:text-white">{t("settlement.tenantSignature")}</p>
+              <p className="text-[10px] text-neutral-500 font-bold">{tenantName}</p>
             </div>
           </div>
         </div>
@@ -352,11 +352,11 @@ export function SettlementStatementModal({
             {t("common.close")}
           </Button>
           <Button variant="outline" onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-1.5" />
+            <Printer className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("settlement.printStatement")}
           </Button>
-          <Button onClick={handleDownloadPdf} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
-            <Download className="w-4 h-4 mr-1.5" />
+          <Button variant="neo" onClick={handleDownloadPdf}>
+            <Download className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("settlement.downloadPdf")}
           </Button>
         </div>

@@ -91,9 +91,9 @@ export function ChangePasswordModal({
       isOpen={isOpen}
       onClose={onClose}
       title={
-        <div className="flex items-center gap-2 text-slate-900 dark:text-white">
-          <KeyRound className="w-5 h-5 text-teal-600 dark:text-teal-400 shrink-0" />
-          <span>{locale === "bn" ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change User Password"}</span>
+        <div className="flex items-center gap-2 text-black dark:text-white">
+          <KeyRound className="w-5 h-5 text-black dark:text-[#FED734] shrink-0 stroke-[2.5]" />
+          <span className="font-black">{locale === "bn" ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change User Password"}</span>
         </div>
       }
       description={
@@ -105,24 +105,24 @@ export function ChangePasswordModal({
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* User Identity Banner */}
-        <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between text-xs">
+        <div className="p-3 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black flex items-center justify-between text-xs shadow-[2px_2px_0px_#000000]">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-teal-600 text-white font-black flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[#FED734] text-black font-black border-2 border-black flex items-center justify-center shadow-[1.5px_1.5px_0px_#000000]">
               {userName.slice(0, 2).toUpperCase()}
             </div>
             <div>
-              <p className="font-bold text-slate-900 dark:text-white">{userName}</p>
-              <p className="text-[10px] text-slate-500">Security Credentials</p>
+              <p className="font-black text-black dark:text-white">{userName}</p>
+              <p className="text-[10px] text-neutral-500 font-bold">Security Credentials</p>
             </div>
           </div>
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+          <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-wider bg-[#00BA88] text-white border-2 border-black shadow-[1px_1px_0px_#000000]">
             Active User
           </span>
         </div>
 
         {/* Current Password */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
             {locale === "bn" ? "বর্তমান পাসওয়ার্ড (Current Password)" : "Current Password"}
           </label>
           <div className="relative">
@@ -137,16 +137,16 @@ export function ChangePasswordModal({
             <button
               type="button"
               onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer"
             >
-              {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showCurrent ? <EyeOff className="w-4 h-4 stroke-[2.5]" /> : <Eye className="w-4 h-4 stroke-[2.5]" />}
             </button>
           </div>
         </div>
 
         {/* New Password */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
             {locale === "bn" ? "নতুন পাসওয়ার্ড (New Password)" : "New Password"}
           </label>
           <div className="relative">
@@ -161,16 +161,16 @@ export function ChangePasswordModal({
             <button
               type="button"
               onClick={() => setShowNew(!showNew)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer"
             >
-              {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showNew ? <EyeOff className="w-4 h-4 stroke-[2.5]" /> : <Eye className="w-4 h-4 stroke-[2.5]" />}
             </button>
           </div>
         </div>
 
         {/* Confirm Password */}
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-1.5">
+          <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
             {locale === "bn" ? "নতুন পাসওয়ার্ড নিশ্চিত করুন" : "Confirm New Password"}
           </label>
           <Input
@@ -184,7 +184,7 @@ export function ChangePasswordModal({
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-2 pt-2 border-t-2 border-black">
           <Button
             type="button"
             variant="outline"
@@ -196,12 +196,12 @@ export function ChangePasswordModal({
           </Button>
           <Button
             type="submit"
-            variant="primary"
+            variant="neo"
             size="sm"
             isLoading={isLoading}
-            className="w-full sm:w-auto"
+            className="w-full sm:w-auto font-black"
           >
-            <CheckCircle2 className="w-4 h-4 mr-1.5" />
+            <CheckCircle2 className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {locale === "bn" ? "পাসওয়ার্ড আপডেট করুন" : "Update Password"}
           </Button>
         </div>

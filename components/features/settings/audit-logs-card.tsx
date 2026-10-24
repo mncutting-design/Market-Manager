@@ -109,21 +109,21 @@ export function AuditLogsCard() {
 
   const getActionBadgeClass = (action: string) => {
     if (action.startsWith("UNDO_")) {
-      return "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-200 border border-slate-400 dark:border-slate-700";
+      return "bg-[#F4F1EA] text-black dark:bg-[#262830] dark:text-white border-2 border-black shadow-[1.5px_1.5px_0px_#000000] font-black";
     }
     if (action.includes("DELETE") || action.includes("REJECTED") || action.includes("CLEAR")) {
-      return "bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-300 dark:border-rose-800";
+      return "bg-[#FFEBEF] text-[#CC0000] dark:bg-[#2A1417] dark:text-[#FF4B55] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] font-black";
     }
     if (action.includes("ADJUST") || action.includes("WAIVED") || action.includes("EDIT")) {
-      return "bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300 dark:border-amber-800";
+      return "bg-[#FEF3C7] text-[#92400E] dark:bg-[#3D2F14] dark:text-[#FBBF24] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] font-black";
     }
     if (action.includes("SETTLEMENT") || action.includes("POLICY")) {
-      return "bg-purple-100 text-purple-800 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-300 dark:border-purple-800";
+      return "bg-[#F3E8FF] text-[#6B21A8] dark:bg-[#3B1754] dark:text-[#D8B4FE] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] font-black";
     }
     if (action.includes("RESTORE") || action.includes("DEPOSIT") || action.includes("TOPUP") || action.includes("ADDED")) {
-      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800";
+      return "bg-[#E6F8F2] text-[#00875A] dark:bg-[#122A20] dark:text-[#00BA88] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] font-black";
     }
-    return "bg-teal-100 text-teal-800 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-300 dark:border-teal-800";
+    return "bg-[#E0F2FE] text-[#0369A1] dark:bg-[#082F49] dark:text-[#38BDF8] border-2 border-black shadow-[1.5px_1.5px_0px_#000000] font-black";
   };
 
   // Helper to determine if there are meaningful details to render
@@ -189,20 +189,20 @@ export function AuditLogsCard() {
   const visibleLogs = showAll ? logs : logs.slice(0, 5);
 
   return (
-    <Card className="p-6 border-slate-200 dark:border-slate-800">
-      <CardHeader className="p-0 pb-4 border-b border-slate-100 dark:border-slate-800">
+    <Card className="p-6">
+      <CardHeader className="p-0 pb-4 border-b-2 border-black/10 dark:border-white/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <Shield className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <CardTitle className="text-base font-black text-black dark:text-white flex items-center gap-2">
+              <Shield className="w-5 h-5 text-black dark:text-white stroke-[2.5]" />
               <span>{t("audit.title")}</span>
-              <span className="text-[11px] font-normal px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+              <span className="text-[11px] font-black px-2 py-0.5 rounded-full bg-[#FED734] text-black border border-black shadow-[1px_1px_0px_#000000]">
                 {showAll
                   ? (locale === "bn" ? `সবগুলো (${toBanglaDigits(logs.length)})` : `All (${logs.length})`)
                   : (locale === "bn" ? `সর্বশেষ ৫টি (${toBanglaDigits(Math.min(5, logs.length))}/${toBanglaDigits(logs.length)})` : `Last 5 entries (${Math.min(5, logs.length)}/${logs.length})`)}
               </span>
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            <CardDescription className="text-xs text-gray-700 dark:text-gray-300 font-bold mt-1">
               {locale === "bn"
                 ? "ডিফল্টভাবে সর্বশেষ ৫টি এন্ট্রি প্রদর্শিত হয়। অ্যাডমিন যেকোনো এন্ট্রি পূর্বাবস্থায় ফিরিয়ে (Undo) নিতে পারেন।"
                 : "Showing the latest 5 entries by default. Admins can view more and undo changes."}
@@ -292,7 +292,7 @@ export function AuditLogsCard() {
 
                       {/* Show meaningful detail block ONLY if details exist */}
                       {hasReadableDetails(details) && (
-                        <div className="text-[11px] text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-[#141d2c] p-2.5 rounded-lg border border-slate-200 dark:border-[#2d3b52] flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <div className="text-[11px] text-gray-700 dark:text-gray-300 bg-[#FBF9F5] dark:bg-[#262830] p-2.5 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] flex flex-wrap items-center gap-x-3 gap-y-1">
                           {details.shopNumber && (
                             <span>
                               <strong>{locale === "bn" ? "দোকান:" : "Shop:"}</strong> {details.shopNumber}
@@ -375,12 +375,12 @@ export function AuditLogsCard() {
 
             {/* View More / Show Less Toggle (Requirement 4) */}
             {logs.length > 5 && (
-              <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex justify-center">
+              <div className="pt-3 border-t-2 border-black flex justify-center">
                 <Button
-                  variant="outline"
+                  variant="neo"
                   size="sm"
                   onClick={() => setShowAll(!showAll)}
-                  className="text-xs font-bold gap-1.5 h-8 border-dashed border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                  className="text-xs font-black gap-1.5 h-8"
                 >
                   {showAll ? (
                     <>

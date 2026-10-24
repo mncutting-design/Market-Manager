@@ -118,12 +118,12 @@ export function DashboardView() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-lg text-xs space-y-1">
-          <p className="font-bold text-slate-800 dark:text-slate-200">
+        <div className="p-3 bg-white dark:bg-[#1E1F24] border-2 border-black rounded-xl shadow-[3px_3px_0px_#000000] text-xs space-y-1">
+          <p className="font-black text-black dark:text-white">
             {formatMonth(Number(label), locale, selectedYear)}
           </p>
           {payload.map((entry: any, index: number) => (
-            <p key={`item-${index}`} style={{ color: entry.color }} className="font-medium">
+            <p key={`item-${index}`} style={{ color: entry.color }} className="font-black">
               {entry.name}: {locale === "bn" ? toBanglaDigits(entry.value) : entry.value} ৳
             </p>
           ))}
@@ -136,12 +136,12 @@ export function DashboardView() {
   return (
     <div className="space-y-6 animate-in fade-in duration-200">
       {/* Top Banner & Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white text-black border-2 border-black shadow-[4px_4px_0px_#000000]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-[#1E1F24] text-black dark:text-white border-2 border-black shadow-[4px_4px_0px_#000000]">
         <div>
-          <h2 className="text-xl md:text-2xl font-black text-black tracking-tight">
+          <h2 className="text-xl md:text-2xl font-black text-black dark:text-white tracking-tight">
             {t("dashboard.title")}
           </h2>
-          <p className="text-xs md:text-sm text-gray-700 font-bold mt-1">
+          <p className="text-xs md:text-sm text-gray-700 dark:text-gray-300 font-bold mt-1">
             {formatMonth(selectedMonth, locale, selectedYear)} — {t("dashboard.subtitle")}
           </p>
         </div>
@@ -151,7 +151,7 @@ export function DashboardView() {
             size="sm"
             variant="primary"
             onClick={() => openQuickCollect()}
-            className="font-black"
+            className="font-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
           >
             <Wallet className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("dashboard.quickCollect")}
@@ -161,7 +161,7 @@ export function DashboardView() {
             size="sm"
             variant="outline"
             onClick={() => openGenerateBills()}
-            className="font-black"
+            className="font-black border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
           >
             <Receipt className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("dashboard.generateBills")}
@@ -171,7 +171,7 @@ export function DashboardView() {
             size="sm"
             variant="outline"
             onClick={() => openAddExpense()}
-            className="font-black"
+            className="font-black border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
           >
             <PlusCircle className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("dashboard.addExpense")}
@@ -259,18 +259,18 @@ export function DashboardView() {
         {/* 1. Expected Rent */}
         <div
           onClick={() => setActiveTab("billing")}
-          className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("dashboard.expectedRent")}</span>
-            <Building2 className="w-4 h-4 stroke-[2.5] text-black shrink-0" />
+            <Building2 className="w-4 h-4 stroke-[2.5] text-black dark:text-white shrink-0" />
           </div>
           <div className="my-2">
-            <div className="text-lg sm:text-xl font-black text-black truncate" title={formatCurrency(kpis.expectedRent, locale)}>
+            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate" title={formatCurrency(kpis.expectedRent, locale)}>
               {formatCurrency(kpis.expectedRent, locale)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-gray-700 font-bold border-t-2 border-black/10 pt-2">
+          <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">
               {locale === "bn" ? toBanglaDigits(kpis.totalBillsCount) : kpis.totalBillsCount} {t("reports.shopCount")}
             </span>
@@ -281,18 +281,18 @@ export function DashboardView() {
         {/* 2. Collected Rent */}
         <div
           onClick={() => setActiveTab("billing")}
-          className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("dashboard.collectedRent")}</span>
             <CheckCircle className="w-4 h-4 stroke-[2.5] text-[#00BA88] shrink-0" />
           </div>
           <div className="my-2">
-            <div className="text-lg sm:text-xl font-black text-black truncate" title={formatCurrency(kpis.collectedRent, locale)}>
+            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate" title={formatCurrency(kpis.collectedRent, locale)}>
               {formatCurrency(kpis.collectedRent, locale)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-gray-700 font-bold border-t-2 border-black/10 pt-2">
+          <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">
               {locale === "bn" ? toBanglaDigits(kpis.paidShopsCount) : kpis.paidShopsCount} {t("status.paid")}
             </span>
@@ -303,9 +303,9 @@ export function DashboardView() {
         {/* 3. Total Due */}
         <div
           onClick={() => setActiveTab("dues")}
-          className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("dashboard.totalDue")}</span>
             <AlertCircle className="w-4 h-4 stroke-[2.5] text-[#FF4B55] shrink-0" />
           </div>
@@ -314,7 +314,7 @@ export function DashboardView() {
               {formatCurrency(kpis.totalDue, locale)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-gray-700 font-bold border-t-2 border-black/10 pt-2">
+          <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">
               {locale === "bn"
                 ? toBanglaDigits(kpis.dueShopsCount + kpis.partialShopsCount)
@@ -328,18 +328,18 @@ export function DashboardView() {
         {/* 4. Total Expense */}
         <div
           onClick={() => setActiveTab("expenses")}
-          className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("dashboard.totalExpense")}</span>
             <TrendingDown className="w-4 h-4 stroke-[2.5] text-[#F59E0B] shrink-0" />
           </div>
           <div className="my-2">
-            <div className="text-lg sm:text-xl font-black text-black truncate" title={formatCurrency(kpis.totalExpense, locale)}>
+            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate" title={formatCurrency(kpis.totalExpense, locale)}>
               {formatCurrency(kpis.totalExpense, locale)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-gray-700 font-bold border-t-2 border-black/10 pt-2">
+          <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">{t("nav.expenses")}</span>
             <span className="font-black text-[#F59E0B]">{locale === "bn" ? "ব্যয়" : "Cost"}</span>
           </div>
@@ -348,9 +348,9 @@ export function DashboardView() {
         {/* 5. Net Profit */}
         <div
           onClick={() => setActiveTab("reports")}
-          className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("dashboard.netProfit")}</span>
             <TrendingUp className="w-4 h-4 stroke-[2.5] text-[#00BA88] shrink-0" />
           </div>
@@ -359,7 +359,7 @@ export function DashboardView() {
               {formatCurrency(kpis.netProfit, locale)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-gray-700 font-bold border-t-2 border-black/10 pt-2">
+          <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">{t("reports.netIncome")}</span>
             <span className="font-black text-[#00BA88]">{locale === "bn" ? "লাভ" : "Profit"}</span>
           </div>
@@ -368,19 +368,19 @@ export function DashboardView() {
         {/* 6. Collection Rate */}
         <div
           onClick={() => setActiveTab("dues")}
-          className="bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("dashboard.collectionRate")}</span>
-            <Layers className="w-4 h-4 stroke-[2.5] text-black shrink-0" />
+            <Layers className="w-4 h-4 stroke-[2.5] text-black dark:text-white shrink-0" />
           </div>
           <div className="my-2">
-            <div className="text-lg sm:text-xl font-black text-black truncate">
+            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate">
               {formatPercent(kpis.collectionRate, locale)}
             </div>
           </div>
-          <div className="border-t-2 border-black/10 pt-2">
-            <div className="w-full bg-[#F4F1EA] border border-black h-2.5 rounded-full overflow-hidden p-0.5">
+          <div className="border-t-2 border-black/10 dark:border-white/10 pt-2">
+            <div className="w-full bg-[#F4F1EA] dark:bg-[#262830] border border-black h-2.5 rounded-full overflow-hidden p-0.5">
               <div
                 className="bg-[#FED734] h-full rounded-full transition-all duration-500"
                 style={{ width: `${Math.min(100, collectionPercent)}%` }}
@@ -392,20 +392,20 @@ export function DashboardView() {
         {/* 7. Total Advance Held (Liability) - Full width on 2-col mobile */}
         <div
           onClick={() => setActiveTab("shops")}
-          className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+          className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
-          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black">
+          <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
             <span className="truncate">{t("advance.advanceHeld")}</span>
             <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#FED734] text-black border border-black shadow-[1px_1px_0px_#000000]">
               Liability
             </span>
           </div>
           <div className="my-2">
-            <div className="text-lg sm:text-xl font-black text-black truncate" title={formatCurrency(kpis.totalAdvanceHeld || 0, locale)}>
+            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate" title={formatCurrency(kpis.totalAdvanceHeld || 0, locale)}>
               {formatCurrency(kpis.totalAdvanceHeld || 0, locale)}
             </div>
           </div>
-          <div className="flex items-center justify-between text-[11px] text-gray-700 font-bold border-t-2 border-black/10 pt-2">
+          <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">{t("advance.title")}</span>
             <span className="font-black text-[#00BCD4]">{locale === "bn" ? "জামানত" : "Held"}</span>
           </div>
@@ -413,13 +413,13 @@ export function DashboardView() {
       </div>
 
       {/* Monthly Collection Progress Bar & Summary */}
-      <div className="p-5 rounded-2xl bg-white border-2 border-black shadow-[4px_4px_0px_#000000]">
+      <div className="p-5 rounded-2xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000]">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
           <div>
-            <h3 className="text-base font-black text-black">
+            <h3 className="text-base font-black text-black dark:text-white">
               {t("dashboard.monthlyOverview")}
             </h3>
-            <p className="text-xs text-gray-700 font-bold mt-0.5">
+            <p className="text-xs text-gray-700 dark:text-gray-400 font-bold mt-0.5">
               {t("dashboard.paidVsDueSummary", {
                 paid: locale === "bn" ? toBanglaDigits(kpis.paidShopsCount) : kpis.paidShopsCount,
                 total: locale === "bn" ? toBanglaDigits(kpis.totalBillsCount) : kpis.totalBillsCount,
@@ -454,7 +454,7 @@ export function DashboardView() {
           />
         </div>
 
-        <div className="flex items-center gap-4 text-xs mt-3 text-black font-black">
+        <div className="flex items-center gap-4 text-xs mt-3 text-black dark:text-white font-black">
           <span className="flex items-center gap-1.5">
             <span className="w-3 h-3 rounded-full bg-[#00BA88] border border-black shadow-[1px_1px_0px_#000000]" />
             {t("status.paid")}: {locale === "bn" ? toBanglaDigits(kpis.paidShopsCount) : kpis.paidShopsCount}
@@ -476,10 +476,10 @@ export function DashboardView() {
         <div className="lg:col-span-2 space-y-4">
           {/* At-Risk Tenants Alert Card */}
           {data.atRiskTenants && data.atRiskTenants.length > 0 && (
-            <div className="p-4 rounded-2xl bg-[#FFEBEF] border-2 border-[#FFA2B2] shadow-[3px_3px_0px_#FF4B55]">
+            <div className="p-4 rounded-2xl bg-[#FFEBEF] dark:bg-[#2C1417] border-2 border-[#FFA2B2] dark:border-[#FF4B55] shadow-[3px_3px_0px_#FF4B55]">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-xl bg-white border-2 border-[#FF4B55] text-[#FF4B55] flex items-center justify-center shadow-[1.5px_1.5px_0px_#FF4B55] shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-[#FF4B55] text-[#FF4B55] flex items-center justify-center shadow-[1.5px_1.5px_0px_#FF4B55] shrink-0">
                     <ShieldAlert className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <div>
@@ -489,7 +489,7 @@ export function DashboardView() {
                         {locale === "bn" ? toBanglaDigits(data.atRiskTenants.length) : data.atRiskTenants.length}
                       </span>
                     </h3>
-                    <p className="text-[11px] text-gray-800 font-bold">
+                    <p className="text-[11px] text-gray-800 dark:text-gray-300 font-bold">
                       {t("alerts.atRiskSubtitle")}
                     </p>
                   </div>
@@ -501,14 +501,14 @@ export function DashboardView() {
                   <div
                     key={item.tenantId}
                     onClick={() => setActiveProfileTenantId(item.tenantId)}
-                    className="p-3.5 rounded-xl border-2 border-black bg-white shadow-[2px_2px_0px_#000000] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
+                    className="p-3.5 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[2px_2px_0px_#000000] hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
                   >
                     <div className="flex items-start justify-between gap-1 mb-1.5">
                       <div>
-                        <p className="font-black text-xs text-black group-hover:underline">
+                        <p className="font-black text-xs text-black dark:text-white group-hover:underline">
                           {item.tenantName}
                         </p>
-                        <p className="text-[11px] text-gray-700 font-bold">
+                        <p className="text-[11px] text-gray-700 dark:text-gray-400 font-bold">
                           {item.shopNumber} ({item.marketName})
                         </p>
                       </div>
@@ -523,22 +523,22 @@ export function DashboardView() {
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1 text-[11px] py-1 border-t-2 border-black/10">
+                    <div className="grid grid-cols-2 gap-1 text-[11px] py-1 border-t-2 border-black/10 dark:border-white/10">
                       <div>
-                        <span className="text-gray-700 font-bold">{t("dashboard.totalDue")}: </span>
+                        <span className="text-gray-700 dark:text-gray-400 font-bold">{t("dashboard.totalDue")}: </span>
                         <span className="font-black text-[#FF4B55]">
                           {formatCurrency(item.totalDue, locale)}
                         </span>
                       </div>
                       <div>
-                        <span className="text-gray-700 font-bold">{t("advance.title")}: </span>
+                        <span className="text-gray-700 dark:text-gray-400 font-bold">{t("advance.title")}: </span>
                         <span className="font-black text-[#00BCD4]">
                           {formatCurrency(item.advanceBalance, locale)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="mt-2 pt-1.5 flex items-center justify-between gap-1.5 border-t-2 border-black/10">
+                    <div className="mt-2 pt-1.5 flex items-center justify-between gap-1.5 border-t-2 border-black/10 dark:border-white/10">
                       <Button
                         size="sm"
                         variant="outline"
@@ -575,11 +575,11 @@ export function DashboardView() {
           )}
 
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-black text-black flex items-center gap-2">
+            <h3 className="text-base font-black text-black dark:text-white flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-[#FF4B55] stroke-[2.5]" />
               <span>{t("dashboard.dueShopsList")}</span>
             </h3>
-            <span className="text-xs text-black font-black">
+            <span className="text-xs text-black dark:text-white font-black">
               {locale === "bn" ? toBanglaDigits(dueShops.length) : dueShops.length} {t("reports.shopCount")}
             </span>
           </div>
@@ -596,28 +596,28 @@ export function DashboardView() {
                     dueAmount: shop.dueAmount,
                   })
                 }
-                className="p-4 rounded-2xl border-2 border-black bg-white shadow-[3px_3px_0px_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all flex flex-col justify-between cursor-pointer group"
+                className="p-4 rounded-2xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all flex flex-col justify-between cursor-pointer group"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="font-black text-base text-black group-hover:underline">
+                      <p className="font-black text-base text-black dark:text-white group-hover:underline">
                         {shop.shopNumber}
                       </p>
-                      <p className="text-xs text-gray-700 truncate max-w-[170px] font-bold">{shop.marketName}</p>
+                      <p className="text-xs text-gray-700 dark:text-gray-400 truncate max-w-[170px] font-bold">{shop.marketName}</p>
                     </div>
                     <StatusBadge status={shop.status} />
                   </div>
 
-                  <div className="mt-2 text-xs text-black space-y-0.5">
-                    <p className="font-black text-black">{shop.tenantName}</p>
-                    <p className="font-bold text-gray-700">{shop.phone}</p>
+                  <div className="mt-2 text-xs text-black dark:text-white space-y-0.5">
+                    <p className="font-black text-black dark:text-white">{shop.tenantName}</p>
+                    <p className="font-bold text-gray-700 dark:text-gray-400">{shop.phone}</p>
                   </div>
                 </div>
 
-                <div className="mt-3 pt-2.5 border-t-2 border-black/10 flex items-center justify-between">
+                <div className="mt-3 pt-2.5 border-t-2 border-black/10 dark:border-white/10 flex items-center justify-between">
                   <div>
-                    <span className="text-xs text-gray-700 font-bold">{t("common.amount")}: </span>
+                    <span className="text-xs text-gray-700 dark:text-gray-400 font-bold">{t("common.amount")}: </span>
                     <span className="font-black text-[#FF4B55] text-sm">
                       {formatCurrency(shop.dueAmount, locale)}
                     </span>
@@ -628,7 +628,7 @@ export function DashboardView() {
                     <a
                       href={`tel:${shop.phone}`}
                       onClick={(e) => e.stopPropagation()}
-                      className="p-1.5 rounded-lg border-2 border-black bg-white hover:bg-[#FED734] text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
+                      className="p-1.5 rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] text-black dark:text-white hover:text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-0.5 active:translate-y-0.5 transition-all"
                       title={t("tenants.call")}
                       aria-label="Call tenant"
                     >
@@ -663,23 +663,23 @@ export function DashboardView() {
         <div className="space-y-4">
           {/* Most Profitable Market Card */}
           {mostProfitableMarket && (
-            <div className="p-5 rounded-2xl border-2 border-black bg-[#FED734]/25 shadow-[4px_4px_0px_#000000]">
-              <div className="flex items-center gap-2 text-black text-xs font-black uppercase tracking-wider mb-1">
-                <Sparkles className="w-4 h-4 stroke-[2.5] text-black" />
+            <div className="p-5 rounded-2xl border-2 border-black bg-[#FED734]/25 dark:bg-[#FED734]/15 shadow-[4px_4px_0px_#000000]">
+              <div className="flex items-center gap-2 text-black dark:text-[#FED734] text-xs font-black uppercase tracking-wider mb-1">
+                <Sparkles className="w-4 h-4 stroke-[2.5] text-black dark:text-[#FED734]" />
                 <span>{t("dashboard.mostProfitableMarket")}</span>
               </div>
-              <h4 className="text-lg font-black text-black mt-1">
+              <h4 className="text-lg font-black text-black dark:text-white mt-1">
                 {mostProfitableMarket.name}
               </h4>
-              <p className="text-xs text-black font-bold leading-relaxed mt-2">
+              <p className="text-xs text-black dark:text-gray-200 font-bold leading-relaxed mt-2">
                 {t("dashboard.mostProfitableDesc", {
                   name: mostProfitableMarket.name,
                   amount: formatCurrency(mostProfitableMarket.rawNetProfit, locale),
                 })}
               </p>
-              <div className="mt-3 pt-2 border-t-2 border-black/10 flex items-center justify-between text-xs font-black">
-                <span className="text-black">{t("dashboard.collectionRate")}:</span>
-                <span className="text-black font-black text-sm">
+              <div className="mt-3 pt-2 border-t-2 border-black/10 dark:border-white/10 flex items-center justify-between text-xs font-black">
+                <span className="text-black dark:text-gray-300">{t("dashboard.collectionRate")}:</span>
+                <span className="text-black dark:text-[#FED734] font-black text-sm">
                   {formatPercent(mostProfitableMarket.collectionRate, locale)}
                 </span>
               </div>
@@ -687,26 +687,26 @@ export function DashboardView() {
           )}
 
           {/* Top Expense Categories */}
-          <div className="p-5 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0px_#000000]">
-            <h4 className="text-sm font-black uppercase tracking-wider text-black mb-3">
+          <div className="p-5 rounded-2xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+            <h4 className="text-sm font-black uppercase tracking-wider text-black dark:text-white mb-3">
               {t("dashboard.topExpenseCategories")}
             </h4>
 
             {expensesByCategory.length === 0 ? (
-              <p className="text-xs text-gray-700 font-bold">{t("expenses.noExpensesFound")}</p>
+              <p className="text-xs text-gray-700 dark:text-gray-400 font-bold">{t("expenses.noExpensesFound")}</p>
             ) : (
               <div className="space-y-3">
                 {expensesByCategory.slice(0, 5).map((cat: any) => (
                   <div key={cat.id} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-black">
+                      <span className="font-bold text-black dark:text-white">
                         {locale === "bn" ? cat.name_bn || cat.name_en : cat.name_en || cat.name_bn}
                       </span>
-                      <span className="font-black text-black">
+                      <span className="font-black text-black dark:text-white">
                         {formatCurrency(cat.amount, locale)}
                       </span>
                     </div>
-                    <div className="w-full bg-[#F4F1EA] border border-black h-2 rounded-full overflow-hidden p-0.5">
+                    <div className="w-full bg-[#F4F1EA] dark:bg-[#262830] border border-black h-2 rounded-full overflow-hidden p-0.5">
                       <div
                         className="h-full rounded-full bg-[#F59E0B]"
                         style={{
@@ -725,14 +725,14 @@ export function DashboardView() {
       {/* Collections by Channel & Collector Breakdown */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {/* Collections by Channel */}
-        <div className="p-5 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0px_#000000]">
+        <div className="p-5 rounded-2xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h4 className="text-base font-black text-black flex items-center gap-2">
+              <h4 className="text-base font-black text-black dark:text-white flex items-center gap-2">
                 <CreditCard className="w-4 h-4 stroke-[2.5]" />
                 <span>{locale === "bn" ? "পেমেন্ট মাধ্যমভিত্তিক কালেকশন" : "Collections by Payment Method"}</span>
               </h4>
-              <p className="text-xs text-gray-700 font-bold mt-0.5">
+              <p className="text-xs text-gray-700 dark:text-gray-400 font-bold mt-0.5">
                 {locale === "bn" ? "বর্তমান মাসের আদায়কৃত অর্থের মাধ্যমভিত্তিক বিবরণ" : "Breakdown of rent received by channel this month"}
               </p>
             </div>
@@ -760,21 +760,21 @@ export function DashboardView() {
               return (
                 <div
                   key={ch.key}
-                  className="p-3 rounded-xl border-2 border-black bg-[#FBF9F5] shadow-[2px_2px_0px_#000000] flex flex-col justify-between"
+                  className="p-3 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] shadow-[2px_2px_0px_#000000] flex flex-col justify-between"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black px-2 py-0.5 rounded-md border border-black bg-white text-black shadow-[1px_1px_0px_#000000]">
+                    <span className="text-[11px] font-black px-2 py-0.5 rounded-md border border-black bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[1px_1px_0px_#000000]">
                       {locale === "bn" ? ch.labelBn : ch.labelEn}
                     </span>
-                    <span className="text-[10px] text-gray-700 font-bold">
+                    <span className="text-[10px] text-gray-700 dark:text-gray-400 font-bold">
                       {locale === "bn" ? toBanglaDigits(item.count) : item.count} {locale === "bn" ? "টি" : "rcpts"}
                     </span>
                   </div>
                   <div className="mt-2.5">
-                    <p className="text-base font-black text-black truncate">
+                    <p className="text-base font-black text-black dark:text-white truncate">
                       {formatCurrency(item.amount, locale)}
                     </p>
-                    <div className="mt-1.5 w-full bg-white border border-black h-2 rounded-full overflow-hidden p-0.5">
+                    <div className="mt-1.5 w-full bg-white dark:bg-[#1E1F24] border border-black h-2 rounded-full overflow-hidden p-0.5">
                       <div
                         className="h-full bg-[#FED734] rounded-full transition-all"
                         style={{ width: `${Math.min(100, percent)}%` }}
@@ -788,14 +788,14 @@ export function DashboardView() {
         </div>
 
         {/* Collector Performance */}
-        <div className="p-5 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0px_#000000]">
+        <div className="p-5 rounded-2xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h4 className="text-base font-black text-black flex items-center gap-2">
+              <h4 className="text-base font-black text-black dark:text-white flex items-center gap-2">
                 <UserCheck className="w-4 h-4 stroke-[2.5]" />
                 <span>{locale === "bn" ? "কালেকশন স্টাফ পারফরম্যান্স" : "Collector Performance"}</span>
               </h4>
-              <p className="text-xs text-gray-700 font-bold mt-0.5">
+              <p className="text-xs text-gray-700 dark:text-gray-400 font-bold mt-0.5">
                 {locale === "bn" ? "কে কত টাকা আদায় করেছেন (Received by)" : "Amount collected by staff members this month"}
               </p>
             </div>
@@ -813,7 +813,7 @@ export function DashboardView() {
           </div>
 
           {collectionsByCollector.length === 0 ? (
-            <div className="p-8 text-center text-xs text-gray-700 font-bold">
+            <div className="p-8 text-center text-xs text-gray-700 dark:text-gray-400 font-bold">
               {locale === "bn" ? "এই মাসে কোনো কালেকশন রেকর্ড পাওয়া যায়নি।" : "No collections recorded this month yet."}
             </div>
           ) : (
@@ -823,26 +823,26 @@ export function DashboardView() {
                 return (
                   <div
                     key={col.id}
-                    className="p-3 rounded-xl border-2 border-black bg-[#FBF9F5] shadow-[2px_2px_0px_#000000] flex items-center justify-between gap-3"
+                    className="p-3 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] shadow-[2px_2px_0px_#000000] flex items-center justify-between gap-3"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className="w-9 h-9 rounded-xl border-2 border-black bg-[#FED734] text-black font-black text-xs flex items-center justify-center shrink-0 shadow-[1px_1px_0px_#000000]">
                         {col.name ? col.name.slice(0, 2).toUpperCase() : "ST"}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-black text-black truncate">
+                        <p className="text-xs font-black text-black dark:text-white truncate">
                           {col.name}
                         </p>
-                        <p className="text-[10px] text-gray-700 font-bold">
+                        <p className="text-[10px] text-gray-700 dark:text-gray-400 font-bold">
                           {locale === "bn" ? toBanglaDigits(col.count) : col.count} {locale === "bn" ? "টি রসিদ আদায়" : "receipts collected"}
                         </p>
                       </div>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs font-black text-black">
+                      <p className="text-xs font-black text-black dark:text-white">
                         {formatCurrency(col.amount, locale)}
                       </p>
-                      <span className="text-[10px] text-gray-700 font-bold">
+                      <span className="text-[10px] text-gray-700 dark:text-gray-400 font-bold">
                         {locale === "bn" ? toBanglaDigits(percent) : percent}%
                       </span>
                     </div>
@@ -858,11 +858,11 @@ export function DashboardView() {
       {mounted && monthlyTrends && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Income vs Expenses Bar Chart */}
-          <div className="p-5 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0px_#000000]">
-            <h4 className="text-base font-black text-black mb-1">
+          <div className="p-5 rounded-2xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+            <h4 className="text-base font-black text-black dark:text-white mb-1">
               {t("dashboard.incomeVsExpense")}
             </h4>
-            <p className="text-xs text-gray-700 font-bold mb-4">
+            <p className="text-xs text-gray-700 dark:text-gray-400 font-bold mb-4">
               {selectedYear} — {t("dashboard.yearlyFinancials")}
             </p>
             <div className="h-64 w-full">
@@ -872,13 +872,15 @@ export function DashboardView() {
                   <XAxis
                     dataKey="month"
                     tickFormatter={(m) => (locale === "bn" ? toBanglaDigits(m) : m)}
-                    tick={{ fontSize: 11, fontWeight: 700 }}
+                    tick={{ fontSize: 11, fontWeight: 700, fill: "currentColor" }}
+                    className="text-black dark:text-gray-300"
                   />
                   <YAxis
                     tickFormatter={(v) =>
                       locale === "bn" ? toBanglaDigits(Math.round(v / 1000)) + "k" : `${Math.round(v / 1000)}k`
                     }
-                    tick={{ fontSize: 11, fontWeight: 700 }}
+                    tick={{ fontSize: 11, fontWeight: 700, fill: "currentColor" }}
+                    className="text-black dark:text-gray-300"
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend
@@ -899,11 +901,11 @@ export function DashboardView() {
           </div>
 
           {/* Net Profit Trend Line Chart */}
-          <div className="p-5 rounded-2xl border-2 border-black bg-white shadow-[4px_4px_0px_#000000]">
-            <h4 className="text-base font-black text-black mb-1">
+          <div className="p-5 rounded-2xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+            <h4 className="text-base font-black text-black dark:text-white mb-1">
               {t("dashboard.profitTrend")}
             </h4>
-            <p className="text-xs text-gray-700 font-bold mb-4">
+            <p className="text-xs text-gray-700 dark:text-gray-400 font-bold mb-4">
               {selectedYear} — {t("dashboard.profitTrend")}
             </p>
             <div className="h-64 w-full">
@@ -913,13 +915,15 @@ export function DashboardView() {
                   <XAxis
                     dataKey="month"
                     tickFormatter={(m) => (locale === "bn" ? toBanglaDigits(m) : m)}
-                    tick={{ fontSize: 11, fontWeight: 700 }}
+                    tick={{ fontSize: 11, fontWeight: 700, fill: "currentColor" }}
+                    className="text-black dark:text-gray-300"
                   />
                   <YAxis
                     tickFormatter={(v) =>
                       locale === "bn" ? toBanglaDigits(Math.round(v / 1000)) + "k" : `${Math.round(v / 1000)}k`
                     }
-                    tick={{ fontSize: 11, fontWeight: 700 }}
+                    tick={{ fontSize: 11, fontWeight: 700, fill: "currentColor" }}
+                    className="text-black dark:text-gray-300"
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend

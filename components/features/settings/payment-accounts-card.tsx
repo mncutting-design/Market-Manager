@@ -174,35 +174,35 @@ export function PaymentAccountsCard() {
 
   return (
     <Card className="p-6">
-      <CardHeader className="p-0 pb-4 flex flex-row items-center justify-between">
+      <CardHeader className="p-0 pb-4 flex flex-row items-center justify-between border-b-2 border-black/10 dark:border-white/10">
         <div>
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <CreditCard className="w-5 h-5 text-teal-600" />
+          <CardTitle className="text-base font-black flex items-center gap-2">
+            <CreditCard className="w-5 h-5 text-black dark:text-white stroke-[2.5]" />
             <span>
               {locale === "bn"
                 ? "পেমেন্ট চ্যানেল ও একাউন্টস (Payment Accounts)"
                 : "Payment Receiving Accounts"}
             </span>
           </CardTitle>
-          <CardDescription className="text-xs">
+          <CardDescription className="text-xs text-gray-700 dark:text-gray-300 font-bold mt-1">
             {locale === "bn"
               ? "ভাড়া ও বিল কালেকশনের জন্য বিকাশ, নগদ ও ব্যাংক একাউন্ট কনফিগার করুন।"
               : "Configure official bKash, Nagad, and Bank accounts for rental payment collections."}
           </CardDescription>
         </div>
         {isAdmin && (
-          <Button size="sm" onClick={openAddModal} className="text-xs bg-teal-600 hover:bg-teal-500 text-white font-bold">
-            <PlusCircle className="w-3.5 h-3.5 mr-1" />
+          <Button size="sm" onClick={openAddModal} className="text-xs shrink-0">
+            <PlusCircle className="w-4 h-4 mr-1" />
             <span>{locale === "bn" ? "নতুন একাউন্ট" : "Add Account"}</span>
           </Button>
         )}
       </CardHeader>
 
-      <CardContent className="p-0 space-y-3">
+      <CardContent className="p-0 pt-4 space-y-3">
         {isLoading ? (
-          <div className="py-8 text-center text-xs text-slate-400">Loading payment accounts...</div>
+          <div className="py-8 text-center text-xs font-bold text-gray-500">Loading payment accounts...</div>
         ) : accounts.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-400 border border-dashed rounded-xl border-slate-200 dark:border-slate-800">
+          <div className="py-8 text-center text-xs font-bold text-gray-600 dark:text-gray-300 border-2 border-dashed rounded-xl border-black bg-[#FBF9F5] dark:bg-[#262830]">
             {locale === "bn"
               ? "কোনো পেমেন্ট একাউন্ট কনফিগার করা নেই। নতুন একাউন্ট যোগ করুন।"
               : "No payment accounts configured yet. Add your first receiving account."}
@@ -217,75 +217,75 @@ export function PaymentAccountsCard() {
               return (
                 <div
                   key={acc.id}
-                  className={`p-3.5 rounded-xl border transition-all ${
+                  className={`p-3.5 rounded-xl border-2 border-black shadow-[2.5px_2.5px_0px_#000000] transition-all ${
                     acc.isActive
-                      ? "border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40"
-                      : "border-slate-200 dark:border-slate-800 bg-slate-100/50 dark:bg-slate-950/40 opacity-60"
+                      ? "bg-white dark:bg-[#262830]"
+                      : "bg-[#FBF9F5] dark:bg-[#1E1F24] opacity-70"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2">
                       <div
-                        className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border-2 border-black shadow-[1.5px_1.5px_0px_#000000] ${
                           isBkash
-                            ? "bg-pink-100 text-pink-700 dark:bg-pink-950 dark:text-pink-300"
+                            ? "bg-[#FFEBEF] text-[#FF4B55]"
                             : isNagad
-                            ? "bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+                            ? "bg-[#FED734] text-black"
+                            : "bg-[#00BCD4] text-black"
                         }`}
                       >
-                        {isBank ? <Landmark className="w-4 h-4" /> : <Smartphone className="w-4 h-4" />}
+                        {isBank ? <Landmark className="w-4 h-4 stroke-[2.5]" /> : <Smartphone className="w-4 h-4 stroke-[2.5]" />}
                       </div>
                       <div>
-                        <h4 className="font-bold text-xs text-slate-900 dark:text-slate-100">
+                        <h4 className="font-black text-xs text-black dark:text-white">
                           {locale === "bn" ? acc.name_bn : acc.name_en}
                         </h4>
-                        <span className="text-[10px] font-semibold uppercase text-slate-400">
+                        <span className="text-[10px] font-black uppercase text-gray-600 dark:text-gray-400">
                           {acc.accountType}
                           {acc.bankName ? ` • ${acc.bankName}` : ""}
                         </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       <button
                         type="button"
                         onClick={() => handleToggleActive(acc)}
                         title={acc.isActive ? "Deactivate" : "Activate"}
-                        className={`p-1.5 rounded-lg border text-xs transition-colors ${
+                        className={`p-1.5 rounded-lg border-2 border-black text-xs shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer transition-all ${
                           acc.isActive
-                            ? "border-emerald-300 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100"
-                            : "border-slate-300 text-slate-400 hover:text-slate-600"
+                            ? "bg-[#00BA88] text-black"
+                            : "bg-white dark:bg-[#1E1F24] text-gray-500"
                         }`}
                       >
-                        <Power className="w-3.5 h-3.5" />
+                        <Power className="w-3.5 h-3.5 stroke-[2.5]" />
                       </button>
                       {isAdmin && (
                         <button
                           type="button"
                           onClick={() => openEditModal(acc)}
-                          className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-500 hover:text-teal-600 transition-colors"
+                          className="p-1.5 rounded-lg border-2 border-black bg-white dark:bg-[#1E1F24] text-black dark:text-white hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer transition-all"
                           title="Edit"
                         >
-                          <Edit2 className="w-3.5 h-3.5" />
+                          <Edit2 className="w-3.5 h-3.5 stroke-[2.5]" />
                         </button>
                       )}
                     </div>
                   </div>
 
-                  <div className="mt-3 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between text-xs">
-                    <span className="text-slate-500 text-[11px]">
+                  <div className="mt-3 pt-2 border-t-2 border-black/10 dark:border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-gray-600 dark:text-gray-400 font-bold text-[11px]">
                       {isBank ? (locale === "bn" ? "হিসাব নম্বর:" : "Account No:") : (locale === "bn" ? "মোবাইল নম্বর:" : "Mobile No:")}
                     </span>
-                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                    <span className="font-mono font-black text-black dark:text-white">
                       {acc.number}
                     </span>
                   </div>
 
                   {acc.branch && (
-                    <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-gray-600 dark:text-gray-400 font-bold">
                       <span>{locale === "bn" ? "শাখা:" : "Branch:"}</span>
-                      <span className="font-medium text-slate-600 dark:text-slate-300">{acc.branch}</span>
+                      <span className="font-black text-black dark:text-white">{acc.branch}</span>
                     </div>
                   )}
                 </div>
@@ -345,7 +345,7 @@ export function PaymentAccountsCard() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                 লেবেল (বাংলা) *
               </label>
               <Input
@@ -356,7 +356,7 @@ export function PaymentAccountsCard() {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+              <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                 Label (English) *
               </label>
               <Input
@@ -369,7 +369,7 @@ export function PaymentAccountsCard() {
           </div>
 
           <div>
-            <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               {accountType === "BANK"
                 ? locale === "bn"
                   ? "হিসাব নম্বর (Account Number) *"
@@ -383,14 +383,14 @@ export function PaymentAccountsCard() {
               onChange={(e) => setNumber(e.target.value)}
               placeholder={accountType === "BANK" ? "e.g. 205012345678" : "017XXXXXXXX"}
               required
-              className="font-mono"
+              className="font-mono font-bold"
             />
           </div>
 
           {accountType === "BANK" && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                   ব্যাংকের নাম
                 </label>
                 <Input
@@ -400,7 +400,7 @@ export function PaymentAccountsCard() {
                 />
               </div>
               <div>
-                <label className="block text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
                   শাখা (Branch)
                 </label>
                 <Input
@@ -412,11 +412,11 @@ export function PaymentAccountsCard() {
             </div>
           )}
 
-          <div className="pt-2 flex justify-end gap-2">
+          <div className="pt-2 flex justify-end gap-2 border-t-2 border-black">
             <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
               {t("common.cancel")}
             </Button>
-            <Button type="submit" isLoading={isSubmitting} className="bg-teal-600 hover:bg-teal-500 text-white font-bold">
+            <Button type="submit" variant="neo" isLoading={isSubmitting}>
               <CheckCircle2 className="w-4 h-4 mr-1.5" />
               {locale === "bn" ? "সংরক্ষণ করুন" : "Save Account"}
             </Button>

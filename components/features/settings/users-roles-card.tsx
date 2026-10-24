@@ -110,19 +110,19 @@ export function UsersRolesCard() {
   };
 
   return (
-    <Card className="p-4 sm:p-6 border-slate-200 dark:border-slate-800">
+    <Card className="p-4 sm:p-6">
       <CardHeader className="p-0 pb-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+            <CardTitle className="text-base font-black flex items-center gap-2">
+              <Users className="w-5 h-5 text-black dark:text-white stroke-[2.5]" />
               <span>
                 {locale === "bn"
                   ? "ব্যবহারকারী ও রোল পারমিশন (Role-Based Permissions)"
                   : "Users & Role Permissions Architecture"}
               </span>
             </CardTitle>
-            <CardDescription className="text-xs text-slate-500 mt-0.5">
+            <CardDescription className="text-xs text-gray-700 dark:text-gray-300 font-bold mt-0.5">
               {locale === "bn"
                 ? "এডমিন, ম্যানেজার, অপারেটর ও অডিটর ভূমিকা অনুযায়ী আলাদা অ্যাক্সেস নিয়ন্ত্রণ।"
                 : "Manage administrative roles: Admin, Manager, Operator, and Viewer permissions."}
@@ -145,17 +145,17 @@ export function UsersRolesCard() {
         {isAddUserOpen && (
           <form
             onSubmit={handleCreateUser}
-            className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-teal-500/30 space-y-3 animate-in fade-in duration-150"
+            className="p-4 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black shadow-[4px_4px_0px_#000000] space-y-3 animate-in fade-in duration-150"
           >
-            <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-800">
-              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                <UserPlus className="w-3.5 h-3.5 text-teal-600" />
+            <div className="flex items-center justify-between pb-2 border-b-2 border-black/10 dark:border-white/10">
+              <span className="text-xs font-black text-black dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <UserPlus className="w-4 h-4 stroke-[2.5]" />
                 {locale === "bn" ? "নতুন ব্যবহারকারী নিবন্ধন" : "Register New User with Role"}
               </span>
               <button
                 type="button"
                 onClick={() => setIsAddUserOpen(false)}
-                className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                className="text-xs font-black text-black dark:text-white hover:text-[#FF4B55] p-1 cursor-pointer"
               >
                 ✕
               </button>
@@ -163,7 +163,7 @@ export function UsersRolesCard() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {locale === "bn" ? "ব্যবহারকারীর ইউজারনেম" : "Username"}
                 </label>
                 <Input
@@ -175,7 +175,7 @@ export function UsersRolesCard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {locale === "bn" ? "লগইন পাসওয়ার্ড" : "Login Password"}
                 </label>
                 <Input
@@ -188,7 +188,7 @@ export function UsersRolesCard() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">
+                <label className="block text-xs font-black uppercase text-black dark:text-white mb-1">
                   {locale === "bn" ? "অ্যাসাইনকৃত রোল (Role)" : "Assigned Role"}
                 </label>
                 <Select
@@ -222,14 +222,14 @@ export function UsersRolesCard() {
 
         {/* Users Roster List */}
         <div className="space-y-2">
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+          <div className="text-xs font-black text-black dark:text-white uppercase tracking-wider px-1">
             {locale === "bn" ? "সক্রিয় ব্যবহারকারী তালিকা" : "Active Registered Users"}
           </div>
 
           {isLoading ? (
-            <div className="py-6 text-center text-xs text-slate-400">Loading users...</div>
+            <div className="py-6 text-center text-xs font-bold text-gray-500">Loading users...</div>
           ) : users.length === 0 ? (
-            <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 text-center text-xs text-slate-500">
+            <div className="p-4 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-center text-xs font-bold text-gray-500">
               No users found.
             </div>
           ) : (
@@ -241,29 +241,29 @@ export function UsersRolesCard() {
                 return (
                   <div
                     key={u.id}
-                    className="p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 flex items-center justify-between gap-2 shadow-2xs hover:border-teal-500/40 transition-all"
+                    className="p-3 rounded-xl border-2 border-black bg-white dark:bg-[#262830] flex items-center justify-between gap-2 shadow-[2.5px_2.5px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] transition-all"
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 to-teal-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-9 h-9 rounded-xl bg-[#FED734] text-black font-black text-xs flex items-center justify-center shrink-0 border-2 border-black shadow-[1.5px_1.5px_0px_#000000]">
                         {u.name.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-900 dark:text-white truncate flex items-center gap-1.5">
+                        <p className="text-xs font-black text-black dark:text-white truncate flex items-center gap-1.5">
                           <span>{u.name}</span>
                           {isNazrul && (
-                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold border border-cyan-500/30">
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-black text-[#FED734] font-black border border-black uppercase">
                               Super Admin
                             </span>
                           )}
                         </p>
-                        <p className="text-[11px] font-mono text-slate-500 dark:text-slate-400 truncate">
+                        <p className="text-[11px] font-mono text-gray-600 dark:text-gray-300 font-bold truncate">
                           ইউজারনেম: {u.name}
                         </p>
                       </div>
                     </div>
 
                     <span
-                      className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider shrink-0 border ${def.badgeColor}`}
+                      className="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider shrink-0 border-2 border-black bg-[#FED734] text-black shadow-[1px_1px_0px_#000000]"
                     >
                       {u.role}
                     </span>
@@ -275,99 +275,99 @@ export function UsersRolesCard() {
         </div>
 
         {/* Role Permission Matrix Interactive Table */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+        <div className="pt-2 border-t-2 border-black/10 dark:border-white/10">
           <button
             type="button"
             onClick={() => setShowMatrix(!showMatrix)}
-            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 cursor-pointer transition-all border border-slate-200 dark:border-slate-800"
+            className="w-full flex items-center justify-between p-2.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] hover:text-black dark:hover:text-black text-xs font-black text-black dark:text-white cursor-pointer transition-all border-2 border-black shadow-[2px_2px_0px_#000000]"
           >
             <span className="flex items-center gap-2">
-              <Layers className="w-4 h-4 text-teal-600" />
+              <Layers className="w-4 h-4 stroke-[2.5]" />
               <span>
                 {locale === "bn"
                   ? "রোল ভিত্তিক অনুমতি তালিকা দেখুন (Permission Matrix Table)"
                   : "View Role-Based Access Control (RBAC) Matrix"}
               </span>
             </span>
-            {showMatrix ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            {showMatrix ? <ChevronUp className="w-4 h-4 stroke-[2.5]" /> : <ChevronDown className="w-4 h-4 stroke-[2.5]" />}
           </button>
 
           {showMatrix && (
-            <div className="mt-2 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 animate-in fade-in duration-150">
+            <div className="mt-2 overflow-x-auto rounded-xl border-2 border-black shadow-[4px_4px_0px_#000000] animate-in fade-in duration-150">
               <table className="w-full text-xs text-left">
-                <thead className="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-800">
+                <thead className="bg-[#FED734] text-black font-black border-b-2 border-black">
                   <tr>
                     <th className="p-2.5">ফিচার / পারমিশন</th>
-                    <th className="p-2.5 text-center text-teal-600 dark:text-teal-400 font-bold">
+                    <th className="p-2.5 text-center font-black">
                       ADMIN
                     </th>
-                    <th className="p-2.5 text-center text-blue-600 dark:text-blue-400 font-bold">
+                    <th className="p-2.5 text-center font-black">
                       MANAGER
                     </th>
-                    <th className="p-2.5 text-center text-amber-600 dark:text-amber-400 font-bold">
+                    <th className="p-2.5 text-center font-black">
                       OPERATOR
                     </th>
-                    <th className="p-2.5 text-center text-purple-600 dark:text-purple-400 font-bold">
+                    <th className="p-2.5 text-center font-black">
                       VIEWER
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900/40">
+                <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 bg-white dark:bg-[#1E1F24] font-bold">
                   <tr>
-                    <td className="p-2.5 font-medium">মার্কেট তৈরি, এডিট ও মুছা</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ পূর্ণ নিয়ন্ত্রণ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">মার্কেট তৈরি, এডিট ও মুছা</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ পূর্ণ নিয়ন্ত্রণ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">দোকান তথ্য ও ভাড়া পরিবর্তন</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ সরাসরি সেভ</td>
-                    <td className="p-2.5 text-center text-amber-600">অনুমোদনের আবেদন</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">দোকান তথ্য ও ভাড়া পরিবর্তন</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ সরাসরি সেভ</td>
+                    <td className="p-2.5 text-center text-[#F59E0B] font-black">অনুমোদনের আবেদন</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">ভাড়া আদায় ও মানি রিসিট প্রিন্ট</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">ভাড়া আদায় ও মানি রিসিট প্রিন্ট</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">মাসিক বিল জেনারেশন</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">মাসিক বিল জেনারেশন</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">খরচ (Expense) এন্ট্রি</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">খরচ (Expense) এন্ট্রি</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">অ্যাডমিন অনুমোদন (Approve / Reject)</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">অ্যাডমিন অনুমোদন (Approve / Reject)</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">ইউজার তৈরি ও পাসওয়ার্ড নিয়ন্ত্রণ</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
-                    <td className="p-2.5 text-center text-slate-400">✕ নিষেধ</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">ইউজার তৈরি ও পাসওয়ার্ড নিয়ন্ত্রণ</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">✕ নিষেধ</td>
                   </tr>
                   <tr>
-                    <td className="p-2.5 font-medium">রিপোর্ট ও ড্যাশবোর্ড পরিদর্শন</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-emerald-600">✓ অনুমোদিত</td>
-                    <td className="p-2.5 text-center text-slate-400">বকেয়া অনুসন্ধান</td>
-                    <td className="p-2.5 text-center text-purple-600">✓ শুধু দেখা</td>
+                    <td className="p-2.5 font-bold text-black dark:text-white">রিপোর্ট ও ড্যাশবোর্ড পরিদর্শন</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-[#00BA88] font-black">✓ অনুমোদিত</td>
+                    <td className="p-2.5 text-center text-gray-500 font-bold">বকেয়া অনুসন্ধান</td>
+                    <td className="p-2.5 text-center text-[#00BCD4] font-black">✓ শুধু দেখা</td>
                   </tr>
                 </tbody>
               </table>

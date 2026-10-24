@@ -81,23 +81,23 @@ export function CollectionsView() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
         <div>
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <Wallet className="w-6 h-6 text-teal-600 dark:text-teal-400" />
+          <h2 className="text-xl md:text-2xl font-black tracking-tight text-black dark:text-white flex items-center gap-2">
+            <Wallet className="w-6 h-6 text-black dark:text-white stroke-[2.5]" />
             <span>{t("collections.title")}</span>
           </h2>
-          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400 font-bold mt-0.5">
             {t("collections.subtitle")}
           </p>
         </div>
 
-        <Button onClick={() => openQuickCollect()} className="shadow-xs font-bold text-xs sm:text-sm">
-          <Plus className="w-4 h-4 mr-1.5" />
+        <Button onClick={() => openQuickCollect()} className="font-black text-xs sm:text-sm shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+          <Plus className="w-4 h-4 mr-1.5 stroke-[2.5]" />
           {t("collections.quickCollect")}
         </Button>
       </div>
 
       {/* Filter Toolbar */}
-      <div className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-2.5">
+      <div className="p-3 rounded-2xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000] space-y-2.5">
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 text-xs">
           {/* Search */}
           <div className="sm:col-span-2 relative">
@@ -145,9 +145,9 @@ export function CollectionsView() {
 
         {/* Filter Notice Banner when Active Filter matches zero records */}
         {hasActiveFilters && payments.length === 0 && !isLoading && (
-          <div className="p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200">
-            <div className="flex items-center gap-1.5 font-medium">
-              <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="p-3 rounded-xl bg-[#FFF8D6] dark:bg-[#2C2405] border-2 border-black shadow-[2px_2px_0px_#000000] flex items-center justify-between text-xs text-black dark:text-white font-bold">
+            <div className="flex items-center gap-1.5 font-black">
+              <AlertCircle className="w-4 h-4 text-black dark:text-white shrink-0 stroke-[2.5]" />
               <span>
                 {locale === "bn"
                   ? "রেকর্ড সংরক্ষিত রয়েছে, কিন্তু বর্তমান ফিল্টারের কারণে তালিকায় প্রদর্শিত হচ্ছে না।"
@@ -158,9 +158,9 @@ export function CollectionsView() {
               size="sm"
               variant="outline"
               onClick={clearAllFilters}
-              className="h-7 px-2 text-xs border-amber-300 text-amber-900 hover:bg-amber-100"
+              className="h-7 px-2 text-xs font-black border-2 border-black bg-white dark:bg-[#1E1F24] text-black dark:text-white shadow-[1.5px_1.5px_0px_#000000]"
             >
-              <FilterX className="w-3 h-3 mr-1" />
+              <FilterX className="w-3 h-3 mr-1 stroke-[2.5]" />
               {locale === "bn" ? "ফিল্টার মুছুন" : "Clear filters"}
             </Button>
           </div>
@@ -171,18 +171,18 @@ export function CollectionsView() {
       {isLoading ? (
         <TableSkeleton rows={6} />
       ) : payments.length === 0 ? (
-        <Card className="p-10 text-center">
-          <Wallet className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-2" />
-          <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+        <Card className="p-10 text-center bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000]">
+          <Wallet className="w-10 h-10 text-black dark:text-white mx-auto mb-2 stroke-[2]" />
+          <p className="text-sm font-black text-black dark:text-white">
             {t("collections.noPaymentsFound")}
           </p>
           {hasActiveFilters ? (
-            <Button onClick={clearAllFilters} variant="outline" className="mt-3 text-xs">
-              <FilterX className="w-3.5 h-3.5 mr-1" />
+            <Button onClick={clearAllFilters} variant="outline" className="mt-3 text-xs font-black border-2 border-black shadow-[2px_2px_0px_#000000]">
+              <FilterX className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
               {locale === "bn" ? "ফিল্টার রিসেট করুন" : "Clear all filters"}
             </Button>
           ) : (
-            <Button onClick={() => openQuickCollect()} className="mt-3 text-xs">
+            <Button onClick={() => openQuickCollect()} className="mt-3 text-xs font-black shadow-[2px_2px_0px_#000000]">
               {t("collections.quickCollect")}
             </Button>
           )}
@@ -225,68 +225,68 @@ export function CollectionsView() {
             return (
               <Card
                 key={p.id}
-                className="p-3 sm:p-4 hover:border-slate-300 dark:hover:border-slate-700 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-xs"
+                className="p-4 rounded-xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[3px_3px_0px_#000000] hover:-translate-x-[1px] hover:-translate-y-[1px] hover:shadow-[5px_5px_0px_#000000] transition-all flex flex-col md:flex-row md:items-center justify-between gap-3"
               >
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    <span className="text-base font-black text-black dark:text-white">
                       {p.bill.shop.shopNumber}
                     </span>
-                    <span className="text-xs text-slate-400">•</span>
-                    <span className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    <span className="text-xs text-black/40 dark:text-white/40 font-black">•</span>
+                    <span className="text-xs font-black text-black dark:text-white">
                       {p.bill.tenant.name}
                     </span>
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-teal-50 dark:bg-teal-950/60 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                    <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-[#FED734] text-black border border-black shadow-[1px_1px_0px_#000000]">
                       {p.method}
                     </span>
                     {p.paymentAccount && (
-                      <span className="text-[10px] font-semibold text-pink-600 dark:text-pink-400 bg-pink-50 dark:bg-pink-950/40 px-2 py-0.5 rounded border border-pink-200 dark:border-pink-900">
+                      <span className="text-[10px] font-black text-black bg-[#FFD6E8] px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000000]">
                         {p.paymentAccount.name_bn || p.paymentAccount.name_en} ({p.paymentAccount.number})
                       </span>
                     )}
                     {p.bankName && (
-                      <span className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                      <span className="text-[10px] font-black text-black bg-[#D8F2FF] px-2 py-0.5 rounded-md border border-black shadow-[1px_1px_0px_#000000]">
                         {p.bankName}
                       </span>
                     )}
                   </div>
 
-                  <p className="text-xs text-slate-500 flex flex-wrap items-center gap-2">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 font-bold flex flex-wrap items-center gap-2">
                     <span>{p.bill.shop.market.name}</span>
                     <span>•</span>
                     <span>{formatDate(p.paidOn, locale)}</span>
                     {p.transactionRef && (
                       <>
                         <span>•</span>
-                        <span className="font-mono text-slate-600 dark:text-slate-300">Trx: {p.transactionRef}</span>
+                        <span className="font-mono text-black dark:text-white font-bold">Trx: {p.transactionRef}</span>
                       </>
                     )}
                     {p.senderNumber && (
                       <>
                         <span>•</span>
-                        <span className="font-mono text-slate-600 dark:text-slate-300">From: {p.senderNumber}</span>
+                        <span className="font-mono text-black dark:text-white font-bold">From: {p.senderNumber}</span>
                       </>
                     )}
                   </p>
 
                   {/* Staff Audit: Received by & Entered by */}
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-slate-400 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400 font-bold pt-0.5">
                     <span>
                       {locale === "bn" ? "আদায়কারী:" : "Received by:"}{" "}
-                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">{collectorName}</strong>
+                      <strong className="text-black dark:text-white font-black">{collectorName}</strong>
                     </span>
                     <span>•</span>
                     <span>
                       {locale === "bn" ? "এন্ট্রি করেছেন:" : "Entered by:"}{" "}
-                      <strong className="text-slate-700 dark:text-slate-300 font-semibold">{enteredByName}</strong>
+                      <strong className="text-black dark:text-white font-black">{enteredByName}</strong>
                     </span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between md:justify-end gap-3 pt-2 md:pt-0 border-t-2 md:border-t-0 border-black/10 dark:border-white/10">
                   <div className="text-left md:text-right">
-                    <p className="text-[11px] text-slate-400">{t("collections.paymentAmount")}</p>
-                    <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400 font-bold">{t("collections.paymentAmount")}</p>
+                    <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                       {formatCurrency(p.amount, locale)}
                     </p>
                   </div>
@@ -295,9 +295,9 @@ export function CollectionsView() {
                     size="sm"
                     variant="outline"
                     onClick={() => showReceipt(receiptData)}
-                    className="h-8 text-xs font-semibold shrink-0"
+                    className="h-8 text-xs font-black shrink-0 border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
                   >
-                    <Printer className="w-3.5 h-3.5 mr-1" />
+                    <Printer className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
                     {locale === "bn" ? "রিসিট প্রিন্ট" : "Receipt"}
                   </Button>
                 </div>

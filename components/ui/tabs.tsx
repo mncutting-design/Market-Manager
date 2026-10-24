@@ -24,7 +24,7 @@ export function Tabs({
   return (
     <div
       className={cn(
-        "flex p-1.5 gap-1.5 bg-[#FBF9F5] border-2 border-black rounded-xl overflow-x-auto no-scrollbar shadow-[2px_2px_0px_#000000]",
+        "flex p-1.5 gap-1.5 bg-[#FBF9F5] dark:bg-[#1E1F24] border-2 border-black rounded-xl overflow-x-auto no-scrollbar shadow-[2px_2px_0px_#000000]",
         className
       )}
     >
@@ -39,7 +39,7 @@ export function Tabs({
               "flex items-center gap-2 px-3.5 py-1.5 text-xs md:text-sm font-black rounded-lg transition-all shrink-0 select-none cursor-pointer min-h-[38px] active:translate-x-0.5 active:translate-y-0.5",
               isActive
                 ? "bg-[#FED734] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
-                : "text-gray-700 hover:text-black hover:bg-white border-2 border-transparent hover:border-black font-bold"
+                : "text-gray-700 dark:text-gray-300 hover:text-black dark:hover:text-white hover:bg-white dark:hover:bg-[#262830] border-2 border-transparent hover:border-black font-bold"
             )}
           >
             {tab.icon}
