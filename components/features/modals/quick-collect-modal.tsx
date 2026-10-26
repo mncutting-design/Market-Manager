@@ -484,18 +484,44 @@ export function QuickCollectModal() {
         )}
 
         {/* Payment Amount & Received by Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5">
-              {t("collections.paymentAmount")} (৳ BDT) *
-            </label>
+            <div className="flex items-center justify-between h-5 mb-1.5">
+              <label className="text-xs font-black uppercase tracking-wider text-black dark:text-white whitespace-nowrap">
+                {t("collections.paymentAmount")} (৳ BDT) *
+              </label>
+              {activeBill && (
+                <button
+                  type="button"
+                  onClick={() => setAmountBDT(activeBill.dueAmount / 100)}
+                  className="text-[10px] font-black text-blue-700 dark:text-blue-400 hover:underline cursor-pointer"
+                >
+                  {locale === "bn" ? "বকেয়া বসান" : "Fill Due"}
+                </button>
+              )}
+            </div>
             <NumberInput
               value={amountBDT}
               onChange={(val) => setAmountBDT(val)}
               prefix="৳"
               placeholder="0"
-              className="text-lg font-black text-black dark:text-white"
+              className="h-11 text-base font-black text-black dark:text-white font-mono"
             />
+            <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 dark:text-gray-400 px-0.5 pt-0.5">
+              <span>
+                {locale === "bn" ? "মোট বকেয়া:" : "Total Due:"}{" "}
+                <strong className="text-[#FF4B55] font-black">
+                  {formatCurrency(activeBill?.dueAmount || 0, locale)}
+                </strong>
+              </span>
+              {amountBDT > 0 && activeBill && (
+                <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                  {amountBDT >= activeBill.dueAmount / 100
+                    ? (locale === "bn" ? "সম্পূর্ণ পরিশোধ" : "Full Payment")
+                    : (locale === "bn" ? `অবশিষ্ট ৳${toBanglaDigits(Math.max(0, Math.round(activeBill.dueAmount / 100 - amountBDT)))}` : "Partial")}
+                </span>
+              )}
+            </div>
           </div>
 
           <div>

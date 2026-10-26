@@ -288,41 +288,38 @@ export function CollectorSelect({
   return (
     <div className={`space-y-1.5 ${className}`}>
       {/* Label and Quick Actions Row */}
-      <div className="flex items-center justify-between">
-        <label className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5">
+      <div className="flex items-center justify-between h-5 mb-1.5">
+        <label className="text-xs font-black uppercase tracking-wider text-black dark:text-white flex items-center gap-1.5 whitespace-nowrap">
           <UserCheck className="w-3.5 h-3.5 text-[#00AA6C]" />
-          <span>{isBn ? "আদায়কারী (Collected by) *" : "Collected by *"}</span>
+          <span>{isBn ? "আদায়কারী *" : "Collector *"}</span>
         </label>
 
         <div className="flex items-center gap-1">
           {/* Add Collector Button */}
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="outline"
             onClick={(e) => openAddModal(e)}
-            className="h-6 px-2 text-[10px] font-black border-2 border-black bg-[#FED734] hover:bg-[#ffe169] text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+            className="h-5 px-2 text-[10px] font-black rounded-md border border-black bg-[#FED734] hover:bg-[#ffe169] text-black shadow-[1px_1px_0px_#000000] flex items-center gap-0.5 whitespace-nowrap cursor-pointer active:translate-x-[0.5px] active:translate-y-[0.5px]"
             title={isBn ? "নতুন আদায়কারী যোগ করুন" : "Add new collector"}
           >
-            <Plus className="w-3 h-3 mr-0.5 stroke-[3]" />
-            <span>{isBn ? "নতুন আদায়কারী" : "New Collector"}</span>
-          </Button>
+            <Plus className="w-2.5 h-2.5 stroke-[3]" />
+            <span>{isBn ? "নতুন" : "New"}</span>
+          </button>
 
           {/* Manage All Collectors */}
-          <Button
+          <button
             type="button"
-            size="sm"
-            variant="outline"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               setIsManageOpen(true);
             }}
-            className="h-6 px-1.5 text-[10px] font-black border-2 border-black bg-white dark:bg-[#2B2C33] text-black dark:text-white shadow-[1.5px_1.5px_0px_#000000]"
-            title={isBn ? "আদায়কারী তালিকা পরিচালনা" : "Manage collectors"}
+            className="h-5 px-1.5 text-[10px] font-black rounded-md border border-black bg-white dark:bg-[#2B2C33] text-black dark:text-white hover:bg-neutral-100 dark:hover:bg-[#34353E] shadow-[1px_1px_0px_#000000] flex items-center gap-1 whitespace-nowrap cursor-pointer"
+            title={isBn ? "আদায়কারী তালিকা পরিচালনা ও এডিট" : "Manage collectors"}
           >
-            <Users className="w-3 h-3 stroke-[2.5]" />
-          </Button>
+            <Users className="w-2.5 h-2.5 stroke-[2.5]" />
+            <span>{isBn ? "তালিকা" : "List"}</span>
+          </button>
         </div>
       </div>
 
@@ -333,16 +330,16 @@ export function CollectorSelect({
             value={value}
             onChange={handleSelectChange}
             disabled={disabled}
-            className="w-full font-black text-xs h-10 border-2 border-black rounded-lg shadow-[2px_2px_0px_#000000] bg-white dark:bg-[#1E1F24] text-black dark:text-white pr-8"
+            className="w-full font-bold text-xs h-11 border-2 border-black rounded-lg shadow-[2px_2px_0px_#000000] bg-white dark:bg-[#1E1F24] text-black dark:text-white"
           >
             {/* Self Option */}
             <option value="SELF" className="font-bold">
-              👤 {isBn ? "পোস্টিংকারী নিজেই আদায় করেছেন" : "Self (I collected personally)"} - ({currentUser?.name || "Me"})
+              👤 {isBn ? "পোস্টিংকারী নিজে" : "Self"} ({currentUser?.name || "Me"})
             </option>
 
             {/* Custom Collectors */}
             {collectors.length > 0 && (
-              <optgroup label={isBn ? "── নির্ধারিত আদায়কারীগণ (Field Collectors) ──" : "── Field Collectors ──"}>
+              <optgroup label={isBn ? "── নির্ধারিত আদায়কারীগণ ──" : "── Field Collectors ──"}>
                 {collectors.map((c) => (
                   <option key={c.id} value={c.id} className="font-bold">
                     🏷️ {c.name} {c.phone ? `(${c.phone})` : ""}
@@ -360,7 +357,7 @@ export function CollectorSelect({
             size="sm"
             variant="outline"
             onClick={(e) => openEditModal(selectedCollector, e)}
-            className="h-10 w-10 p-0 shrink-0 border-2 border-black bg-[#D8F2FF] hover:bg-[#bfe8ff] text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+            className="h-11 w-9 p-0 shrink-0 border-2 border-black bg-[#D8F2FF] hover:bg-[#bfe8ff] text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             title={isBn ? `"${selectedCollector.name}" এডিট করুন` : "Edit collector"}
           >
             <Pencil className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -374,7 +371,7 @@ export function CollectorSelect({
             size="sm"
             variant="outline"
             onClick={(e) => openDeleteModal(selectedCollector, e)}
-            className="h-10 w-10 p-0 shrink-0 border-2 border-black bg-[#FFD6E8] hover:bg-[#ffbfdb] text-red-600 shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+            className="h-11 w-9 p-0 shrink-0 border-2 border-black bg-[#FFD6E8] hover:bg-[#ffbfdb] text-red-600 shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             title={isBn ? `"${selectedCollector.name}" ডিলিট করুন` : "Delete collector"}
           >
             <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
@@ -382,20 +379,21 @@ export function CollectorSelect({
         )}
       </div>
 
-      {/* Audit Helper Banner */}
-      <div className="flex items-center justify-between text-[10px] font-bold text-neutral-600 dark:text-neutral-400 bg-neutral-100 dark:bg-[#25262C] px-2 py-1 rounded-md border border-black/20 dark:border-white/10">
-        <span className="flex items-center gap-1">
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-          <span>{isBn ? "আদায়কারী:" : "Collector:"}</span>
-          <strong className="text-black dark:text-white">
-            {isSelfSelected ? (currentUser?.name || "Self") : (selectedCollector?.name || "Staff")}
-          </strong>
+      {/* Subtext info row */}
+      <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 dark:text-gray-400 px-0.5 pt-0.5">
+        <span className="truncate">
+          {isBn ? "পোস্টিং এন্ট্রি:" : "Posting by:"}{" "}
+          <strong className="text-black dark:text-white font-black">{currentUser?.name || "System"}</strong>
         </span>
-        <span className="text-neutral-400 dark:text-neutral-600">•</span>
-        <span>
-          <span>{isBn ? "পোস্টিংকারী:" : "Posting by:"}</span>{" "}
-          <strong className="text-black dark:text-white">{currentUser?.name || "System"}</strong>
-        </span>
+        {selectedCollector && !isSelfSelected ? (
+          <span className="text-[9px] font-black text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-1.5 py-0.2 rounded border border-emerald-400 shrink-0">
+            {isBn ? "ফিল্ড আদায়কারী" : "Field Collector"}
+          </span>
+        ) : (
+          <span className="text-[9px] font-bold text-neutral-400 dark:text-neutral-500">
+            {isBn ? "সরাসরি আদায়" : "Direct Collection"}
+          </span>
+        )}
       </div>
 
       {/* 1. ADD COLLECTOR MODAL (Pure div, NO nested form) */}
