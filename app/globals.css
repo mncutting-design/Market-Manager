@@ -732,17 +732,30 @@ html.lang-bn textarea {
     height: auto !important;
   }
 
-  /* Hide everything outside dialog */
+  /* Hide navigation, chrome, headers, footers and interactive controls */
   header,
   aside,
   nav,
-  main,
   footer,
   .no-print,
   button,
   [data-slot="dialog-overlay"] {
     display: none !important;
     visibility: hidden !important;
+  }
+
+  /* When a modal dialog is open (e.g. Money Receipt voucher), hide main so only dialog prints */
+  body:has([role="dialog"]) main {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* When printing from main view directly (e.g. Reports), unconstrain main */
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   /* Unconstrain dialog wrapper in print */
@@ -774,6 +787,43 @@ html.lang-bn textarea {
     max-height: none !important;
     padding: 0 !important;
     margin: 0 !important;
+  }
+
+  /* Pure Report Print Container styling */
+  .print-report-container {
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+  }
+
+  .print-report-container table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+  }
+
+  .print-report-container thead {
+    display: table-header-group !important;
+  }
+
+  .print-report-container tfoot {
+    display: table-footer-group !important;
+  }
+
+  .print-report-container tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-report-container * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   /* Target the exact 2-part counterfoil money receipt voucher */

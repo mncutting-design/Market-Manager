@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useTranslation } from "@/lib/i18n";
 import { useApp } from "@/lib/app-context";
 import { formatCurrency, formatDate, toBanglaDigits, formatMonth, formatPercent } from "@/lib/format";
@@ -14,6 +14,8 @@ import {
   FileSpreadsheet,
   Download,
   Printer,
+  FileDown,
+  Loader2,
   Calendar,
   Layers,
   Users,
@@ -26,6 +28,9 @@ import {
   FolderOpen,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import { toPng } from "html-to-image";
+import jsPDF from "jspdf";
+import { toast } from "sonner";
 import { formatFloorName } from "@/lib/floors";
 
 export function ReportsView() {
@@ -42,6 +47,9 @@ export function ReportsView() {
   const [availableTenants, setAvailableTenants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const reportContainerRef = useRef<HTMLDivElement>(null);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const toggleCategory = (catId: string) => {
     setExpandedCategories((prev) => {
@@ -218,6 +226,189 @@ export function ReportsView() {
     XLSX.writeFile(workbook, `${fileName}.xlsx`);
   };
 
+  const getReportTitle = () => {
+    switch (reportType) {
+      case "monthly_collection":
+        return locale === "bn" ? "মাসিক ভাড়া ও ইউটিলিটি আদায় বিবরণী" : "Monthly Rent & Utility Collection Report";
+      case "month_wise_summary":
+        return locale === "bn" ? "মাসভিত্তিক সমন্বিত আর্থিক বিবরণী (১২ মাস)" : "Month-wise Financial Statement (12 Months)";
+      case "market_pnl":
+        return locale === "bn" ? "মার্কেটভিত্তিক লাভ-ক্ষতি বিবরণী" : "Market Profit & Loss Statement";
+      case "expense_by_category":
+        return locale === "bn" ? "খাতওয়ারী ব্যয়ের বিস্তারিত প্রতিবেদন" : "Category-wise Expense Report";
+      case "collector_summary":
+        return locale === "bn" ? "কালেক্টর ও স্টাফ আদায় পারফরম্যান্স রিপোর্ট" : "Collector & Staff Performance Report";
+      case "channel_summary":
+        return locale === "bn" ? "পেমেন্ট চ্যানেল ও একাউন্ট বিবরণী" : "Payment Channel & Account Summary";
+      case "tenant_ledger":
+        return locale === "bn"
+          ? `ভাড়াটিয়ার লেজার ও হিসাব বিবরণী — ${data?.tenant?.name || ""}`
+          : `Tenant Ledger & Statement — ${data?.tenant?.name || ""}`;
+      case "settlements":
+        return locale === "bn" ? "দোকান নিষ্পত্তি ও জামানত সমন্বয় রিপোর্ট" : "Shop Settlement & Exit Statement";
+      case "unrecovered_receivables":
+        return locale === "bn" ? "অনাদায়ী পাওনা ও আর্থিক ক্ষতি রিপোর্ট" : "Unrecovered Receivables Report";
+      default:
+        return t("reports.title");
+    }
+  };
+
+  const getMarketLabel = () => {
+    if (reportType === "tenant_ledger") {
+      return data?.tenant?.marketName || (locale === "bn" ? "সকল মার্কেট" : "All Markets");
+    }
+    if (marketFilter === "ALL") {
+      return locale === "bn" ? "সকল মার্কেট" : "All Markets";
+    }
+    const found = markets.find((m) => m.id === marketFilter);
+    return found ? found.name : marketFilter;
+  };
+
+  const getPeriodLabel = () => {
+    if (reportMonth > 0) {
+      return formatMonth(reportMonth, locale, reportYear);
+    }
+    return locale === "bn" ? `সম্পূর্ণ বছর — ${toBanglaDigits(reportYear)}` : `Full Year — ${reportYear}`;
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!reportContainerRef.current) return;
+    setIsDownloadingPdf(true);
+
+    const wasDark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
+    const originalStyles: { el: HTMLElement; overflow: string; maxWidth: string }[] = [];
+
+    try {
+      // 1. Temporarily switch off dark mode so exported PDF is crisp white paper background
+      if (wasDark) {
+        document.documentElement.classList.remove("dark");
+      }
+
+      // 2. Unconstrain table scroll containers so full-width tables are captured completely
+      const scrollContainers = reportContainerRef.current.querySelectorAll<HTMLElement>(".overflow-x-auto");
+      scrollContainers.forEach((el) => {
+        originalStyles.push({ el, overflow: el.style.overflow, maxWidth: el.style.maxWidth });
+        el.style.overflow = "visible";
+        el.style.maxWidth = "none";
+      });
+
+      // Brief tick to allow DOM layout reflow
+      await new Promise((resolve) => setTimeout(resolve, 80));
+
+      const isLandscape = reportType !== "tenant_ledger";
+      const pdfWidth = isLandscape ? 297 : 210;
+      const pdfHeight = isLandscape ? 210 : 297;
+      const margin = 6;
+      const printableWidth = pdfWidth - margin * 2;
+      const printableHeight = pdfHeight - margin * 2;
+
+      // 3. High-resolution canvas snapshot via html-to-image
+      const dataUrl = await toPng(reportContainerRef.current, {
+        quality: 0.98,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+        cacheBust: true,
+      });
+
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+
+      const pdf = new jsPDF({
+        orientation: isLandscape ? "landscape" : "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const totalImgHeightMm = (img.naturalHeight * printableWidth) / img.naturalWidth;
+
+      if (totalImgHeightMm <= printableHeight) {
+        // Fits entirely on a single page
+        pdf.addImage(dataUrl, "PNG", margin, margin, printableWidth, totalImgHeightMm, undefined, "FAST");
+      } else {
+        // Multi-page slicing using canvas tiles
+        const pxPerMm = img.naturalWidth / printableWidth;
+        const sPageHeightPx = Math.floor(printableHeight * pxPerMm);
+
+        let currentY = 0;
+        let pageIndex = 0;
+
+        while (currentY < img.naturalHeight) {
+          if (pageIndex > 0) {
+            pdf.addPage();
+          }
+
+          const sliceHeightPx = Math.min(sPageHeightPx, img.naturalHeight - currentY);
+          const canvas = document.createElement("canvas");
+          canvas.width = img.naturalWidth;
+          canvas.height = sliceHeightPx;
+
+          const ctx = canvas.getContext("2d");
+          if (ctx) {
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(
+              img,
+              0,
+              currentY,
+              img.naturalWidth,
+              sliceHeightPx,
+              0,
+              0,
+              canvas.width,
+              sliceHeightPx
+            );
+
+            const sliceDataUrl = canvas.toDataURL("image/png");
+            const sliceHeightMm = (sliceHeightPx * printableWidth) / img.naturalWidth;
+
+            pdf.addImage(sliceDataUrl, "PNG", margin, margin, printableWidth, sliceHeightMm, undefined, "FAST");
+          }
+
+          currentY += sliceHeightPx;
+          pageIndex++;
+        }
+      }
+
+      // Generate localized, clean file name
+      const typeSlug = reportType.replace(/_/g, "-");
+      const marketSlug = (getMarketLabel() || "report").replace(/[\s/\\?%*:|"<>]+/g, "-");
+      const periodSlug = (reportMonth > 0 ? `${reportMonth}-${reportYear}` : `${reportYear}`).replace(/[\s/\\?%*:|"<>]+/g, "-");
+      const fileName = `Report_${typeSlug}_${marketSlug}_${periodSlug}.pdf`;
+
+      pdf.save(fileName);
+
+      toast.success(
+        locale === "bn"
+          ? "রিপোর্টটি সফলভাবে পিডিএফ ফর্মেটে ডাউনলোড হয়েছে!"
+          : "Report PDF downloaded successfully!"
+      );
+    } catch (err) {
+      console.error("PDF generation error:", err);
+      toast.error(
+        locale === "bn"
+          ? "পিডিএফ তৈরিতে সমস্যা হয়েছে। 'প্রিন্ট' অপশন থেকে 'Save as PDF' করতে পারেন।"
+          : "Failed to download PDF. Please use the Print option and select 'Save as PDF'."
+      );
+    } finally {
+      // Restore original scroll overflow styles
+      originalStyles.forEach(({ el, overflow, maxWidth }) => {
+        el.style.overflow = overflow;
+        el.style.maxWidth = maxWidth;
+      });
+
+      // Restore dark mode if it was active
+      if (wasDark) {
+        document.documentElement.classList.add("dark");
+      }
+
+      setIsDownloadingPdf(false);
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -236,15 +427,41 @@ export function ReportsView() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={handleExportExcel} disabled={isLoading || !data} className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Excel Export */}
+          <Button
+            variant="outline"
+            onClick={handleExportExcel}
+            disabled={isLoading || !data}
+            className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] hover:bg-black/5 dark:hover:bg-white/10"
+          >
             <Download className="w-4 h-4 mr-1.5 stroke-[2.5]" />
             {t("reports.exportExcel")}
           </Button>
 
-          <Button variant="outline" onClick={handlePrint} disabled={isLoading || !data} className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]">
+          {/* Direct PDF Download (requested by user) */}
+          <Button
+            onClick={handleDownloadPdf}
+            disabled={isLoading || !data || isDownloadingPdf}
+            className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] bg-[#FED734] text-black hover:bg-[#FED734]/90"
+          >
+            {isDownloadingPdf ? (
+              <Loader2 className="w-4 h-4 mr-1.5 animate-spin stroke-[2.5]" />
+            ) : (
+              <FileDown className="w-4 h-4 mr-1.5 stroke-[2.5]" />
+            )}
+            {locale === "bn" ? "পিডিএফ ডাউনলোড" : "Download PDF"}
+          </Button>
+
+          {/* Print / Save as PDF */}
+          <Button
+            variant="outline"
+            onClick={handlePrint}
+            disabled={isLoading || !data}
+            className="font-black border-2 border-black shadow-[3px_3px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+          >
             <Printer className="w-4 h-4 mr-1.5 stroke-[2.5]" />
-            {t("reports.exportPdf")}
+            {locale === "bn" ? "প্রিন্ট" : "Print"}
           </Button>
         </div>
       </div>
@@ -342,27 +559,61 @@ export function ReportsView() {
         </Select>
       </div>
 
-      {/* Printable Report Header */}
-      <div className="print-only hidden p-4 border-b">
-        <h1 className="text-2xl font-bold">{t("common.appName")}</h1>
-        <p className="text-sm text-slate-600">
-          {reportType === "monthly_collection"
-            ? `${t("reports.monthlyCollection")} — ${formatMonth(reportMonth, locale, reportYear)}`
-            : reportType === "market_pnl"
-            ? `${t("reports.marketProfitLoss")} — ${reportYear}`
-            : reportType === "expense_by_category"
-            ? `${t("reports.expenseByCategory")} — ${reportYear}`
-            : `${t("reports.tenantLedger")} — ${data?.tenant?.name || ""}`}
-        </p>
-      </div>
-
       {/* Report Data Display */}
       {isLoading ? (
         <TableSkeleton rows={8} />
       ) : !data ? (
         <Card className="p-12 text-center text-slate-500">{t("common.noData")}</Card>
       ) : (
-        <div className="space-y-4">
+        <div ref={reportContainerRef} className="space-y-4 print-report-container bg-transparent">
+          {/* Branded Official Report Header (visible on preview, in PDF, and in Print) */}
+          <div className="bg-[#FED734] border-2 border-black rounded-xl p-4 shadow-[4px_4px_0px_#000000] text-black">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-black text-[#FED734] flex items-center justify-center font-black text-xl border-2 border-black shadow-[2px_2px_0px_#000000] shrink-0">
+                  R
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-base sm:text-lg font-black uppercase tracking-tight text-black">
+                      {t("common.appName")}
+                    </h1>
+                    <span className="text-[10px] font-black uppercase bg-black text-white px-2 py-0.5 rounded border border-black">
+                      {locale === "bn" ? "অফিসিয়াল রিপোর্ট" : "Official Report"}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm font-black text-black/90 mt-0.5">
+                    {getReportTitle()}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap sm:flex-col items-start sm:items-end gap-1.5 text-xs font-bold">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-black/75">{locale === "bn" ? "মার্কেট:" : "Market:"}</span>
+                  <span className="font-black bg-white text-black px-2.5 py-0.5 rounded-md border-2 border-black shadow-[1.5px_1.5px_0px_#000000]">
+                    {getMarketLabel()}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-black/75">{locale === "bn" ? "সময়কাল:" : "Period:"}</span>
+                  <span className="font-black bg-white text-black px-2.5 py-0.5 rounded-md border-2 border-black shadow-[1.5px_1.5px_0px_#000000]">
+                    {getPeriodLabel()}
+                  </span>
+                </div>
+                <div className="text-[10px] text-black/75 font-mono">
+                  {locale === "bn" ? "জেনারেটেড: " : "Generated: "}
+                  {new Date().toLocaleDateString(locale === "bn" ? "bn-BD" : "en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
           {/* 1. Monthly Collection Report Table */}
           {/* 1. Monthly Collection Report Table */}
           {reportType === "monthly_collection" && data.rows && (() => {
@@ -1209,6 +1460,21 @@ export function ReportsView() {
               </Card>
             </div>
           )}
+
+          {/* Official Report Footer Note */}
+          <div className="p-3 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#1E1F24] text-black dark:text-white flex flex-col sm:flex-row items-center justify-between text-xs font-bold gap-2 shadow-[2px_2px_0px_#000000]">
+            <span className="flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+              <ShieldCheck className="w-4 h-4 text-emerald-600 stroke-[2.5]" />
+              <span>
+                {locale === "bn"
+                  ? "RENT PRO মার্কেট ম্যানেজমেন্ট সিস্টেম দ্বারা প্রস্তুতকৃত সঠিক ও যাচাইকৃত রিপোর্ট।"
+                  : "Verified and authenticated by RENT PRO Market Management System."}
+              </span>
+            </span>
+            <span className="text-gray-500 font-mono text-[11px]">
+              {locale === "bn" ? "অফিসিয়াল কপি" : "Official Copy"}
+            </span>
+          </div>
         </div>
       )}
     </div>
