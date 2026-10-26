@@ -111,10 +111,11 @@ export function ReportsView() {
         [t("shops.floor")]: r.floor,
         [t("tenants.tenantName")]: r.tenantName,
         [t("tenants.phone")]: r.phone,
-        [t("billing.rentAmount")]: Math.round(r.rentAmount / 100), // Numeric cell!
-        [t("billing.totalBill")]: Math.round(r.totalAmount / 100), // Numeric cell!
-        [t("billing.paidAmount")]: Math.round(r.paidAmount / 100), // Numeric cell!
-        [t("billing.dueAmount")]: Math.round(r.dueAmount / 100),   // Numeric cell!
+        [locale === "bn" ? "মূল ভাড়া" : "Base Rent"]: Math.round((r.rentAmount || 0) / 100),
+        [locale === "bn" ? "ইউটিলিটি ও অন্যান্য বিল" : "Utilities & Other Bills"]: Math.round((r.utilityAmount || 0) / 100),
+        [locale === "bn" ? "মোট বিলের পরিমাণ" : "Total Billed"]: Math.round((r.totalAmount || 0) / 100),
+        [t("billing.paidAmount")]: Math.round((r.paidAmount || 0) / 100),
+        [t("billing.dueAmount")]: Math.round((r.dueAmount || 0) / 100),
         [t("common.status")]: r.status,
       }));
     } else if (reportType === "month_wise_summary" && data.rows) {
@@ -363,54 +364,124 @@ export function ReportsView() {
       ) : (
         <div className="space-y-4">
           {/* 1. Monthly Collection Report Table */}
-          {reportType === "monthly_collection" && data.rows && (
-            <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs md:text-sm border-collapse">
-                  <thead>
-                    <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
-                      <th className="p-3.5">{t("shops.shopNumber")}</th>
-                      <th className="p-3.5">{t("tenants.tenantName")}</th>
-                      <th className="p-3.5">{t("markets.marketName")}</th>
-                      <th className="p-3.5 text-right">{t("billing.totalBill")}</th>
-                      <th className="p-3.5 text-right">{t("billing.paidAmount")}</th>
-                      <th className="p-3.5 text-right">{t("billing.dueAmount")}</th>
-                      <th className="p-3.5 text-center">{t("common.status")}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
-                    {data.rows.map((row: any, idx: number) => (
-                      <tr
-                        key={idx}
-                        className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15 transition-colors"
-                      >
-                        <td className="p-3.5 font-black text-black dark:text-white">
-                          {row.shopNumber}
+          {/* 1. Monthly Collection Report Table */}
+          {reportType === "monthly_collection" && data.rows && (() => {
+            const totalRent = (data.rows || []).reduce((sum: number, r: any) => sum + (r.rentAmount || 0), 0);
+            const totalUtility = (data.rows || []).reduce((sum: number, r: any) => sum + (r.utilityAmount || 0), 0);
+            const totalBilled = (data.rows || []).reduce((sum: number, r: any) => sum + (r.totalAmount || 0), 0);
+            const totalPaid = (data.rows || []).reduce((sum: number, r: any) => sum + (r.paidAmount || 0), 0);
+            const totalDue = (data.rows || []).reduce((sum: number, r: any) => sum + (r.dueAmount || 0), 0);
+
+            return (
+              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs md:text-sm border-collapse">
+                    <thead>
+                      <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
+                        <th className="p-3.5 whitespace-nowrap">{t("shops.shopNumber")}</th>
+                        <th className="p-3.5 whitespace-nowrap">{t("tenants.tenantName")}</th>
+                        <th className="p-3.5 whitespace-nowrap">{t("markets.marketName")}</th>
+                        <th className="p-3.5 text-right whitespace-nowrap">{locale === "bn" ? "মূল ভাড়া" : "Base Rent"}</th>
+                        <th className="p-3.5 text-right whitespace-nowrap">{locale === "bn" ? "বিদ্যুৎ/ইউটিলিটি ও অন্যান্য" : "Utilities & Other"}</th>
+                        <th className="p-3.5 text-right whitespace-nowrap">{locale === "bn" ? "মোট ভাড়া/দাবি" : "Total Billed"}</th>
+                        <th className="p-3.5 text-right whitespace-nowrap">{t("billing.paidAmount")}</th>
+                        <th className="p-3.5 text-right whitespace-nowrap">{t("billing.dueAmount")}</th>
+                        <th className="p-3.5 text-center whitespace-nowrap">{t("common.status")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
+                      {data.rows.map((row: any, idx: number) => (
+                        <tr
+                          key={idx}
+                          className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15 transition-colors"
+                        >
+                          <td className="p-3.5 font-black text-black dark:text-white whitespace-nowrap">
+                            {row.shopNumber}
+                          </td>
+                          <td className="p-3.5 font-bold text-black dark:text-white">
+                            <p>{row.tenantName}</p>
+                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
+                          </td>
+                          <td className="p-3.5 text-gray-600 dark:text-gray-400 font-bold whitespace-nowrap">{row.marketName}</td>
+
+                          {/* 1. Base Rent Column */}
+                          <td className="p-3.5 text-right font-bold text-black dark:text-white font-mono whitespace-nowrap">
+                            {formatCurrency(row.rentAmount, locale)}
+                          </td>
+
+                          {/* 2. Utility & Other Charges Column */}
+                          <td className="p-3.5 text-right font-bold text-amber-700 dark:text-amber-400 font-mono whitespace-nowrap">
+                            {row.utilityAmount > 0 ? (
+                              <div>
+                                <span>{formatCurrency(row.utilityAmount, locale)}</span>
+                                {row.billItems && row.billItems.length > 0 && (
+                                  <p
+                                    className="text-[10px] text-gray-500 dark:text-gray-400 font-normal truncate max-w-[150px] ml-auto"
+                                    title={row.billItems.map((i: any) => `${i.description}: ${formatCurrency(i.amount, locale)}`).join(", ")}
+                                  >
+                                    {row.billItems.map((i: any) => i.description).join("+")}
+                                  </p>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 dark:text-gray-500">—</span>
+                            )}
+                          </td>
+
+                          {/* 3. Total Bill / Rent Column */}
+                          <td className="p-3.5 text-right font-black text-black dark:text-white font-mono whitespace-nowrap">
+                            {formatCurrency(row.totalAmount, locale)}
+                          </td>
+
+                          {/* 4. Paid Amount Column */}
+                          <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 font-mono whitespace-nowrap">
+                            {formatCurrency(row.paidAmount, locale)}
+                          </td>
+
+                          {/* 5. Due Amount Column */}
+                          <td className="p-3.5 text-right font-black text-red-600 dark:text-red-400 font-mono whitespace-nowrap">
+                            {row.dueAmount > 0 ? formatCurrency(row.dueAmount, locale) : "—"}
+                          </td>
+
+                          {/* 6. Status Column */}
+                          <td className="p-3.5 text-center whitespace-nowrap">
+                            <StatusBadge status={row.status} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+
+                    {/* Summary Footer Row */}
+                    <tfoot className="border-t-2 border-black bg-[#FBF9F5] dark:bg-[#18191E] font-black text-black dark:text-white">
+                      <tr>
+                        <td colSpan={3} className="p-3.5 text-right font-black">
+                          {locale === "bn" ? "সর্বমোট (Total):" : "Total:"}
                         </td>
-                        <td className="p-3.5 font-bold text-black dark:text-white">
-                          <p>{row.tenantName}</p>
-                          <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
+                        <td className="p-3.5 text-right font-mono font-black whitespace-nowrap">
+                          {formatCurrency(totalRent, locale)}
                         </td>
-                        <td className="p-3.5 text-gray-600 dark:text-gray-400 font-bold">{row.marketName}</td>
-                        <td className="p-3.5 text-right font-bold text-black dark:text-white">
-                          {formatCurrency(row.totalAmount, locale)}
+                        <td className="p-3.5 text-right font-mono font-black text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                          {totalUtility > 0 ? formatCurrency(totalUtility, locale) : "—"}
                         </td>
-                        <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400">
-                          {formatCurrency(row.paidAmount, locale)}
+                        <td className="p-3.5 text-right font-mono font-black whitespace-nowrap">
+                          {formatCurrency(totalBilled, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-black text-red-600 dark:text-red-400">
-                          {row.dueAmount > 0 ? formatCurrency(row.dueAmount, locale) : "—"}
+                        <td className="p-3.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                          {formatCurrency(totalPaid, locale)}
                         </td>
-                        <td className="p-3.5 text-center">
-                          <StatusBadge status={row.status} />
+                        <td className="p-3.5 text-right font-mono font-black text-red-600 dark:text-red-400 whitespace-nowrap">
+                          {totalDue > 0 ? formatCurrency(totalDue, locale) : "—"}
+                        </td>
+                        <td className="p-3.5 text-center font-mono whitespace-nowrap">
+                          {toBanglaDigits((data.rows || []).length)} {locale === "bn" ? "টি দোকান" : "shops"}
                         </td>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </Card>
-          )}
+                    </tfoot>
+                  </table>
+                </div>
+              </Card>
+            );
+          })()}
 
           {/* 1b. Month-Wise Financial Statement */}
           {reportType === "month_wise_summary" && data.rows && (

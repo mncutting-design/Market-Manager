@@ -29,23 +29,39 @@ export async function GET(req: Request) {
           shop: { include: { market: true } },
           tenant: true,
           payments: true,
+          billItems: { include: { chargeType: true } },
         },
         orderBy: [{ shop: { marketId: "asc" } }, { shop: { shopNumber: "asc" } }],
       });
 
-      const rows = bills.map((b) => ({
-        marketName: b.shop.market.name,
-        shopNumber: b.shop.shopNumber,
-        floor: b.shop.floor,
-        tenantName: b.tenant.name,
-        phone: b.tenant.phone,
-        rentAmount: b.rentAmount,
-        totalAmount: b.totalAmount,
-        paidAmount: b.paidAmount,
-        dueAmount: b.dueAmount,
-        status: b.status,
-        lastPaymentDate: b.payments[0]?.paidOn || null,
-      }));
+      const rows = bills.map((b) => {
+        const itemsTotal = (b.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
+        const utilityAmount = itemsTotal > 0 ? itemsTotal : Math.max(0, b.totalAmount - b.rentAmount);
+        const computedTotal = b.rentAmount + utilityAmount;
+        const totalAmount = Math.max(b.totalAmount, computedTotal);
+        const effectiveDue = Math.max(0, totalAmount - b.paidAmount);
+
+        return {
+          marketName: b.shop.market.name,
+          shopNumber: b.shop.shopNumber,
+          floor: b.shop.floor,
+          tenantName: b.tenant.name,
+          phone: b.tenant.phone,
+          rentAmount: b.rentAmount,
+          utilityAmount,
+          totalAmount,
+          paidAmount: b.paidAmount,
+          dueAmount: effectiveDue,
+          status: b.status,
+          billItems: (b.billItems || []).map((item: any) => ({
+            id: item.id,
+            description: item.description,
+            amount: item.amount,
+            typeName: item.chargeType?.name || null,
+          })),
+          lastPaymentDate: b.payments[0]?.paidOn || null,
+        };
+      });
 
       return NextResponse.json({ reportType, rows });
     }
