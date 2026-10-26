@@ -514,6 +514,8 @@ export async function PUT(req: Request) {
                 ...(proposed.transactionRef !== undefined && { transactionRef: proposed.transactionRef?.trim() || null }),
                 ...(proposed.note !== undefined && { note: proposed.note?.trim() || null }),
                 ...(proposed.paidOn && { paidOn: new Date(proposed.paidOn) }),
+                ...(proposed.collectorId !== undefined && { collectorId: proposed.collectorId || null }),
+                ...(proposed.receivedBy !== undefined && { receivedBy: proposed.receivedBy || null }),
               },
             });
 

@@ -307,18 +307,35 @@ model Payment {
   transactionRef   String?  // TrxID / Cheque Number
   senderNumber     String?  // e.g. bKash/Nagad sender phone number
   bankName         String?  // Selected bank name
+  collectorId      String?  // ID of collector from Collector table
   createdAt        DateTime @default(now())
 
   bill             Bill            @relation(fields: [billId], references: [id], onDelete: Cascade)
   receivedByUser   User?           @relation("PaymentReceivedBy", fields: [receivedById], references: [id], onDelete: SetNull)
   enteredByUser    User?           @relation("PaymentEnteredBy", fields: [enteredById], references: [id], onDelete: SetNull)
   paymentAccount   PaymentAccount? @relation(fields: [paymentAccountId], references: [id], onDelete: SetNull)
+  collector        Collector?      @relation(fields: [collectorId], references: [id], onDelete: SetNull)
 
   @@index([billId])
   @@index([paidOn])
   @@index([receivedById])
   @@index([enteredById])
   @@index([paymentAccountId])
+  @@index([collectorId])
+}
+
+model Collector {
+  id        String    @id @default(cuid())
+  name      String
+  phone     String?
+  notes     String?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  payments  Payment[]
+
+  @@index([isActive])
 }
 
 model ExpenseCategory {

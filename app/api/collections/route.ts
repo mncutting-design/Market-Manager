@@ -26,7 +26,7 @@ export async function GET(req: Request) {
       where.bill = { shop: { marketId } };
     }
     if (collectorId && collectorId !== "ALL") {
-      where.receivedById = collectorId;
+      where.OR = [{ collectorId }, { receivedById: collectorId }];
     }
     if (paymentAccountId && paymentAccountId !== "ALL") {
       where.paymentAccountId = paymentAccountId;
@@ -51,6 +51,7 @@ export async function GET(req: Request) {
         },
         receivedByUser: { select: { id: true, name: true, role: true } },
         enteredByUser: { select: { id: true, name: true, role: true } },
+        collector: { select: { id: true, name: true, phone: true } },
         paymentAccount: true,
       },
       orderBy: { paidOn: "desc" },
@@ -68,6 +69,7 @@ export async function GET(req: Request) {
           matchesSearchWithDigits(p.reference || "", q) ||
           matchesSearchWithDigits(p.transactionRef || "", q) ||
           matchesSearchWithDigits(p.receivedBy || "", q) ||
+          matchesSearchWithDigits(p.collector?.name || "", q) ||
           matchesSearchWithDigits(p.receivedByUser?.name || "", q)
       );
     }
@@ -101,7 +103,9 @@ export async function POST(req: Request) {
       method = "CASH",
       reference,
       note,
+      collectorId,
       receivedById: clientReceivedById,
+      receivedBy: clientReceivedBy,
       paymentAccountId,
       transactionRef,
       senderNumber,
@@ -130,26 +134,35 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Bill not found" }, { status: 404 });
     }
 
-    // Role enforcement for Received By collector tracking:
-    // COLLECTOR / OPERATOR can only pick themselves
-    const isCollectorStaff = session.role === "COLLECTOR" || session.role === "OPERATOR";
-    let finalReceivedById = session.id;
+    // Resolve Collector & Received By vs Entered By (Posting):
+    let finalCollectorId: string | null = null;
+    let finalReceivedById: string | null = null;
+    let collectorName: string = session.name || "Staff";
 
-    if (!isCollectorStaff && clientReceivedById) {
-      // ADMIN & MANAGER can select any active staff member
+    if (collectorId) {
+      const col = await prisma.collector.findUnique({
+        where: { id: collectorId },
+        select: { id: true, name: true },
+      });
+      if (col) {
+        finalCollectorId = col.id;
+        collectorName = col.name;
+      }
+    } else if (clientReceivedById && clientReceivedById !== session.id) {
       finalReceivedById = clientReceivedById;
-    }
-
-    // Resolve staff name for receipt display
-    let collectorName = session.name || "Staff";
-    if (finalReceivedById) {
       const staffUser = await prisma.user.findUnique({
-        where: { id: finalReceivedById },
+        where: { id: clientReceivedById },
         select: { id: true, name: true, role: true },
       });
       if (staffUser) {
         collectorName = staffUser.name;
       }
+    } else if (clientReceivedBy && clientReceivedBy.trim()) {
+      collectorName = clientReceivedBy.trim();
+    } else {
+      // Default: logged in user collected it personally
+      finalReceivedById = session.id;
+      collectorName = session.name || "Staff";
     }
 
     // Payment Channel validation
@@ -181,7 +194,8 @@ export async function POST(req: Request) {
           note: note?.trim() || null,
           receivedBy: collectorName,
           receivedById: finalReceivedById,
-          enteredById: session.id, // Strictly set from server session
+          collectorId: finalCollectorId,
+          enteredById: session.id, // Strictly set from server session (পোস্টিংকারী)
           paymentAccountId: paymentAccountId || null,
           transactionRef: transactionRef?.trim() || reference?.trim() || null,
           senderNumber: senderNumber?.trim() || null,
@@ -190,6 +204,7 @@ export async function POST(req: Request) {
         include: {
           receivedByUser: { select: { id: true, name: true, role: true } },
           enteredByUser: { select: { id: true, name: true, role: true } },
+          collector: { select: { id: true, name: true, phone: true } },
           paymentAccount: true,
         },
       });
@@ -241,8 +256,8 @@ export async function POST(req: Request) {
       remainingDue: result.updatedBill.dueAmount,
       paymentMethod: result.payment.method,
       reference: result.payment.reference,
-      receivedBy: result.payment.receivedByUser?.name || result.payment.receivedBy,
-      enteredBy: result.payment.enteredByUser?.name || session.name,
+      receivedBy: result.payment.collector?.name || result.payment.receivedBy || result.payment.receivedByUser?.name || collectorName,
+      enteredBy: result.payment.enteredByUser?.name || session.name || "Staff",
       note: result.payment.note,
       transactionRef: result.payment.transactionRef,
       senderNumber: result.payment.senderNumber,
@@ -275,7 +290,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, amount, method, reference, transactionRef, note, paidOn, submitForApproval } = body;
+    const { id, amount, method, reference, transactionRef, note, paidOn, collectorId, receivedBy, receivedById, submitForApproval } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Payment ID is required" }, { status: 400 });
@@ -297,6 +312,16 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Payment record not found" }, { status: 404 });
     }
 
+    // Resolve updated collector if provided
+    let finalCollectorId = collectorId !== undefined ? (collectorId || null) : payment.collectorId;
+    let finalReceivedBy = receivedBy !== undefined ? (receivedBy || null) : payment.receivedBy;
+    if (collectorId) {
+      const col = await prisma.collector.findUnique({ where: { id: collectorId } });
+      if (col) {
+        finalReceivedBy = col.name;
+      }
+    }
+
     const newAmountPaisa = amount !== undefined ? Math.round(Number(amount)) : payment.amount;
     const isAdmin = session?.role === "ADMIN";
 
@@ -315,6 +340,8 @@ export async function PUT(req: Request) {
             reference: payment.reference,
             transactionRef: payment.transactionRef,
             paidOn: payment.paidOn,
+            receivedBy: payment.receivedBy,
+            collectorId: payment.collectorId,
           }),
           proposedData: JSON.stringify({
             amount: newAmountPaisa,
@@ -323,6 +350,8 @@ export async function PUT(req: Request) {
             transactionRef: transactionRef?.trim() || null,
             note: note?.trim() || null,
             paidOn: paidOn || payment.paidOn,
+            receivedBy: finalReceivedBy,
+            collectorId: finalCollectorId,
           }),
           requestedBy: session?.name || "Manager",
           requesterRole: session?.role || "MANAGER",
@@ -348,6 +377,9 @@ export async function PUT(req: Request) {
           ...(transactionRef !== undefined && { transactionRef: transactionRef?.trim() || null }),
           ...(note !== undefined && { note: note?.trim() || null }),
           ...(paidOn && { paidOn: new Date(paidOn) }),
+          ...(collectorId !== undefined && { collectorId: finalCollectorId }),
+          ...(finalReceivedBy !== undefined && { receivedBy: finalReceivedBy }),
+          ...(receivedById !== undefined && { receivedById: receivedById || null }),
         },
       });
 

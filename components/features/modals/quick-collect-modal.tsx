@@ -13,6 +13,7 @@ import { formatCurrency, toBanglaDigits } from "@/lib/format";
 import { formatFloorName } from "@/lib/floors";
 import { toast } from "sonner";
 import { Wallet, CheckCircle2, Building, Smartphone, CreditCard, User, Landmark } from "lucide-react";
+import { CollectorSelect } from "@/components/features/collectors/collector-select";
 
 const STANDARD_BANKS = [
   { id: "Sonali Bank", name_en: "Sonali Bank", name_bn: "সোনালী ব্যাংক" },
@@ -52,7 +53,9 @@ export function QuickCollectModal() {
   const [activeBill, setActiveBill] = useState<any | null>(null);
   const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
 
-  // Staff (Received by) state
+  // Collector (Received by) state
+  const [collectorId, setCollectorId] = useState<string>("SELF");
+  const [collectorName, setCollectorName] = useState<string>("");
   const [staffList, setStaffList] = useState<any[]>([]);
   const [receivedById, setReceivedById] = useState<string>("");
 
@@ -323,7 +326,9 @@ export function QuickCollectModal() {
           billId: selectedBillId,
           amount: Math.round(amountBDT * 100),
           method: paymentMethod,
-          receivedById: receivedById || currentUser?.id,
+          collectorId: collectorId === "SELF" ? undefined : collectorId,
+          receivedById: collectorId === "SELF" ? currentUser?.id : undefined,
+          receivedBy: collectorName || (collectorId === "SELF" ? currentUser?.name : undefined),
           paymentAccountId: selectedAccountId || undefined,
           transactionRef: transactionRef.trim() || undefined,
           senderNumber: senderNumber.trim() || undefined,
@@ -494,30 +499,14 @@ export function QuickCollectModal() {
           </div>
 
           <div>
-            <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1.5 flex items-center justify-between">
-              <span>{locale === "bn" ? "আদায়কারী (Received by) *" : "Received by *"}</span>
-              {isCollectorOnly && (
-                <span className="text-[10px] text-neutral-500 dark:text-neutral-400 font-bold lowercase">(only self)</span>
-              )}
-            </label>
-            <Select
-              value={receivedById}
-              onChange={(e) => setReceivedById(e.target.value)}
+            <CollectorSelect
+              value={collectorId}
+              onChange={(colId, colName) => {
+                setCollectorId(colId);
+                setCollectorName(colName);
+              }}
               disabled={isCollectorOnly}
-              className="font-bold text-xs"
-            >
-              {staffList.length > 0 ? (
-                staffList.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name} ({s.role === "ADMIN" ? "Admin" : s.role === "MANAGER" ? "Manager" : "Collector"})
-                  </option>
-                ))
-              ) : (
-                <option value={currentUser?.id || ""}>
-                  {currentUser?.name || "Current User"} ({currentUser?.role})
-                </option>
-              )}
-            </Select>
+            />
           </div>
         </div>
 

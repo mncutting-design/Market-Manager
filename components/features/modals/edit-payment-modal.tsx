@@ -23,6 +23,7 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { toast } from "sonner";
+import { CollectorSelect } from "@/components/features/collectors/collector-select";
 
 export interface EditPaymentModalProps {
   isOpen: boolean;
@@ -46,6 +47,8 @@ export function EditPaymentModal({
   const [transactionRef, setTransactionRef] = useState<string>("");
   const [note, setNote] = useState<string>("");
   const [paidOn, setPaidOn] = useState<string>("");
+  const [collectorId, setCollectorId] = useState<string>("SELF");
+  const [collectorName, setCollectorName] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   useEffect(() => {
@@ -60,8 +63,13 @@ export function EditPaymentModal({
           ? new Date(payment.paidOn).toISOString().slice(0, 10)
           : new Date().toISOString().slice(0, 10)
       );
+      setCollectorId(
+        payment.collectorId ||
+          (payment.receivedById === currentUser?.id ? "SELF" : payment.collectorId || "")
+      );
+      setCollectorName(payment.collector?.name || payment.receivedBy || "");
     }
-  }, [payment, isOpen]);
+  }, [payment, isOpen, currentUser]);
 
   if (!payment) return null;
 
@@ -100,6 +108,9 @@ export function EditPaymentModal({
           transactionRef: transactionRef.trim() || null,
           note: note.trim() || null,
           paidOn,
+          collectorId: collectorId === "SELF" ? null : collectorId,
+          receivedById: collectorId === "SELF" ? currentUser?.id : null,
+          receivedBy: collectorName || (collectorId === "SELF" ? currentUser?.name : null),
           submitForApproval: !isAdmin,
         }),
       });
@@ -283,6 +294,17 @@ export function EditPaymentModal({
                 className="text-xs font-bold"
               />
             </div>
+          </div>
+
+          {/* Collector / Received By with Add/Edit/Delete */}
+          <div>
+            <CollectorSelect
+              value={collectorId}
+              onChange={(colId, colName) => {
+                setCollectorId(colId);
+                setCollectorName(colName);
+              }}
+            />
           </div>
 
           {/* Transaction Ref / Cheque No */}

@@ -47,23 +47,31 @@ export function CollectionsView() {
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("ALL");
   const [collectorFilter, setCollectorFilter] = useState("ALL");
+  const [collectorList, setCollectorList] = useState<any[]>([]);
   const [staffList, setStaffList] = useState<any[]>([]);
   const [editingPayment, setEditingPayment] = useState<any | null>(null);
 
-  // Fetch active staff for filter
+  // Fetch collectors and staff for filter
   useEffect(() => {
-    const fetchStaff = async () => {
+    const fetchCollectorsAndStaff = async () => {
       try {
-        const res = await fetch("/api/users?activeStaff=true");
-        if (res.ok) {
-          const data = await res.json();
-          setStaffList(data.users || []);
+        const [colRes, staffRes] = await Promise.all([
+          fetch("/api/collectors"),
+          fetch("/api/users?activeStaff=true"),
+        ]);
+        if (colRes.ok) {
+          const colData = await colRes.json();
+          setCollectorList(colData.collectors || []);
+        }
+        if (staffRes.ok) {
+          const staffData = await staffRes.json();
+          setStaffList(staffData.staff || staffData.users || []);
         }
       } catch (e) {
-        console.warn("Could not load staff users:", e);
+        console.warn("Could not load collectors/staff:", e);
       }
     };
-    fetchStaff();
+    fetchCollectorsAndStaff();
   }, [refreshKey]);
 
   const queryParams = new URLSearchParams();
@@ -189,12 +197,25 @@ export function CollectionsView() {
               onChange={(e) => setCollectorFilter(e.target.value)}
               className="h-9 text-xs"
             >
-              <option value="ALL">{locale === "bn" ? "সব কালেকশন স্টাফ" : "All Collectors"}</option>
-              {staffList.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.role === "ADMIN" ? "Admin" : s.role === "MANAGER" ? "Manager" : "Collector"})
-                </option>
-              ))}
+              <option value="ALL">{locale === "bn" ? "সব আদায়কারী ও স্টাফ" : "All Collectors"}</option>
+              {collectorList.length > 0 && (
+                <optgroup label={locale === "bn" ? "── আদায়কারী তালিকা ──" : "── Field Collectors ──"}>
+                  {collectorList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      🏷️ {c.name}
+                    </option>
+                  ))}
+                </optgroup>
+              )}
+              {staffList.length > 0 && (
+                <optgroup label={locale === "bn" ? "── সিস্টেম স্টাফ ──" : "── System Staff ──"}>
+                  {staffList.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      👤 {s.name} ({s.role === "ADMIN" ? "Admin" : s.role === "MANAGER" ? "Manager" : "Collector"})
+                    </option>
+                  ))}
+                </optgroup>
+              )}
             </Select>
           </div>
         </div>
@@ -265,7 +286,7 @@ export function CollectionsView() {
               remainingDue: p.bill.dueAmount,
               paymentMethod: p.method,
               reference: p.reference,
-              receivedBy: p.receivedByUser?.name || p.receivedBy,
+              receivedBy: p.collector?.name || p.receivedBy || p.receivedByUser?.name || "Staff",
               enteredBy: p.enteredByUser?.name || "Staff",
               note: p.note,
               transactionRef: p.transactionRef,
@@ -275,7 +296,7 @@ export function CollectionsView() {
               billItems: p.bill.billItems || [],
             };
 
-            const collectorName = p.receivedByUser?.name || p.receivedBy || "Staff";
+            const collectorName = p.collector?.name || p.receivedBy || p.receivedByUser?.name || "Staff";
             const enteredByName = p.enteredByUser?.name || "Staff";
 
             return (
@@ -326,15 +347,16 @@ export function CollectionsView() {
                   </p>
 
                   {/* Staff Audit: Received by & Entered by */}
-                  <div className="flex flex-wrap items-center gap-3 text-[11px] text-gray-500 dark:text-gray-400 font-bold pt-0.5">
-                    <span>
-                      {locale === "bn" ? "আদায়কারী:" : "Received by:"}{" "}
-                      <strong className="text-black dark:text-white font-black">{collectorName}</strong>
+                  <div className="flex flex-wrap items-center gap-2 text-[11px] pt-1">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span>{locale === "bn" ? "আদায়কারী:" : "Collector:"}</span>
+                      <strong className="font-black text-black dark:text-white">{collectorName}</strong>
                     </span>
-                    <span>•</span>
-                    <span>
-                      {locale === "bn" ? "এন্ট্রি করেছেন:" : "Entered by:"}{" "}
-                      <strong className="text-black dark:text-white font-black">{enteredByName}</strong>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800 font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      <span>{locale === "bn" ? "পোস্টিং করেছেন:" : "Entered by:"}</span>
+                      <strong className="font-black text-black dark:text-white">{enteredByName}</strong>
                     </span>
                   </div>
                 </div>
