@@ -59,45 +59,64 @@ export async function GET(req: Request) {
       take: 150,
     });
 
-    // Calculate prior unpaid dues for each payment bill's shop
+    // Calculate prior unpaid dues for each payment bill's shop using cumulative formula
     const shopIds = Array.from(new Set(payments.map((p) => p.bill?.shopId).filter(Boolean)));
-    const allPriorUnpaid = shopIds.length > 0
+    const allShopBills = shopIds.length > 0
       ? await prisma.bill.findMany({
           where: {
             shopId: { in: shopIds },
-            status: { in: ["DUE", "PARTIAL"] },
-            dueAmount: { gt: 0 },
           },
           select: {
+            id: true,
             shopId: true,
             year: true,
             month: true,
+            rentAmount: true,
+            totalAmount: true,
+            paidAmount: true,
             dueAmount: true,
+            billItems: { select: { amount: true } },
+            payments: { select: { amount: true } },
           },
+          orderBy: [{ year: "asc" }, { month: "asc" }],
         })
       : [];
 
-    const unpaidByShop = new Map<string, { year: number; month: number; dueAmount: number }[]>();
-    for (const b of allPriorUnpaid) {
-      if (!unpaidByShop.has(b.shopId)) {
-        unpaidByShop.set(b.shopId, []);
+    const billsByShop = new Map<string, typeof allShopBills>();
+    for (const b of allShopBills) {
+      if (!billsByShop.has(b.shopId)) {
+        billsByShop.set(b.shopId, []);
       }
-      unpaidByShop.get(b.shopId)!.push(b);
+      billsByShop.get(b.shopId)!.push(b);
     }
 
     const enhancedPayments = payments.map((p) => {
-      const priorBills = unpaidByShop.get(p.bill?.shopId) || [];
-      const priorUnpaid = priorBills.filter(
+      const shopAllBills = billsByShop.get(p.bill?.shopId) || [];
+      const priorBills = shopAllBills.filter(
         (b) => b.year < p.bill.year || (b.year === p.bill.year && b.month < p.bill.month)
       );
-      const carryForwardDue = priorUnpaid.reduce((sum, b) => sum + b.dueAmount, 0);
+
+      let priorBilled = 0;
+      let priorPaid = 0;
+      for (const pb of priorBills) {
+        const pItems = pb.billItems.reduce((acc, i) => acc + i.amount, 0);
+        priorBilled += Math.max(pb.totalAmount, pb.rentAmount + pItems);
+        priorPaid += Math.max(pb.paidAmount, pb.payments.reduce((acc, pay) => acc + pay.amount, 0));
+      }
+      const carryForwardDue = Math.max(0, priorBilled - priorPaid);
+
+      const itemsTotal = (p.bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
+      const effectiveTotal = Math.max(p.bill.totalAmount, p.bill.rentAmount + itemsTotal);
+      const totalDemand = effectiveTotal + carryForwardDue;
+      const actualPaid = p.bill.paidAmount;
+      const totalPayableWithArrears = Math.max(0, totalDemand - actualPaid);
 
       return {
         ...p,
         bill: {
           ...p.bill,
           carryForwardDue,
-          totalPayableWithArrears: p.bill.dueAmount + carryForwardDue,
+          totalPayableWithArrears,
         },
       };
     });
@@ -253,56 +272,45 @@ export async function POST(req: Request) {
         },
       });
 
-      // 2. FIFO Payment Allocation across Prior Unpaid Bills & Current Bill
-      const priorUnpaidBills = await tx.bill.findMany({
+      // 2. Direct payment attribution to target bill with cumulative arrears demand
+      const allBillPayments = await tx.payment.findMany({
+        where: { billId },
+        select: { amount: true },
+      });
+      const newPaidAmount = allBillPayments.reduce((sum, p) => sum + p.amount, 0);
+
+      const itemsTotal = (bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
+      const computedTotal = bill.rentAmount + itemsTotal;
+      const effectiveTotal = Math.max(bill.totalAmount, computedTotal);
+
+      // Compute carry-forward prior arrears entering this bill
+      const priorBills = await tx.bill.findMany({
         where: {
           shopId: bill.shopId,
-          status: { in: ["DUE", "PARTIAL"] },
           OR: [
             { year: { lt: bill.year } },
             { year: bill.year, month: { lt: bill.month } },
           ],
         },
-        orderBy: [{ year: "asc" }, { month: "asc" }],
+        include: {
+          billItems: { select: { amount: true } },
+          payments: { select: { amount: true } },
+        },
       });
 
-      let remainingToAllocate = paymentPaisa;
-      let arrearsClearedPaisa = 0;
-
-      // Allocate to oldest unpaid bills first
-      for (const pBill of priorUnpaidBills) {
-        if (remainingToAllocate <= 0) break;
-
-        const pBillDue = Math.max(0, pBill.totalAmount - pBill.paidAmount);
-        if (pBillDue <= 0) continue;
-
-        const alloc = Math.min(remainingToAllocate, pBillDue);
-        const pNewPaid = pBill.paidAmount + alloc;
-        const pNewDue = Math.max(0, pBill.totalAmount - pNewPaid);
-        const pNewStatus = pNewPaid >= pBill.totalAmount ? "PAID" : "PARTIAL";
-
-        await tx.bill.update({
-          where: { id: pBill.id },
-          data: {
-            paidAmount: pNewPaid,
-            dueAmount: pNewDue,
-            status: pNewStatus,
-          },
-        });
-
-        remainingToAllocate -= alloc;
-        arrearsClearedPaisa += alloc;
+      let priorBilled = 0;
+      let priorPaid = 0;
+      for (const pb of priorBills) {
+        const pbItems = pb.billItems.reduce((acc, i) => acc + i.amount, 0);
+        priorBilled += Math.max(pb.totalAmount, pb.rentAmount + pbItems);
+        priorPaid += Math.max(pb.paidAmount, pb.payments.reduce((acc, pay) => acc + pay.amount, 0));
       }
-
-      // Remaining payment applies to current target bill
-      const itemsTotal = (bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
-      const computedTotal = bill.rentAmount + itemsTotal;
-      const effectiveTotal = Math.max(bill.totalAmount, computedTotal);
-      const newPaidAmount = bill.paidAmount + remainingToAllocate;
-      const newDueAmount = Math.max(0, effectiveTotal - newPaidAmount);
+      const carryForwardDue = Math.max(0, priorBilled - priorPaid);
+      const totalDemand = effectiveTotal + carryForwardDue;
+      const newDueAmount = Math.max(0, totalDemand - newPaidAmount);
 
       let newStatus = "DUE";
-      if (newPaidAmount >= effectiveTotal) {
+      if (newDueAmount === 0 && newPaidAmount > 0) {
         newStatus = "PAID";
       } else if (newPaidAmount > 0) {
         newStatus = "PARTIAL";
@@ -318,7 +326,7 @@ export async function POST(req: Request) {
         },
       });
 
-      return { payment, updatedBill, arrearsClearedPaisa };
+      return { payment, updatedBill, arrearsClearedPaisa: Math.min(paymentPaisa, carryForwardDue) };
     });
 
     // Record audit log for collected payment

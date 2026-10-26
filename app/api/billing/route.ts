@@ -48,48 +48,75 @@ export async function GET(req: Request) {
 
     // Calculate previous unpaid balance carry-forward for each shop in ONE single batch query
     const shopIds = Array.from(new Set(bills.map((b) => b.shopId)));
-    const allUnpaidBills = shopIds.length > 0
+    const allShopBills = shopIds.length > 0
       ? await prisma.bill.findMany({
           where: {
             shopId: { in: shopIds },
-            status: { in: ["DUE", "PARTIAL"] },
           },
           select: {
+            id: true,
             shopId: true,
             year: true,
             month: true,
+            rentAmount: true,
+            totalAmount: true,
+            paidAmount: true,
             dueAmount: true,
+            billItems: { select: { amount: true } },
+            payments: { select: { amount: true } },
           },
+          orderBy: [{ year: "asc" }, { month: "asc" }],
         })
       : [];
 
-    const unpaidByShop = new Map<string, { year: number; month: number; dueAmount: number }[]>();
-    for (const b of allUnpaidBills) {
-      if (!unpaidByShop.has(b.shopId)) {
-        unpaidByShop.set(b.shopId, []);
+    const billsByShop = new Map<string, typeof allShopBills>();
+    for (const b of allShopBills) {
+      if (!billsByShop.has(b.shopId)) {
+        billsByShop.set(b.shopId, []);
       }
-      unpaidByShop.get(b.shopId)!.push(b);
+      billsByShop.get(b.shopId)!.push(b);
     }
 
     const billsWithCarryForward = bills.map((bill) => {
       const itemsTotal = (bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
       const computedTotal = bill.rentAmount + itemsTotal;
       const effectiveTotal = Math.max(bill.totalAmount, computedTotal);
-      const effectiveDue = Math.max(0, effectiveTotal - bill.paidAmount);
 
-      const priorBills = unpaidByShop.get(bill.shopId) || [];
-      const priorUnpaidList = priorBills
-        .filter((b) => b.year < bill.year || (b.year === bill.year && b.month < bill.month))
-        .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
+      const shopAllBills = billsByShop.get(bill.shopId) || [];
+      const priorBills = shopAllBills
+        .filter((p) => p.year < bill.year || (p.year === bill.year && p.month < bill.month))
+        .sort((x, y) => (x.year !== y.year ? x.year - y.year : x.month - y.month));
 
-      const carryForwardDue = priorUnpaidList.reduce((sum, b) => sum + b.dueAmount, 0);
+      let priorBilled = 0;
+      let priorPaid = 0;
+      const priorUnpaidList: { month: number; year: number; dueAmount: number }[] = [];
+
+      for (const p of priorBills) {
+        const pItems = p.billItems.reduce((acc, i) => acc + i.amount, 0);
+        const pBilled = Math.max(p.totalAmount, p.rentAmount + pItems);
+        const pPaid = Math.max(p.paidAmount, p.payments.reduce((acc, pay) => acc + pay.amount, 0));
+        priorBilled += pBilled;
+        priorPaid += pPaid;
+
+        const pDue = Math.max(0, pBilled - pPaid);
+        if (pDue > 0) {
+          priorUnpaidList.push({ month: p.month, year: p.year, dueAmount: pDue });
+        }
+      }
+
+      const carryForwardDue = Math.max(0, priorBilled - priorPaid);
       const totalBillWithArrears = effectiveTotal + carryForwardDue;
-      const totalPayableWithArrears = effectiveDue + carryForwardDue;
+
+      const paymentsOnThisBill = (bill.payments || []).reduce((sum: number, pay: any) => sum + (pay.amount || 0), 0);
+      const actualPaid = Math.max(bill.paidAmount, paymentsOnThisBill);
+      const totalPayableWithArrears = Math.max(0, totalBillWithArrears - actualPaid);
+      const effectiveDue = Math.max(0, effectiveTotal - Math.max(0, actualPaid - carryForwardDue));
 
       return {
         ...bill,
         totalAmount: effectiveTotal,
-        dueAmount: effectiveDue,
+        paidAmount: actualPaid,
+        dueAmount: totalPayableWithArrears,
         currentMonthBill: effectiveTotal,
         currentMonthDue: effectiveDue,
         carryForwardDue,

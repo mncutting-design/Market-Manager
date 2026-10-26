@@ -34,30 +34,34 @@ export async function GET(req: Request) {
         orderBy: [{ shop: { marketId: "asc" } }, { shop: { shopNumber: "asc" } }],
       });
 
-      // Batch query prior unpaid bills for all shops in the report
+      // Batch query all bills for the shops to calculate cumulative arrears
       const shopIds = Array.from(new Set(bills.map((b) => b.shopId)));
-      const allPriorUnpaid = shopIds.length > 0
+      const allShopBills = shopIds.length > 0
         ? await prisma.bill.findMany({
             where: {
               shopId: { in: shopIds },
-              status: { in: ["DUE", "PARTIAL"] },
-              dueAmount: { gt: 0 },
             },
             select: {
               shopId: true,
               year: true,
               month: true,
+              rentAmount: true,
+              totalAmount: true,
+              paidAmount: true,
               dueAmount: true,
+              billItems: { select: { amount: true, description: true } },
+              payments: { select: { amount: true, paidOn: true } },
             },
+            orderBy: [{ year: "asc" }, { month: "asc" }],
           })
         : [];
 
-      const unpaidByShop = new Map<string, { year: number; month: number; dueAmount: number }[]>();
-      for (const b of allPriorUnpaid) {
-        if (!unpaidByShop.has(b.shopId)) {
-          unpaidByShop.set(b.shopId, []);
+      const billsByShop = new Map<string, typeof allShopBills>();
+      for (const b of allShopBills) {
+        if (!billsByShop.has(b.shopId)) {
+          billsByShop.set(b.shopId, []);
         }
-        unpaidByShop.get(b.shopId)!.push(b);
+        billsByShop.get(b.shopId)!.push(b);
       }
 
       const rows = bills.map((b) => {
@@ -65,15 +69,37 @@ export async function GET(req: Request) {
         const utilityAmount = itemsTotal > 0 ? itemsTotal : Math.max(0, b.totalAmount - b.rentAmount);
         const currentMonthBill = b.rentAmount + utilityAmount;
 
-        const priorBills = unpaidByShop.get(b.shopId) || [];
-        const priorUnpaidList = priorBills
+        const shopAllBills = billsByShop.get(b.shopId) || [];
+        const priorBills = shopAllBills
           .filter((p) => p.year < b.year || (p.year === b.year && p.month < b.month))
           .sort((x, y) => (x.year !== y.year ? x.year - y.year : x.month - y.month));
 
-        const carryForwardDue = priorUnpaidList.reduce((sum, p) => sum + p.dueAmount, 0);
-        const effectiveDue = Math.max(0, currentMonthBill - b.paidAmount);
+        // Calculate prior arrears cumulatively: (Total Prior Billed - Total Prior Paid)
+        let priorBilled = 0;
+        let priorPaid = 0;
+        const priorUnpaidList: { month: number; year: number; dueAmount: number }[] = [];
+
+        for (const p of priorBills) {
+          const pItems = p.billItems.reduce((acc, i) => acc + i.amount, 0);
+          const pBilled = Math.max(p.totalAmount, p.rentAmount + pItems);
+          const pPaid = Math.max(p.paidAmount, p.payments.reduce((acc, pay) => acc + pay.amount, 0));
+          priorBilled += pBilled;
+          priorPaid += pPaid;
+
+          const pDue = Math.max(0, pBilled - pPaid);
+          if (pDue > 0) {
+            priorUnpaidList.push({ month: p.month, year: p.year, dueAmount: pDue });
+          }
+        }
+
+        const carryForwardDue = Math.max(0, priorBilled - priorPaid);
         const totalDemand = currentMonthBill + carryForwardDue; // সর্বমোট দাবি (চলতি মাসের বিল + পূর্বের বকেয়া)
-        const totalDue = effectiveDue + carryForwardDue; // সর্বমোট অবশিষ্ট বকেয়া
+
+        // Actual paid this month: sum of payments on this bill
+        const paymentsOnThisBill = (b.payments || []).reduce((sum: number, pay: any) => sum + (pay.amount || 0), 0);
+        const paidAmount = Math.max(b.paidAmount, paymentsOnThisBill);
+        const totalDue = Math.max(0, totalDemand - paidAmount); // সর্বমোট অবশিষ্ট বকেয়া
+        const effectiveDue = Math.max(0, currentMonthBill - Math.max(0, paidAmount - carryForwardDue));
 
         return {
           marketName: b.shop.market.name,
@@ -87,11 +113,11 @@ export async function GET(req: Request) {
           carryForwardDue,
           totalDemand,
           totalAmount: totalDemand, // Backward compatibility
-          paidAmount: b.paidAmount,
+          paidAmount,
           effectiveDue,
           dueAmount: totalDue, // Total due with prior arrears
           totalDue,
-          status: totalDue === 0 ? "PAID" : b.paidAmount > 0 ? "PARTIAL" : "DUE",
+          status: totalDue === 0 ? "PAID" : paidAmount > 0 ? "PARTIAL" : "DUE",
           priorUnpaidList,
           billItems: (b.billItems || []).map((item: any) => ({
             id: item.id,

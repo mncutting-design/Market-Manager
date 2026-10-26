@@ -152,8 +152,6 @@ export async function GET(req: Request) {
 
     // Calculate prior unpaid arrears for active shops up to the selected month/year
     const priorBillsWhere: any = {
-      status: { in: ["DUE", "PARTIAL"] },
-      dueAmount: { gt: 0 },
       OR: [
         { year: { lt: year } },
         { year, month: { lt: month } },
@@ -165,22 +163,34 @@ export async function GET(req: Request) {
       priorBillsWhere.shop = { isActive: true };
     }
 
-    const priorUnpaidBills = await prisma.bill.findMany({
+    const priorBills = await prisma.bill.findMany({
       where: priorBillsWhere,
       select: {
         shopId: true,
         year: true,
         month: true,
+        rentAmount: true,
+        totalAmount: true,
+        paidAmount: true,
         dueAmount: true,
+        billItems: { select: { amount: true } },
+        payments: { select: { amount: true } },
       },
     });
 
     const unpaidByShop = new Map<string, number>();
-    for (const b of priorUnpaidBills) {
-      unpaidByShop.set(b.shopId, (unpaidByShop.get(b.shopId) || 0) + b.dueAmount);
+    for (const b of priorBills) {
+      const bItems = b.billItems.reduce((acc, i) => acc + i.amount, 0);
+      const bBilled = Math.max(b.totalAmount, b.rentAmount + bItems);
+      const bPaid = Math.max(b.paidAmount, b.payments.reduce((acc, pay) => acc + pay.amount, 0));
+      const bDue = Math.max(0, bBilled - bPaid);
+      unpaidByShop.set(b.shopId, (unpaidByShop.get(b.shopId) || 0) + bDue);
     }
 
-    const priorArrears = priorUnpaidBills.reduce((sum, b) => sum + b.dueAmount, 0);
+    let priorArrears = 0;
+    for (const due of unpaidByShop.values()) {
+      priorArrears += due;
+    }
     const totalDue = currentMonthDue + priorArrears; // Total outstanding portfolio due (Current + Prior Arrears)
 
     const paidShopsCount = currentBills.filter((b) => b.status === "PAID").length;
