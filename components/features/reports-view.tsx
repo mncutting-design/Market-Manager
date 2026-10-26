@@ -119,11 +119,13 @@ export function ReportsView() {
         [t("shops.floor")]: r.floor,
         [t("tenants.tenantName")]: r.tenantName,
         [t("tenants.phone")]: r.phone,
-        [locale === "bn" ? "মূল ভাড়া" : "Base Rent"]: Math.round((r.rentAmount || 0) / 100),
-        [locale === "bn" ? "ইউটিলিটি ও অন্যান্য বিল" : "Utilities & Other Bills"]: Math.round((r.utilityAmount || 0) / 100),
-        [locale === "bn" ? "মোট বিলের পরিমাণ" : "Total Billed"]: Math.round((r.totalAmount || 0) / 100),
-        [t("billing.paidAmount")]: Math.round((r.paidAmount || 0) / 100),
-        [t("billing.dueAmount")]: Math.round((r.dueAmount || 0) / 100),
+        [locale === "bn" ? "মূল ভাড়া (টাকা)" : "Base Rent (BDT)"]: Math.round((r.rentAmount || 0) / 100),
+        [locale === "bn" ? "ইউটিলিটি ও অন্যান্য (টাকা)" : "Utilities & Other (BDT)"]: Math.round((r.utilityAmount || 0) / 100),
+        [locale === "bn" ? "চলতি মাসের বিল (টাকা)" : "Current Month Bill (BDT)"]: Math.round((r.currentMonthBill || (r.rentAmount + (r.utilityAmount || 0)) || 0) / 100),
+        [locale === "bn" ? "পূর্বের বকেয়া (টাকা)" : "Previous Arrears (BDT)"]: Math.round((r.carryForwardDue || 0) / 100),
+        [locale === "bn" ? "সর্বমোট দাবি (টাকা)" : "Total Demand (BDT)"]: Math.round((r.totalDemand || r.totalAmount || 0) / 100),
+        [locale === "bn" ? "আদায়কৃত (টাকা)" : "Paid Amount (BDT)"]: Math.round((r.paidAmount || 0) / 100),
+        [locale === "bn" ? "সর্বমোট বকেয়া (টাকা)" : "Total Due (BDT)"]: Math.round((r.dueAmount || 0) / 100),
         [t("common.status")]: r.status,
       }));
     } else if (reportType === "month_wise_summary" && data.rows) {
@@ -619,7 +621,18 @@ export function ReportsView() {
           {reportType === "monthly_collection" && data.rows && (() => {
             const totalRent = (data.rows || []).reduce((sum: number, r: any) => sum + (r.rentAmount || 0), 0);
             const totalUtility = (data.rows || []).reduce((sum: number, r: any) => sum + (r.utilityAmount || 0), 0);
-            const totalBilled = (data.rows || []).reduce((sum: number, r: any) => sum + (r.totalAmount || 0), 0);
+            const totalCurrentBill = (data.rows || []).reduce(
+              (sum: number, r: any) => sum + (r.currentMonthBill || (r.rentAmount + (r.utilityAmount || 0))),
+              0
+            );
+            const totalCarryForwardDue = (data.rows || []).reduce(
+              (sum: number, r: any) => sum + (r.carryForwardDue || 0),
+              0
+            );
+            const totalDemand = (data.rows || []).reduce(
+              (sum: number, r: any) => sum + (r.totalDemand || r.totalAmount || 0),
+              0
+            );
             const totalPaid = (data.rows || []).reduce((sum: number, r: any) => sum + (r.paidAmount || 0), 0);
             const totalDue = (data.rows || []).reduce((sum: number, r: any) => sum + (r.dueAmount || 0), 0);
 
@@ -629,101 +642,159 @@ export function ReportsView() {
                   <table className="w-full text-left text-xs md:text-sm border-collapse">
                     <thead>
                       <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
-                        <th className="p-3.5 whitespace-nowrap">{t("shops.shopNumber")}</th>
-                        <th className="p-3.5 whitespace-nowrap">{t("tenants.tenantName")}</th>
-                        <th className="p-3.5 whitespace-nowrap">{t("markets.marketName")}</th>
-                        <th className="p-3.5 text-right whitespace-nowrap">{locale === "bn" ? "মূল ভাড়া" : "Base Rent"}</th>
-                        <th className="p-3.5 text-right whitespace-nowrap">{locale === "bn" ? "বিদ্যুৎ/ইউটিলিটি ও অন্যান্য" : "Utilities & Other"}</th>
-                        <th className="p-3.5 text-right whitespace-nowrap">{locale === "bn" ? "মোট ভাড়া/দাবি" : "Total Billed"}</th>
-                        <th className="p-3.5 text-right whitespace-nowrap">{t("billing.paidAmount")}</th>
-                        <th className="p-3.5 text-right whitespace-nowrap">{t("billing.dueAmount")}</th>
-                        <th className="p-3.5 text-center whitespace-nowrap">{t("common.status")}</th>
+                        <th className="p-3 whitespace-nowrap">{t("shops.shopNumber")}</th>
+                        <th className="p-3 whitespace-nowrap">{t("tenants.tenantName")}</th>
+                        <th className="p-3 whitespace-nowrap">{t("markets.marketName")}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{locale === "bn" ? "মূল ভাড়া" : "Base Rent"}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{locale === "bn" ? "বিদ্যুৎ/ইউটিলিটি" : "Utilities & Other"}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{locale === "bn" ? "চলতি বিল" : "Current Bill"}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{locale === "bn" ? "পূর্বের বকেয়া" : "Previous Arrears"}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{locale === "bn" ? "সর্বমোট দাবি" : "Total Demand"}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{t("billing.paidAmount")}</th>
+                        <th className="p-3 text-right whitespace-nowrap">{locale === "bn" ? "সর্বমোট বকেয়া" : "Total Due"}</th>
+                        <th className="p-3 text-center whitespace-nowrap">{t("common.status")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
-                      {data.rows.map((row: any, idx: number) => (
-                        <tr
-                          key={idx}
-                          className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15 transition-colors"
-                        >
-                          <td className="p-3.5 font-black text-black dark:text-white whitespace-nowrap">
-                            {row.shopNumber}
-                          </td>
-                          <td className="p-3.5 font-bold text-black dark:text-white">
-                            <p>{row.tenantName}</p>
-                            <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
-                          </td>
-                          <td className="p-3.5 text-gray-600 dark:text-gray-400 font-bold whitespace-nowrap">{row.marketName}</td>
+                      {data.rows.map((row: any, idx: number) => {
+                        const curBill = row.currentMonthBill || (row.rentAmount + (row.utilityAmount || 0));
+                        const demand = row.totalDemand || (curBill + (row.carryForwardDue || 0));
 
-                          {/* 1. Base Rent Column */}
-                          <td className="p-3.5 text-right font-bold text-black dark:text-white font-mono whitespace-nowrap">
-                            {formatCurrency(row.rentAmount, locale)}
-                          </td>
+                        return (
+                          <tr
+                            key={idx}
+                            className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15 transition-colors"
+                          >
+                            <td className="p-3 font-black text-black dark:text-white whitespace-nowrap">
+                              {row.shopNumber}
+                            </td>
+                            <td className="p-3 font-bold text-black dark:text-white">
+                              <p>{row.tenantName}</p>
+                              <p className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{row.phone}</p>
+                            </td>
+                            <td className="p-3 text-gray-600 dark:text-gray-400 font-bold whitespace-nowrap">{row.marketName}</td>
 
-                          {/* 2. Utility & Other Charges Column */}
-                          <td className="p-3.5 text-right font-bold text-amber-700 dark:text-amber-400 font-mono whitespace-nowrap">
-                            {row.utilityAmount > 0 ? (
-                              <div>
-                                <span>{formatCurrency(row.utilityAmount, locale)}</span>
-                                {row.billItems && row.billItems.length > 0 && (
-                                  <p
-                                    className="text-[10px] text-gray-500 dark:text-gray-400 font-normal truncate max-w-[150px] ml-auto"
-                                    title={row.billItems.map((i: any) => `${i.description}: ${formatCurrency(i.amount, locale)}`).join(", ")}
-                                  >
-                                    {row.billItems.map((i: any) => i.description).join("+")}
-                                  </p>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-gray-400 dark:text-gray-500">—</span>
-                            )}
-                          </td>
+                            {/* 1. Base Rent Column */}
+                            <td className="p-3 text-right font-bold text-black dark:text-white font-mono whitespace-nowrap">
+                              {formatCurrency(row.rentAmount, locale)}
+                            </td>
 
-                          {/* 3. Total Bill / Rent Column */}
-                          <td className="p-3.5 text-right font-black text-black dark:text-white font-mono whitespace-nowrap">
-                            {formatCurrency(row.totalAmount, locale)}
-                          </td>
+                            {/* 2. Utility & Other Charges Column */}
+                            <td className="p-3 text-right font-bold text-amber-700 dark:text-amber-400 font-mono whitespace-nowrap">
+                              {row.utilityAmount > 0 ? (
+                                <div>
+                                  <span>{formatCurrency(row.utilityAmount, locale)}</span>
+                                  {row.billItems && row.billItems.length > 0 && (
+                                    <p
+                                      className="text-[10px] text-gray-500 dark:text-gray-400 font-normal truncate max-w-[130px] ml-auto"
+                                      title={row.billItems.map((i: any) => `${i.description}: ${formatCurrency(i.amount, locale)}`).join(", ")}
+                                    >
+                                      {row.billItems.map((i: any) => i.description).join("+")}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 dark:text-gray-500">—</span>
+                              )}
+                            </td>
 
-                          {/* 4. Paid Amount Column */}
-                          <td className="p-3.5 text-right font-black text-emerald-600 dark:text-emerald-400 font-mono whitespace-nowrap">
-                            {formatCurrency(row.paidAmount, locale)}
-                          </td>
+                            {/* 3. Current Month Bill Column */}
+                            <td className="p-3 text-right font-black text-black dark:text-white font-mono whitespace-nowrap">
+                              {formatCurrency(curBill, locale)}
+                            </td>
 
-                          {/* 5. Due Amount Column */}
-                          <td className="p-3.5 text-right font-black text-red-600 dark:text-red-400 font-mono whitespace-nowrap">
-                            {row.dueAmount > 0 ? formatCurrency(row.dueAmount, locale) : "—"}
-                          </td>
+                            {/* 4. Previous Arrears (Carry Forward) Column */}
+                            <td className="p-3 text-right font-black font-mono whitespace-nowrap">
+                              {row.carryForwardDue > 0 ? (
+                                <div
+                                  className="inline-flex flex-col items-end"
+                                  title={
+                                    row.priorUnpaidList && row.priorUnpaidList.length > 0
+                                      ? row.priorUnpaidList
+                                          .map((p: any) => `${formatMonth(p.month, locale, p.year)}: ${formatCurrency(p.dueAmount, locale)}`)
+                                          .join(", ")
+                                      : undefined
+                                  }
+                                >
+                                  <span className="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-2 py-0.5 rounded border border-amber-300 dark:border-amber-700 text-xs">
+                                    +{formatCurrency(row.carryForwardDue, locale)}
+                                  </span>
+                                  {row.priorUnpaidList && row.priorUnpaidList.length > 1 && (
+                                    <span className="text-[10px] text-amber-600 dark:text-amber-400/80 font-normal mt-0.5">
+                                      ({toBanglaDigits(row.priorUnpaidList.length)} {locale === "bn" ? "মাসের বকেয়া" : "months"})
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-gray-400 dark:text-gray-500 font-bold">—</span>
+                              )}
+                            </td>
 
-                          {/* 6. Status Column */}
-                          <td className="p-3.5 text-center whitespace-nowrap">
-                            <StatusBadge status={row.status} />
-                          </td>
-                        </tr>
-                      ))}
+                            {/* 5. Total Demand Column (Current Bill + Previous Arrears) */}
+                            <td className="p-3 text-right font-black text-black dark:text-white font-mono whitespace-nowrap bg-black/[0.02] dark:bg-white/[0.02]">
+                              {formatCurrency(demand, locale)}
+                            </td>
+
+                            {/* 6. Paid Amount Column */}
+                            <td className="p-3 text-right font-black text-emerald-600 dark:text-emerald-400 font-mono whitespace-nowrap">
+                              {row.paidAmount > 0 ? formatCurrency(row.paidAmount, locale) : <span className="text-gray-400 font-bold">—</span>}
+                            </td>
+
+                            {/* 7. Total Due Column (Current Due + Previous Arrears) */}
+                            <td className="p-3 text-right font-black text-red-600 dark:text-red-400 font-mono whitespace-nowrap">
+                              {row.dueAmount > 0 ? (
+                                <div>
+                                  <span>{formatCurrency(row.dueAmount, locale)}</span>
+                                  {row.carryForwardDue > 0 && row.effectiveDue > 0 && (
+                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 font-normal">
+                                      {locale === "bn" ? "চলতি:" : "Cur:"} {formatCurrency(row.effectiveDue, locale)}
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-black">
+                                  {locale === "bn" ? "পরিশোধিত" : "PAID"}
+                                </span>
+                              )}
+                            </td>
+
+                            {/* 8. Status Column */}
+                            <td className="p-3 text-center whitespace-nowrap">
+                              <StatusBadge status={row.status} />
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
 
                     {/* Summary Footer Row */}
                     <tfoot className="border-t-2 border-black bg-[#FBF9F5] dark:bg-[#18191E] font-black text-black dark:text-white">
                       <tr>
-                        <td colSpan={3} className="p-3.5 text-right font-black">
+                        <td colSpan={3} className="p-3 text-right font-black">
                           {locale === "bn" ? "সর্বমোট (Total):" : "Total:"}
                         </td>
-                        <td className="p-3.5 text-right font-mono font-black whitespace-nowrap">
+                        <td className="p-3 text-right font-mono font-black whitespace-nowrap">
                           {formatCurrency(totalRent, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-mono font-black text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                        <td className="p-3 text-right font-mono font-black text-amber-700 dark:text-amber-400 whitespace-nowrap">
                           {totalUtility > 0 ? formatCurrency(totalUtility, locale) : "—"}
                         </td>
-                        <td className="p-3.5 text-right font-mono font-black whitespace-nowrap">
-                          {formatCurrency(totalBilled, locale)}
+                        <td className="p-3 text-right font-mono font-black whitespace-nowrap">
+                          {formatCurrency(totalCurrentBill, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <td className="p-3 text-right font-mono font-black text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                          {totalCarryForwardDue > 0 ? `+${formatCurrency(totalCarryForwardDue, locale)}` : "—"}
+                        </td>
+                        <td className="p-3 text-right font-mono font-black whitespace-nowrap bg-black/[0.04] dark:bg-white/[0.04]">
+                          {formatCurrency(totalDemand, locale)}
+                        </td>
+                        <td className="p-3 text-right font-mono font-black text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {formatCurrency(totalPaid, locale)}
                         </td>
-                        <td className="p-3.5 text-right font-mono font-black text-red-600 dark:text-red-400 whitespace-nowrap">
+                        <td className="p-3 text-right font-mono font-black text-red-600 dark:text-red-400 whitespace-nowrap">
                           {totalDue > 0 ? formatCurrency(totalDue, locale) : "—"}
                         </td>
-                        <td className="p-3.5 text-center font-mono whitespace-nowrap">
+                        <td className="p-3 text-center font-mono whitespace-nowrap">
                           {toBanglaDigits((data.rows || []).length)} {locale === "bn" ? "টি দোকান" : "shops"}
                         </td>
                       </tr>

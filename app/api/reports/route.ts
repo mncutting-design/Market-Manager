@@ -34,12 +34,46 @@ export async function GET(req: Request) {
         orderBy: [{ shop: { marketId: "asc" } }, { shop: { shopNumber: "asc" } }],
       });
 
+      // Batch query prior unpaid bills for all shops in the report
+      const shopIds = Array.from(new Set(bills.map((b) => b.shopId)));
+      const allPriorUnpaid = shopIds.length > 0
+        ? await prisma.bill.findMany({
+            where: {
+              shopId: { in: shopIds },
+              status: { in: ["DUE", "PARTIAL"] },
+              dueAmount: { gt: 0 },
+            },
+            select: {
+              shopId: true,
+              year: true,
+              month: true,
+              dueAmount: true,
+            },
+          })
+        : [];
+
+      const unpaidByShop = new Map<string, { year: number; month: number; dueAmount: number }[]>();
+      for (const b of allPriorUnpaid) {
+        if (!unpaidByShop.has(b.shopId)) {
+          unpaidByShop.set(b.shopId, []);
+        }
+        unpaidByShop.get(b.shopId)!.push(b);
+      }
+
       const rows = bills.map((b) => {
         const itemsTotal = (b.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
         const utilityAmount = itemsTotal > 0 ? itemsTotal : Math.max(0, b.totalAmount - b.rentAmount);
-        const computedTotal = b.rentAmount + utilityAmount;
-        const totalAmount = Math.max(b.totalAmount, computedTotal);
-        const effectiveDue = Math.max(0, totalAmount - b.paidAmount);
+        const currentMonthBill = b.rentAmount + utilityAmount;
+
+        const priorBills = unpaidByShop.get(b.shopId) || [];
+        const priorUnpaidList = priorBills
+          .filter((p) => p.year < b.year || (p.year === b.year && p.month < b.month))
+          .sort((x, y) => (x.year !== y.year ? x.year - y.year : x.month - y.month));
+
+        const carryForwardDue = priorUnpaidList.reduce((sum, p) => sum + p.dueAmount, 0);
+        const effectiveDue = Math.max(0, currentMonthBill - b.paidAmount);
+        const totalDemand = currentMonthBill + carryForwardDue; // সর্বমোট দাবি (চলতি মাসের বিল + পূর্বের বকেয়া)
+        const totalDue = effectiveDue + carryForwardDue; // সর্বমোট অবশিষ্ট বকেয়া
 
         return {
           marketName: b.shop.market.name,
@@ -49,10 +83,16 @@ export async function GET(req: Request) {
           phone: b.tenant.phone,
           rentAmount: b.rentAmount,
           utilityAmount,
-          totalAmount,
+          currentMonthBill,
+          carryForwardDue,
+          totalDemand,
+          totalAmount: totalDemand, // Backward compatibility
           paidAmount: b.paidAmount,
-          dueAmount: effectiveDue,
-          status: b.status,
+          effectiveDue,
+          dueAmount: totalDue, // Total due with prior arrears
+          totalDue,
+          status: totalDue === 0 ? "PAID" : b.paidAmount > 0 ? "PARTIAL" : "DUE",
+          priorUnpaidList,
           billItems: (b.billItems || []).map((item: any) => ({
             id: item.id,
             description: item.description,
@@ -590,6 +630,8 @@ export async function GET(req: Request) {
           id: `bill-${bill.id}`,
           date: bill.createdAt,
           period: `${bill.month}/${bill.year}`,
+          month: bill.month,
+          year: bill.year,
           type: "INVOICE",
           description: `ভাড়া ও সার্ভিস চার্জ (${bill.month}/${bill.year})`,
           debit: bill.totalAmount, // Increases amount owed
@@ -604,6 +646,8 @@ export async function GET(req: Request) {
             id: `pay-${payment.id}`,
             date: payment.paidOn,
             period: `${bill.month}/${bill.year}`,
+            month: bill.month,
+            year: bill.year,
             type: "PAYMENT",
             description: `ভাড়া জমা (${payment.method}${payment.reference ? ` - ${payment.reference}` : ""})`,
             debit: 0,
@@ -613,14 +657,44 @@ export async function GET(req: Request) {
         }
       }
 
-      // Filter transactions if specific month selected
-      const filteredTransactions = transactions.filter((tx) => {
-        if (!tx.period) return true;
-        const [m, y] = tx.period.split("/").map(Number);
-        if (year && y !== year) return false;
-        if (month && month > 0 && m !== month) return false;
-        return true;
-      });
+      // If specific month/year is selected, calculate prior arrears as Opening Balance
+      let finalTransactions = transactions;
+      if (month && month > 0) {
+        const priorTx = transactions.filter((tx) => {
+          if (!tx.year || !tx.month) return false;
+          return tx.year < year || (tx.year === year && tx.month < month);
+        });
+
+        const openingBalance = priorTx.reduce((bal, tx) => bal + (tx.debit || 0) - (tx.credit || 0), 0);
+        const currentPeriodTx = transactions.filter((tx) => tx.year === year && tx.month === month);
+
+        let periodRunningBal = openingBalance;
+        const mappedCurrentTx = currentPeriodTx.map((tx) => {
+          periodRunningBal += (tx.debit || 0) - (tx.credit || 0);
+          return {
+            ...tx,
+            balance: periodRunningBal,
+          };
+        });
+
+        if (openingBalance > 0) {
+          finalTransactions = [
+            {
+              id: "opening-balance",
+              date: new Date(year, month - 1, 1),
+              period: `পূর্ববর্তী জের`,
+              type: "OPENING_BALANCE",
+              description: `পূর্ববর্তী মাসের অপরিশোধিত মোট বকেয়া জের (Prior Arrears Carryover)`,
+              debit: openingBalance,
+              credit: 0,
+              balance: openingBalance,
+            },
+            ...mappedCurrentTx,
+          ];
+        } else {
+          finalTransactions = mappedCurrentTx;
+        }
+      }
 
       return NextResponse.json({
         reportType,
@@ -634,7 +708,7 @@ export async function GET(req: Request) {
           shopNumber: tenant.shop.shopNumber,
           marketName: tenant.shop.market.name,
         },
-        transactions: (month > 0) ? filteredTransactions : transactions,
+        transactions: finalTransactions,
         totalBilled: tenant.bills.reduce((sum, b) => sum + b.totalAmount, 0),
         totalPaid: tenant.bills.reduce((sum, b) => sum + b.paidAmount, 0),
         currentOutstandingDue: runningBalance,

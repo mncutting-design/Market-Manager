@@ -59,7 +59,50 @@ export async function GET(req: Request) {
       take: 150,
     });
 
-    let filtered = payments;
+    // Calculate prior unpaid dues for each payment bill's shop
+    const shopIds = Array.from(new Set(payments.map((p) => p.bill?.shopId).filter(Boolean)));
+    const allPriorUnpaid = shopIds.length > 0
+      ? await prisma.bill.findMany({
+          where: {
+            shopId: { in: shopIds },
+            status: { in: ["DUE", "PARTIAL"] },
+            dueAmount: { gt: 0 },
+          },
+          select: {
+            shopId: true,
+            year: true,
+            month: true,
+            dueAmount: true,
+          },
+        })
+      : [];
+
+    const unpaidByShop = new Map<string, { year: number; month: number; dueAmount: number }[]>();
+    for (const b of allPriorUnpaid) {
+      if (!unpaidByShop.has(b.shopId)) {
+        unpaidByShop.set(b.shopId, []);
+      }
+      unpaidByShop.get(b.shopId)!.push(b);
+    }
+
+    const enhancedPayments = payments.map((p) => {
+      const priorBills = unpaidByShop.get(p.bill?.shopId) || [];
+      const priorUnpaid = priorBills.filter(
+        (b) => b.year < p.bill.year || (b.year === p.bill.year && b.month < p.bill.month)
+      );
+      const carryForwardDue = priorUnpaid.reduce((sum, b) => sum + b.dueAmount, 0);
+
+      return {
+        ...p,
+        bill: {
+          ...p.bill,
+          carryForwardDue,
+          totalPayableWithArrears: p.bill.dueAmount + carryForwardDue,
+        },
+      };
+    });
+
+    let filtered = enhancedPayments;
     if (search && search.trim() !== "") {
       const q = search.trim();
       filtered = filtered.filter(

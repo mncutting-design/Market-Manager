@@ -74,7 +74,7 @@ export function MoneyReceiptModal() {
   const waterPaisa = waterItem ? waterItem.amount : 0;
   const otherPaisa = otherTotal;
   const advancePaisa = 0; // Stored separately when advance payment adjusted
-  const arrearsPaisa = activeReceipt.remainingDue || 0;
+  const arrearsPaisa = (activeReceipt.remainingDue || 0) + (activeReceipt.carryForwardDue || 0);
   const totalPaidPaisa = activeReceipt.paidNow || 0;
 
   /**
@@ -408,7 +408,12 @@ export function MoneyReceiptModal() {
                   {isBn ? "বকেয়া" : "Arrears"}
                 </span>
                 <div className="border border-black px-1.5 py-0.5 font-bold font-mono text-right flex-1 bg-white text-black text-[11px] sm:text-xs">
-                  {formatCurrency(arrearsPaisa, receiptLang)}
+                  <span>{formatCurrency(arrearsPaisa, receiptLang)}</span>
+                  {activeReceipt.carryForwardDue > 0 && (
+                    <span className="text-[9px] text-gray-500 font-normal block leading-tight">
+                      {isBn ? "(পূর্বের বকেয়াসহ)" : "(incl. prior due)"}
+                    </span>
+                  )}
                 </div>
               </div>
 

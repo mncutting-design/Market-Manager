@@ -313,6 +313,13 @@ export function DashboardView() {
             <div className="text-lg sm:text-xl font-black text-[#FF4B55] truncate" title={formatCurrency(kpis.totalDue, locale)}>
               {formatCurrency(kpis.totalDue, locale)}
             </div>
+            {kpis.priorArrears > 0 && (
+              <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold truncate mt-0.5">
+                {locale === "bn"
+                  ? `চলতি: ${formatCurrency(kpis.currentMonthDue || 0, locale)} + পূর্বের: ${formatCurrency(kpis.priorArrears, locale)}`
+                  : `Cur: ${formatCurrency(kpis.currentMonthDue || 0, locale)} + Prior: ${formatCurrency(kpis.priorArrears, locale)}`}
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
             <span className="truncate">
@@ -621,6 +628,12 @@ export function DashboardView() {
                     <span className="font-black text-[#FF4B55] text-sm">
                       {formatCurrency(shop.dueAmount, locale)}
                     </span>
+                    {shop.carryForwardDue > 0 && (
+                      <p className="text-[10px] text-amber-700 dark:text-amber-400 font-bold">
+                        {locale === "bn" ? "+পূর্বের বকেয়া: " : "+Prior Due: "}
+                        {formatCurrency(shop.carryForwardDue, locale)}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1.5">

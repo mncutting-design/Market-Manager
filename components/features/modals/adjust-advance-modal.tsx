@@ -60,8 +60,11 @@ export function AdjustAdvanceModal({
           setAdvanceBalance(data.advanceBalance || 0);
           setRequiredAdvance(data.requiredAdvance || 0);
 
+          const effectiveTotalDue = totalDueProp || initialDueAmount || data.totalDue || 0;
+          setTotalDue(effectiveTotalDue);
+
           // Default adjustment amount: min(due, available advance) in BDT
-          const maxAdjustPaisa = Math.min(totalDue, data.advanceBalance || 0);
+          const maxAdjustPaisa = Math.min(effectiveTotalDue, data.advanceBalance || 0);
           setAdjustAmountBDT(Math.round(maxAdjustPaisa / 100));
         }
       } catch (e) {

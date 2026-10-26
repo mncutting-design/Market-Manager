@@ -69,6 +69,22 @@ export async function GET(
     );
     const shortfall = calculateAdvanceShortfall(currentBalance, requiredAdvance);
 
+    const unpaidBills = await prisma.bill.findMany({
+      where: {
+        tenantId: tenant.id,
+        status: { in: ["DUE", "PARTIAL"] },
+        dueAmount: { gt: 0 },
+      },
+      select: {
+        id: true,
+        month: true,
+        year: true,
+        dueAmount: true,
+      },
+      orderBy: [{ year: "asc" }, { month: "asc" }],
+    });
+    const totalDue = unpaidBills.reduce((sum, b) => sum + b.dueAmount, 0);
+
     return NextResponse.json({
       tenant: {
         id: tenant.id,
@@ -84,6 +100,8 @@ export async function GET(
       requiredAdvance,
       shortfall,
       hasShortfall: shortfall > 0,
+      totalDue,
+      unpaidBills,
       policy: {
         versionNumber: policyResult.versionNumber,
         requiredAdvanceMonths: policyResult.data.requiredAdvanceMonths,

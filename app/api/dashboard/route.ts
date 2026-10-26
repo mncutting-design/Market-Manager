@@ -148,7 +148,40 @@ export async function GET(req: Request) {
 
     const expectedRent = currentBills.reduce((sum, b) => sum + b.totalAmount, 0);
     const collectedRent = currentBills.reduce((sum, b) => sum + b.paidAmount, 0);
-    const totalDue = currentBills.reduce((sum, b) => sum + b.dueAmount, 0);
+    const currentMonthDue = currentBills.reduce((sum, b) => sum + b.dueAmount, 0);
+
+    // Calculate prior unpaid arrears for active shops up to the selected month/year
+    const priorBillsWhere: any = {
+      status: { in: ["DUE", "PARTIAL"] },
+      dueAmount: { gt: 0 },
+      OR: [
+        { year: { lt: year } },
+        { year, month: { lt: month } },
+      ],
+    };
+    if (marketId !== "ALL") {
+      priorBillsWhere.shop = { marketId, isActive: true };
+    } else {
+      priorBillsWhere.shop = { isActive: true };
+    }
+
+    const priorUnpaidBills = await prisma.bill.findMany({
+      where: priorBillsWhere,
+      select: {
+        shopId: true,
+        year: true,
+        month: true,
+        dueAmount: true,
+      },
+    });
+
+    const unpaidByShop = new Map<string, number>();
+    for (const b of priorUnpaidBills) {
+      unpaidByShop.set(b.shopId, (unpaidByShop.get(b.shopId) || 0) + b.dueAmount);
+    }
+
+    const priorArrears = priorUnpaidBills.reduce((sum, b) => sum + b.dueAmount, 0);
+    const totalDue = currentMonthDue + priorArrears; // Total outstanding portfolio due (Current + Prior Arrears)
 
     const paidShopsCount = currentBills.filter((b) => b.status === "PAID").length;
     const partialShopsCount = currentBills.filter((b) => b.status === "PARTIAL").length;
@@ -160,24 +193,32 @@ export async function GET(req: Request) {
     const totalExpense = currentExpenses.reduce((sum, e) => sum + e.amount, 0);
     const netProfit = collectedRent - totalExpense;
 
-    // 3. Due shops list for quick action
+    // 3. Due shops list for quick action (including prior arrears)
     const dueShops = currentBills
-      .filter((b) => b.dueAmount > 0)
-      .slice(0, 10)
-      .map((b) => ({
-        billId: b.id,
-        shopId: b.shop.id,
-        shopNumber: b.shop.shopNumber,
-        floor: b.shop.floor,
-        marketId: b.shop.marketId || b.shop.market?.id,
-        marketName: b.shop.market.name,
-        tenantName: b.tenant.name,
-        phone: b.tenant.phone,
-        totalAmount: b.totalAmount,
-        paidAmount: b.paidAmount,
-        dueAmount: b.dueAmount,
-        status: b.status,
-      }));
+      .map((b) => {
+        const carryForwardDue = unpaidByShop.get(b.shop.id) || 0;
+        const totalDueWithArrears = b.dueAmount + carryForwardDue;
+        return {
+          billId: b.id,
+          shopId: b.shop.id,
+          shopNumber: b.shop.shopNumber,
+          floor: b.shop.floor,
+          marketId: b.shop.marketId || b.shop.market?.id,
+          marketName: b.shop.market.name,
+          tenantName: b.tenant.name,
+          phone: b.tenant.phone,
+          totalAmount: b.totalAmount,
+          paidAmount: b.paidAmount,
+          currentMonthDue: b.dueAmount,
+          carryForwardDue,
+          dueAmount: totalDueWithArrears, // full payable amount with arrears
+          totalDueWithArrears,
+          status: totalDueWithArrears === 0 ? "PAID" : b.paidAmount > 0 ? "PARTIAL" : "DUE",
+        };
+      })
+      .filter((s) => s.dueAmount > 0)
+      .sort((a, b) => b.dueAmount - a.dueAmount)
+      .slice(0, 10);
 
     // 4. Expenses by category (donut chart + ranked list)
     const categoryMap = new Map<string, { id: string; name_en: string; name_bn: string; color: string; icon: string; amount: number }>();
@@ -353,7 +394,9 @@ export async function GET(req: Request) {
         kpis: {
           expectedRent, // in paisa
           collectedRent,
-          totalDue,
+          currentMonthDue,
+          priorArrears,
+          totalDue, // Total portfolio due including prior arrears
           totalExpense,
           netProfit,
           collectionRate,
