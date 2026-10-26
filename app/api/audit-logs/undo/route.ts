@@ -49,7 +49,47 @@ export async function POST(req: Request) {
     await prisma.$transaction(async (tx) => {
       const action = log.action;
 
-      if (action === "BILL_CHARGE_ADDED" && details.itemId) {
+      if (action === "BILLS_GENERATED" && Array.isArray(details.billIds) && details.billIds.length > 0) {
+        // Check if any payment was recorded for these bills
+        const paidPayment = await tx.payment.findFirst({
+          where: { billId: { in: details.billIds } },
+          select: { id: true, billId: true },
+        });
+
+        if (paidPayment) {
+          throw new Error("এই ব্যাচের বিলে ইতোমধ্যে ভাড়া আদায় রেকর্ড করা হয়েছে, সম্পূর্ণ বিল ব্যাচ আনডো করা সম্ভব নয়।");
+        }
+
+        // Delete all bill items and bills in this batch
+        await tx.billItem.deleteMany({
+          where: { billId: { in: details.billIds } },
+        });
+        await tx.bill.deleteMany({
+          where: { id: { in: details.billIds } },
+        });
+      } else if (action === "PAYMENT_COLLECTED" && details.paymentId) {
+        const pmt = await tx.payment.findUnique({
+          where: { id: details.paymentId },
+          include: { bill: true },
+        });
+        if (pmt) {
+          await tx.payment.delete({ where: { id: pmt.id } });
+          const remaining = await tx.payment.findMany({ where: { billId: pmt.billId } });
+          const newPaid = remaining.reduce((acc, p) => acc + p.amount, 0);
+          const newDue = Math.max(0, pmt.bill.totalAmount - newPaid);
+          const newStatus = newDue <= 0 ? "PAID" : newPaid > 0 ? "PARTIAL" : "DUE";
+          await tx.bill.update({
+            where: { id: pmt.billId },
+            data: {
+              paidAmount: newPaid,
+              dueAmount: newDue,
+              status: newStatus,
+            },
+          });
+        }
+      } else if (action === "EXPENSE_CREATED" && details.expenseId) {
+        await tx.expense.delete({ where: { id: details.expenseId } }).catch(() => null);
+      } else if (action === "BILL_CHARGE_ADDED" && details.itemId) {
         // Remove the added billItem and recalculate bill totals
         try {
           await tx.billItem.delete({ where: { id: details.itemId } });
@@ -256,10 +296,10 @@ export async function POST(req: Request) {
       success: true,
       message: "অডিট রেকর্ডটি সফলভাবে পূর্বাবস্থায় ফিরিয়ে আনা হয়েছে (Action undone successfully)",
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to undo audit log:", error);
     return NextResponse.json(
-      { error: "পূর্বাবস্থায় ফেরানো ব্যর্থ হয়েছে (Failed to undo audit log)" },
+      { error: error?.message || "পূর্বাবস্থায় ফেরানো ব্যর্থ হয়েছে (Failed to undo audit log)" },
       { status: 500 }
     );
   }

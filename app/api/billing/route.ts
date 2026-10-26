@@ -143,6 +143,7 @@ export async function POST(req: Request) {
     const occupiedShops = await prisma.shop.findMany({
       where: shopWhere,
       include: {
+        market: { select: { id: true, name: true } },
         tenants: {
           where: { isActive: true },
           take: 1,
@@ -162,6 +163,7 @@ export async function POST(req: Request) {
 
     let createdCount = 0;
     let existingCount = 0;
+    const createdBillIds: string[] = [];
 
     for (const shop of occupiedShops) {
       const tenant = shop.tenants[0];
@@ -187,7 +189,7 @@ export async function POST(req: Request) {
       const rentAmount = tenant.rentAmount || shop.defaultRent;
       const totalAmount = rentAmount;
 
-      await prisma.bill.create({
+      const newBill = await prisma.bill.create({
         data: {
           shopId: shop.id,
           tenantId: tenant.id,
@@ -202,7 +204,35 @@ export async function POST(req: Request) {
         },
       });
 
+      createdBillIds.push(newBill.id);
       createdCount++;
+    }
+
+    // Record audit log for generated bills with full metadata and bill IDs for undo support
+    if (createdCount > 0) {
+      const session = await getSession();
+      const targetMarketName =
+        marketId && marketId !== "ALL"
+          ? (occupiedShops[0]?.market?.name || "নির্দিষ্ট মার্কেট")
+          : "সকল মার্কেট";
+
+      await logAudit({
+        userId: session?.id || null,
+        userName: session?.name || "Admin",
+        action: "BILLS_GENERATED",
+        entityType: "BillBatch",
+        entityId: `${targetYear}-${String(targetMonth).padStart(2, "0")}`,
+        details: {
+          month: targetMonth,
+          year: targetYear,
+          marketId: marketId || "ALL",
+          marketName: targetMarketName,
+          createdCount,
+          billIds: createdBillIds,
+          totalChecked: occupiedShops.length,
+          existingCount,
+        },
+      });
     }
 
     return NextResponse.json({

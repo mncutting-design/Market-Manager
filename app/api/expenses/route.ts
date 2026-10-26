@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { matchesSearchWithDigits } from "@/lib/format";
 import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 export async function GET(req: Request) {
   try {
@@ -102,6 +103,22 @@ export async function POST(req: Request) {
       },
     });
 
+    await logAudit({
+      userId: session?.id || null,
+      userName: session?.name || "Staff",
+      action: "EXPENSE_CREATED",
+      entityType: "Expense",
+      entityId: expense.id,
+      details: {
+        expenseId: expense.id,
+        amount: expensePaisa,
+        categoryName: expense.category.name_bn || expense.category.name_en,
+        marketName: expense.market.name,
+        description: expense.description,
+        paymentMethod,
+      },
+    });
+
     return NextResponse.json({ expense }, { status: 201 });
   } catch (error) {
     console.error("Failed to create expense:", error);
@@ -188,6 +205,25 @@ export async function PUT(req: Request) {
       },
     });
 
+    await logAudit({
+      userId: session?.id || null,
+      userName: session?.name || "Admin",
+      action: "EXPENSE_EDITED",
+      entityType: "Expense",
+      entityId: id,
+      details: {
+        expenseId: id,
+        amount: expensePaisa,
+        categoryName: updated.category.name_bn || updated.category.name_en,
+        marketName: updated.market.name,
+        description: updated.description,
+        previousData: {
+          amount: currentExpense.amount,
+          description: currentExpense.description,
+        },
+      },
+    });
+
     return NextResponse.json({ expense: updated });
   } catch (error) {
     console.error("Failed to update expense:", error);
@@ -247,6 +283,21 @@ export async function DELETE(req: Request) {
 
     await prisma.expense.delete({
       where: { id },
+    });
+
+    await logAudit({
+      userId: session?.id || null,
+      userName: session?.name || "Admin",
+      action: "EXPENSE_DELETED",
+      entityType: "Expense",
+      entityId: id,
+      details: {
+        expenseId: id,
+        amount: currentExpense.amount,
+        categoryName: currentExpense.category.name_bn || currentExpense.category.name_en,
+        marketName: currentExpense.market.name,
+        description: currentExpense.description,
+      },
     });
 
     return NextResponse.json({ success: true, message: "Expense deleted successfully" });

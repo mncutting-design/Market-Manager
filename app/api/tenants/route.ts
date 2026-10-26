@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 export async function POST(req: Request) {
   try {
@@ -115,6 +117,22 @@ export async function POST(req: Request) {
       });
 
       return newTenant;
+    });
+
+    const session = await getSession();
+    await logAudit({
+      userId: session?.id || null,
+      userName: session?.name || "Admin",
+      action: "TENANT_CREATED",
+      entityType: "Tenant",
+      entityId: result.id,
+      details: {
+        tenantName: result.name,
+        phone: result.phone,
+        shopId: result.shopId,
+        advanceDeposit: result.advanceDeposit,
+        rentAmount: result.rentAmount,
+      },
     });
 
     return NextResponse.json({ tenant: result }, { status: 201 });

@@ -6,7 +6,7 @@ import { useApp } from "@/lib/app-context";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
-import { formatCurrency, formatDate, toBanglaDigits } from "@/lib/format";
+import { formatCurrency, formatDate, formatMonth, toBanglaDigits } from "@/lib/format";
 import {
   Shield,
   RefreshCw,
@@ -58,6 +58,20 @@ export function AuditLogsCard() {
     }
 
     switch (action) {
+      case "BILLS_GENERATED":
+        return locale === "bn" ? "মাসিক বিল জেনারেট" : "Bills Generated";
+      case "PAYMENT_COLLECTED":
+        return locale === "bn" ? "ভাড়া আদায়" : "Rent Collected";
+      case "PAYMENT_EDITED":
+        return locale === "bn" ? "ভাড়া আদায় পরিবর্তন" : "Payment Edited";
+      case "PAYMENT_DELETED":
+        return locale === "bn" ? "ভাড়া আদায় বাতিল" : "Payment Voided";
+      case "EXPENSE_CREATED":
+        return locale === "bn" ? "খরচ এন্ট্রি" : "Expense Recorded";
+      case "EXPENSE_EDITED":
+        return locale === "bn" ? "খরচ পরিবর্তন" : "Expense Edited";
+      case "EXPENSE_DELETED":
+        return locale === "bn" ? "খরচ মুছে ফেলা" : "Expense Deleted";
       case "BILL_CHARGE_ADDED":
         return locale === "bn" ? "অতিরিক্ত খরচ যোগ" : "Cost Added";
       case "BILL_CHARGE_EDITED":
@@ -68,14 +82,21 @@ export function AuditLogsCard() {
         return locale === "bn" ? "নতুন দোকান তৈরি" : "Shop Created";
       case "SHOP_UPDATED":
         return locale === "bn" ? "দোকানের তথ্য পরিবর্তন" : "Shop Updated";
+      case "SHOP_RENT_REVISED":
+        return locale === "bn" ? "ভাড়া পুনর্নির্ধারণ" : "Rent Revised";
       case "SHOP_DELETED":
         return locale === "bn" ? "দোকান মুছে ফেলা হয়েছে" : "Shop Deleted";
+      case "TENANT_CREATED":
+        return locale === "bn" ? "নতুন ভাড়াটিয়া সংযোজন" : "Tenant Added";
+      case "TENANT_UPDATED":
+        return locale === "bn" ? "ভাড়াটিয়া তথ্য পরিবর্তন" : "Tenant Updated";
       case "MARKET_CREATED":
         return locale === "bn" ? "নতুন মার্কেট তৈরি" : "Market Created";
       case "CHANGE_REQUEST_APPROVED_EDIT":
       case "CHANGE_REQUEST_APPROVED":
         return locale === "bn" ? "অনুমোদিত পরিবর্তন" : "Change Approved";
       case "CHANGE_REQUEST_APPROVED_DELETE":
+      case "CHANGE_REQUEST_APPROVED_DELETE_ITEM":
         return locale === "bn" ? "মোছার অনুমোদন" : "Deletion Approved";
       case "CHANGE_REQUEST_REJECTED":
         return locale === "bn" ? "আবেদন প্রত্যাখ্যাত" : "Request Rejected";
@@ -87,6 +108,7 @@ export function AuditLogsCard() {
         return locale === "bn" ? "জামানত জমা গ্রহণ" : "Advance Deposit";
       case "RECORD_ADVANCE_TOPUP":
       case "ADVANCE_TOPUP":
+      case "ADVANCE_TOPUP_APPROVED":
         return locale === "bn" ? "জামানত টপ-আপ" : "Advance Top-Up";
       case "CONFIRM_SETTLEMENT":
       case "SETTLEMENT_CONFIRMED":
@@ -132,6 +154,9 @@ export function AuditLogsCard() {
     return Boolean(
       details.shopNumber ||
       details.marketName ||
+      details.createdCount !== undefined ||
+      details.categoryName ||
+      details.tenantName ||
       details.rentPaisa ||
       details.amount ||
       details.reason ||
@@ -155,9 +180,14 @@ export function AuditLogsCard() {
     }
 
     const actionTitle = getActionLabel(log.action);
-    const confirmMsg = locale === "bn"
-      ? `আপনি কি নিশ্চিত যে "${actionTitle}" কাজটি পূর্বাবস্থায় ফিরিয়ে নিতে চান?`
-      : `Are you sure you want to undo "${actionTitle}"?`;
+    const confirmMsg =
+      log.action === "BILLS_GENERATED"
+        ? (locale === "bn"
+            ? "আপনি কি নিশ্চিত যে এই মাসের তৈরি করা সমস্ত বিল পূর্বাবস্থায় ফিরিয়ে নিতে (মুছে ফেলতে) চান?"
+            : "Are you sure you want to undo and remove all generated bills in this batch?")
+        : locale === "bn"
+        ? `আপনি কি নিশ্চিত যে "${actionTitle}" কাজটি পূর্বাবস্থায় ফিরিয়ে নিতে চান?`
+        : `Are you sure you want to undo "${actionTitle}"?`;
 
     if (!window.confirm(confirmMsg)) return;
 
@@ -217,6 +247,9 @@ export function AuditLogsCard() {
                 className="h-9 text-xs"
               >
                 <option value="ALL">{t("audit.allActions")}</option>
+                <option value="BILLS_GENERATED">{locale === "bn" ? "মাসিক বিল জেনারেট" : "Bills Generated"}</option>
+                <option value="PAYMENT_COLLECTED">{locale === "bn" ? "ভাড়া আদায়" : "Rent Collected"}</option>
+                <option value="EXPENSE_CREATED">{locale === "bn" ? "খরচ এন্ট্রি" : "Expense Recorded"}</option>
                 <option value="BILL_CHARGE_ADDED">{locale === "bn" ? "অতিরিক্ত খরচ যোগ" : "Cost Added"}</option>
                 <option value="BILL_CHARGE_EDITED">{locale === "bn" ? "খরচ পরিবর্তন" : "Cost Edited"}</option>
                 <option value="BILL_CHARGE_DELETED">{locale === "bn" ? "খরচ মুছে ফেলা" : "Cost Deleted"}</option>
@@ -272,6 +305,14 @@ export function AuditLogsCard() {
                         <span className="font-bold text-slate-900 dark:text-white">
                           {shopNumber
                             ? (locale === "bn" ? `দোকান নং ${shopNumber}` : `Shop #${shopNumber}`)
+                            : log.action === "BILLS_GENERATED" && details.month && details.year
+                            ? (locale === "bn"
+                                ? `${formatMonth(details.month, locale, details.year)} এর মাসিক বিল ব্যাচ`
+                                : `Monthly Bill Batch (${formatMonth(details.month, locale, details.year)})`)
+                            : details.tenantName
+                            ? `${details.tenantName}`
+                            : details.categoryName
+                            ? `${details.categoryName} (${details.marketName || targetEntity})`
                             : `${targetEntity} (${log.entityId?.slice(0, 8)}...)`}
                         </span>
 
@@ -293,40 +334,77 @@ export function AuditLogsCard() {
                       {/* Show meaningful detail block ONLY if details exist */}
                       {hasReadableDetails(details) && (
                         <div className="text-[11px] text-gray-700 dark:text-gray-300 bg-[#FBF9F5] dark:bg-[#262830] p-2.5 rounded-xl border-2 border-black shadow-[2px_2px_0px_#000000] flex flex-wrap items-center gap-x-3 gap-y-1">
-                          {details.shopNumber && (
-                            <span>
-                              <strong>{locale === "bn" ? "দোকান:" : "Shop:"}</strong> {details.shopNumber}
-                            </span>
-                          )}
-                          {details.marketName && (
-                            <span>
-                              <strong>{locale === "bn" ? "মার্কেট:" : "Market:"}</strong> {details.marketName}
-                            </span>
-                          )}
-                          {details.description && (
-                            <span>
-                              <strong>{locale === "bn" ? "বিবরণ:" : "Item:"}</strong> {details.description}
-                            </span>
-                          )}
-                          {details.amount !== undefined && (
-                            <span>
-                              <strong>{locale === "bn" ? "পরিমাণ:" : "Amount:"}</strong> {formatCurrency(details.amount, locale)}
-                            </span>
-                          )}
-                          {details.rentPaisa !== undefined && (
-                            <span>
-                              <strong>{locale === "bn" ? "নির্ধারিত ভাড়া:" : "Rent:"}</strong> {formatCurrency(details.rentPaisa, locale)}
-                            </span>
-                          )}
-                          {details.reason && (
-                            <span>
-                              <strong>{locale === "bn" ? "কারণ:" : "Reason:"}</strong> {details.reason}
-                            </span>
-                          )}
-                          {details.note && (
-                            <span>
-                              <strong>{locale === "bn" ? "নোট:" : "Note:"}</strong> {details.note}
-                            </span>
+                          {log.action === "BILLS_GENERATED" ? (
+                            <>
+                              {details.marketName && (
+                                <span>
+                                  <strong>{locale === "bn" ? "মার্কেট:" : "Market:"}</strong> {details.marketName}
+                                </span>
+                              )}
+                              {details.month && details.year && (
+                                <span>
+                                  <strong>{locale === "bn" ? "বিল মাস:" : "Bill Period:"}</strong> {formatMonth(details.month, locale, details.year)}
+                                </span>
+                              )}
+                              {details.createdCount !== undefined && (
+                                <span>
+                                  <strong>{locale === "bn" ? "মোট তৈরি বিল:" : "Created Bills:"}</strong> {locale === "bn" ? `${toBanglaDigits(details.createdCount)} টি` : `${details.createdCount} bills`}
+                                </span>
+                              )}
+                              {details.existingCount !== undefined && details.existingCount > 0 && (
+                                <span className="text-slate-500">
+                                  <strong>{locale === "bn" ? "আগে থেকেই তৈরি ছিল:" : "Already existed:"}</strong> {locale === "bn" ? `${toBanglaDigits(details.existingCount)} টি` : `${details.existingCount} bills`}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              {details.shopNumber && (
+                                <span>
+                                  <strong>{locale === "bn" ? "দোকান:" : "Shop:"}</strong> {details.shopNumber}
+                                </span>
+                              )}
+                              {details.marketName && (
+                                <span>
+                                  <strong>{locale === "bn" ? "মার্কেট:" : "Market:"}</strong> {details.marketName}
+                                </span>
+                              )}
+                              {details.tenantName && (
+                                <span>
+                                  <strong>{locale === "bn" ? "ভাড়াটিয়া:" : "Tenant:"}</strong> {details.tenantName}
+                                </span>
+                              )}
+                              {details.categoryName && (
+                                <span>
+                                  <strong>{locale === "bn" ? "খাত:" : "Category:"}</strong> {details.categoryName}
+                                </span>
+                              )}
+                              {details.description && (
+                                <span>
+                                  <strong>{locale === "bn" ? "বিবরণ:" : "Item:"}</strong> {details.description}
+                                </span>
+                              )}
+                              {details.amount !== undefined && (
+                                <span>
+                                  <strong>{locale === "bn" ? "পরিমাণ:" : "Amount:"}</strong> {formatCurrency(details.amount, locale)}
+                                </span>
+                              )}
+                              {details.rentPaisa !== undefined && (
+                                <span>
+                                  <strong>{locale === "bn" ? "নির্ধারিত ভাড়া:" : "Rent:"}</strong> {formatCurrency(details.rentPaisa, locale)}
+                                </span>
+                              )}
+                              {details.reason && (
+                                <span>
+                                  <strong>{locale === "bn" ? "কারণ:" : "Reason:"}</strong> {details.reason}
+                                </span>
+                              )}
+                              {details.note && (
+                                <span>
+                                  <strong>{locale === "bn" ? "নোট:" : "Note:"}</strong> {details.note}
+                                </span>
+                              )}
+                            </>
                           )}
                           {details.undoneBy && (
                             <span className="text-amber-600 dark:text-amber-400 font-semibold">

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { matchesSearchWithDigits } from "@/lib/format";
 import { getSession } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 
 
 export async function GET(req: Request) {
@@ -236,6 +237,28 @@ export async function POST(req: Request) {
       return { payment, updatedBill };
     });
 
+    // Record audit log for collected payment
+    await logAudit({
+      userId: session.id,
+      userName: session.name || "Staff",
+      action: "PAYMENT_COLLECTED",
+      entityType: "Payment",
+      entityId: result.payment.id,
+      details: {
+        paymentId: result.payment.id,
+        billId,
+        shopNumber: bill.shop.shopNumber,
+        marketName: bill.shop.market.name,
+        tenantName: bill.tenant.name,
+        amount: paymentPaisa,
+        method: upperMethod,
+        receivedBy: collectorName,
+        enteredBy: session.name || "Staff",
+        month: bill.month,
+        year: bill.year,
+      },
+    });
+
     // Generate formatted receipt object with complete channel & staff details
     const receipt = {
       receiptNo: `REC-${bill.year}${String(bill.month).padStart(2, "0")}-${result.payment.id.slice(-6).toUpperCase()}`,
@@ -398,6 +421,25 @@ export async function PUT(req: Request) {
         },
       });
 
+      await logAudit({
+        userId: session?.id,
+        userName: session?.name || "Admin",
+        action: "PAYMENT_EDITED",
+        entityType: "Payment",
+        entityId: id,
+        details: {
+          paymentId: id,
+          billId: payment.billId,
+          shopNumber: payment.bill.shop.shopNumber,
+          marketName: payment.bill.shop.market?.name,
+          amount: newAmountPaisa,
+          previousAmount: payment.amount,
+          method: method || payment.method,
+          receivedBy: finalReceivedBy,
+        },
+        tx,
+      });
+
       return p;
     });
 
@@ -486,6 +528,23 @@ export async function DELETE(req: Request) {
           dueAmount: newDue,
           status: newStatus,
         },
+      });
+
+      await logAudit({
+        userId: session?.id,
+        userName: session?.name || "Admin",
+        action: "PAYMENT_DELETED",
+        entityType: "Payment",
+        entityId: id,
+        details: {
+          paymentId: id,
+          billId: payment.billId,
+          shopNumber: payment.bill.shop.shopNumber,
+          marketName: payment.bill.shop.market?.name,
+          amount: payment.amount,
+          method: payment.method,
+        },
+        tx,
       });
     });
 
