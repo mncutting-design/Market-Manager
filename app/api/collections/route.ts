@@ -275,7 +275,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, amount, method, reference, note, submitForApproval } = body;
+    const { id, amount, method, reference, transactionRef, note, paidOn, submitForApproval } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Payment ID is required" }, { status: 400 });
@@ -304,7 +304,7 @@ export async function PUT(req: Request) {
     if (!isAdmin || submitForApproval) {
       const cr = await prisma.changeRequest.create({
         data: {
-          entityType: "TRANSACTION",
+          entityType: "PAYMENT",
           entityId: id,
           entityTitle: `ভাড়া আদায় (${payment.bill.shop.shopNumber} - ${payment.bill.tenant.name})`,
           actionType: "EDIT",
@@ -313,12 +313,16 @@ export async function PUT(req: Request) {
             amount: payment.amount,
             method: payment.method,
             reference: payment.reference,
+            transactionRef: payment.transactionRef,
+            paidOn: payment.paidOn,
           }),
           proposedData: JSON.stringify({
             amount: newAmountPaisa,
             method: method || payment.method,
             reference: reference?.trim() || null,
+            transactionRef: transactionRef?.trim() || null,
             note: note?.trim() || null,
+            paidOn: paidOn || payment.paidOn,
           }),
           requestedBy: session?.name || "Manager",
           requesterRole: session?.role || "MANAGER",
@@ -341,7 +345,9 @@ export async function PUT(req: Request) {
           amount: newAmountPaisa,
           ...(method && { method }),
           ...(reference !== undefined && { reference: reference?.trim() || null }),
+          ...(transactionRef !== undefined && { transactionRef: transactionRef?.trim() || null }),
           ...(note !== undefined && { note: note?.trim() || null }),
+          ...(paidOn && { paidOn: new Date(paidOn) }),
         },
       });
 
@@ -408,7 +414,7 @@ export async function DELETE(req: Request) {
     if (!isAdmin) {
       const cr = await prisma.changeRequest.create({
         data: {
-          entityType: "TRANSACTION",
+          entityType: "PAYMENT",
           entityId: id,
           entityTitle: `ভাড়া আদায় বাতিল (${payment.bill.shop.shopNumber} - ${payment.bill.tenant.name})`,
           actionType: "DELETE",

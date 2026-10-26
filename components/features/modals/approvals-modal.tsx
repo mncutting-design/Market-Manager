@@ -23,6 +23,8 @@ import {
   Target,
   Sparkles,
   ArrowRight,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -132,6 +134,11 @@ export function ApprovalsModal() {
         return <User className="w-4 h-4 text-black stroke-[2.5]" />;
       case "BILL":
         return <Receipt className="w-4 h-4 text-black stroke-[2.5]" />;
+      case "TRANSACTION":
+      case "PAYMENT":
+        return <Wallet className="w-4 h-4 text-black stroke-[2.5]" />;
+      case "EXPENSE":
+        return <Wrench className="w-4 h-4 text-black stroke-[2.5]" />;
       default:
         return <FileText className="w-4 h-4 text-black stroke-[2.5]" />;
     }

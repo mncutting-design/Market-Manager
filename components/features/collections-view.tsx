@@ -23,16 +23,32 @@ import {
   FilterX,
   AlertCircle,
   CreditCard,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
+import { EditPaymentModal } from "@/components/features/modals/edit-payment-modal";
 
 export function CollectionsView() {
   const { t, locale } = useTranslation();
-  const { selectedMarketId, setSelectedMarketId, refreshKey, openQuickCollect, showReceipt, markets } = useApp();
+  const {
+    selectedMarketId,
+    setSelectedMarketId,
+    refreshKey,
+    openQuickCollect,
+    showReceipt,
+    markets,
+    currentUser,
+    isAdmin,
+    triggerRefresh,
+  } = useApp();
+  const isOperator = currentUser?.role === "OPERATOR";
 
   const [search, setSearch] = useState("");
   const [methodFilter, setMethodFilter] = useState("ALL");
   const [collectorFilter, setCollectorFilter] = useState("ALL");
   const [staffList, setStaffList] = useState<any[]>([]);
+  const [editingPayment, setEditingPayment] = useState<any | null>(null);
 
   // Fetch active staff for filter
   useEffect(() => {
@@ -74,6 +90,46 @@ export function CollectionsView() {
     setMethodFilter("ALL");
     setCollectorFilter("ALL");
     setSearch("");
+  };
+
+  const handleDeletePayment = async (payment: any) => {
+    const isDirectAdmin = currentUser?.role === "ADMIN";
+    const shopNum = payment.bill?.shop?.shopNumber || "দোকান";
+    const tenantName = payment.bill?.tenant?.name || "ভাড়াটিয়া";
+    const amtStr = formatCurrency(payment.amount, locale);
+
+    const confirmMsg = isDirectAdmin
+      ? `${locale === "bn" ? "আপনি কি নিশ্চিতভাবে এই ভাড়া আদায় এন্ট্রি মুছে ফেলতে চান?" : "Are you sure you want to delete this payment record?"}\n\n${shopNum} - ${tenantName} (${amtStr})\n\n${locale === "bn" ? "সতর্কতা: এটি মুছলে সংশ্লিষ্ট বিলের বকেয়া পুনরায় বৃদ্ধি পাবে।" : "Warning: Deleting will restore the bill due balance."}`
+      : `${locale === "bn" ? "ভাড়া আদায় এন্ট্রি মুছে ফেলার আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হবে। আপনি কি আবেদন পাঠাতে চান?" : "Submit deletion request for Admin approval?"}`;
+
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      const res = await fetch(`/api/collections?id=${payment.id}`, { method: "DELETE" });
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to delete payment");
+        return;
+      }
+      if (data.requiresApproval) {
+        toast.info(
+          data.message ||
+            (locale === "bn"
+              ? "মুছে ফেলার আবেদন অ্যাডমিন অনুমোদনের জন্য পাঠানো হয়েছে!"
+              : "Deletion request submitted for admin approval!")
+        );
+      } else {
+        toast.success(
+          locale === "bn"
+            ? "ভাড়া আদায় রেকর্ড সফলভাবে মুছে ফেলা হয়েছে!"
+            : "Payment record deleted successfully!"
+        );
+      }
+      triggerRefresh();
+      refetchPayments();
+    } catch (e) {
+      toast.error("Failed to delete payment");
+    }
   };
 
   return (
@@ -291,21 +347,56 @@ export function CollectionsView() {
                     </p>
                   </div>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => showReceipt(receiptData)}
-                    className="h-8 text-xs font-black shrink-0 border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
-                  >
-                    <Printer className="w-3.5 h-3.5 mr-1 stroke-[2.5]" />
-                    {locale === "bn" ? "রিসিট প্রিন্ট" : "Receipt"}
-                  </Button>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => showReceipt(receiptData)}
+                      className="h-8 px-2 text-xs font-black border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+                      title={locale === "bn" ? "রিসিট প্রিন্ট করুন" : "Print Receipt"}
+                    >
+                      <Printer className="w-3.5 h-3.5 sm:mr-1 stroke-[2.5]" />
+                      <span className="hidden sm:inline">{locale === "bn" ? "রিসিট প্রিন্ট" : "Receipt"}</span>
+                    </Button>
+
+                    {!isOperator && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setEditingPayment(p)}
+                          className="h-8 px-2 text-xs font-black border-2 border-black bg-[#FED734] text-black hover:bg-[#edd028] shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
+                          title={locale === "bn" ? "ভাড়া আদায় এডিট করুন" : "Edit Payment"}
+                        >
+                          <Pencil className="w-3.5 h-3.5 sm:mr-1 stroke-[2.5]" />
+                          <span className="hidden sm:inline">{locale === "bn" ? "এডিট" : "Edit"}</span>
+                        </Button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePayment(p)}
+                          className="p-1.5 h-8 w-8 flex items-center justify-center rounded-lg border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FF4B55] hover:text-white text-black dark:text-white shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                          title={locale === "bn" ? "ভাড়া আদায় মুছে ফেলুন" : "Delete Payment"}
+                        >
+                          <Trash2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </Card>
             );
           })}
         </div>
       )}
+
+      {/* Edit Payment Modal */}
+      <EditPaymentModal
+        isOpen={!!editingPayment}
+        onClose={() => setEditingPayment(null)}
+        payment={editingPayment}
+        onUpdated={() => refetchPayments()}
+      />
     </div>
   );
 }

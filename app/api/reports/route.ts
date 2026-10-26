@@ -349,11 +349,15 @@ export async function GET(req: Request) {
         catObj.totalAmount += exp.amount;
         catObj.count += 1;
         catObj.items.push({
+          id: exp.id,
+          categoryId: exp.categoryId,
+          marketId: exp.marketId,
           date: exp.date,
           marketName: exp.market.name,
           amount: exp.amount,
           description: exp.description,
           paymentMethod: exp.paymentMethod,
+          attachmentUrl: exp.attachmentUrl,
         });
       }
 

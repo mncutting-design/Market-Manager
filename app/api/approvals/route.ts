@@ -492,7 +492,8 @@ export async function PUT(req: Request) {
         if (pmt) {
           if (cr.actionType === "DELETE") {
             await tx.payment.delete({ where: { id: cr.entityId } });
-            const newPaid = Math.max(0, pmt.bill.paidAmount - pmt.amount);
+            const remainingPayments = await tx.payment.findMany({ where: { billId: pmt.billId } });
+            const newPaid = remainingPayments.reduce((acc, p) => acc + p.amount, 0);
             const newDue = Math.max(0, pmt.bill.totalAmount - newPaid);
             await tx.bill.update({
               where: { id: pmt.billId },
@@ -510,7 +511,9 @@ export async function PUT(req: Request) {
                 amount: newAmt,
                 ...(proposed.method && { method: proposed.method }),
                 ...(proposed.reference !== undefined && { reference: proposed.reference?.trim() || null }),
+                ...(proposed.transactionRef !== undefined && { transactionRef: proposed.transactionRef?.trim() || null }),
                 ...(proposed.note !== undefined && { note: proposed.note?.trim() || null }),
+                ...(proposed.paidOn && { paidOn: new Date(proposed.paidOn) }),
               },
             });
 
@@ -537,8 +540,11 @@ export async function PUT(req: Request) {
             data: {
               ...(proposed.amount !== undefined && { amount: Math.round(Number(proposed.amount)) }),
               ...(proposed.categoryId && { categoryId: proposed.categoryId }),
+              ...(proposed.marketId && { marketId: proposed.marketId }),
               ...(proposed.description !== undefined && { description: proposed.description?.trim() || null }),
               ...(proposed.paymentMethod && { paymentMethod: proposed.paymentMethod }),
+              ...(proposed.date && { date: new Date(proposed.date) }),
+              ...(proposed.attachmentUrl !== undefined && { attachmentUrl: proposed.attachmentUrl?.trim() || null }),
             },
           });
         }

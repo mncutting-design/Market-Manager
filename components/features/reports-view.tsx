@@ -21,6 +21,9 @@ import {
   TrendingUp,
   ShieldCheck,
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  FolderOpen,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { formatFloorName } from "@/lib/floors";
@@ -38,6 +41,27 @@ export function ReportsView() {
   const [data, setData] = useState<any>(null);
   const [availableTenants, setAvailableTenants] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (catId: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(catId)) next.delete(catId);
+      else next.add(catId);
+      return next;
+    });
+  };
+
+  const toggleAllCategories = () => {
+    if (!data?.rows) return;
+    if (expandedCategories.size === data.rows.length) {
+      setExpandedCategories(new Set());
+    } else {
+      setExpandedCategories(
+        new Set(data.rows.map((r: any, idx: number) => r.categoryId || String(idx)))
+      );
+    }
+  };
 
   // Fetch report data
   useEffect(() => {
@@ -620,20 +644,45 @@ export function ReportsView() {
             </Card>
           )}
 
-          {/* 3. Expense Breakdown by Category */}
+          {/* 3. Expense Breakdown by Category (Interactive Open / Close Accordion) */}
           {reportType === "expense_by_category" && data.rows && (
             <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
-              <div className="p-3.5 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black flex items-center justify-between">
-                <span className="text-xs font-black text-black dark:text-white">
-                  {reportMonth > 0
-                    ? `${formatMonth(reportMonth, locale, reportYear)} — ${t("reports.expenseByCategory")}`
-                    : `${reportYear} — ${t("reports.expenseByCategory")} (${locale === "bn" ? "পুরো বছর" : "Full Year"})`}
-                </span>
-                <span className="text-xs font-black text-black dark:text-white font-mono">
-                  {locale === "bn" ? "মোট খরচ: " : "Total: "}
-                  {formatCurrency(data.totalAllExpenses || 0, locale)}
-                </span>
+              <div className="p-3.5 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <span className="text-xs font-black text-black dark:text-white">
+                    {reportMonth > 0
+                      ? `${formatMonth(reportMonth, locale, reportYear)} — ${t("reports.expenseByCategory")}`
+                      : `${reportYear} — ${t("reports.expenseByCategory")} (${locale === "bn" ? "পুরো বছর" : "Full Year"})`}
+                  </span>
+                  <p className="text-[11px] text-gray-600 dark:text-gray-400 font-bold mt-0.5">
+                    {locale === "bn"
+                      ? "যে কোনো খরচের খাতে ক্লিক করে বিস্তারিত ওপেন / ক্লোজ করুন"
+                      : "Click any category row to open/close detailed expense transactions"}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={toggleAllCategories}
+                    className="px-2.5 py-1 text-xs font-black rounded-lg border-2 border-black bg-white dark:bg-[#1E1F24] hover:bg-[#FED734] text-black dark:text-white hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                  >
+                    {expandedCategories.size === data.rows.length
+                      ? locale === "bn"
+                        ? "সবগুলো বন্ধ করুন (Collapse All)"
+                        : "Collapse All"
+                      : locale === "bn"
+                      ? "সবগুলো খুলুন (Expand All)"
+                      : "Expand All"}
+                  </button>
+
+                  <span className="text-xs font-black text-black dark:text-white font-mono bg-[#FED734] px-2.5 py-1 rounded-lg border border-black shadow-[1px_1px_0px_#000000]">
+                    {locale === "bn" ? "মোট খরচ: " : "Total: "}
+                    {formatCurrency(data.totalAllExpenses || 0, locale)}
+                  </span>
+                </div>
               </div>
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs md:text-sm border-collapse">
                   <thead>
@@ -645,28 +694,137 @@ export function ReportsView() {
                     </tr>
                   </thead>
                   <tbody className="divide-y-2 divide-black/10 dark:divide-white/10">
-                    {data.rows.map((row: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-[#FED734]/10 dark:hover:bg-[#FED734]/15">
-                        <td className="p-3.5 font-black text-black dark:text-white flex items-center gap-2">
-                          <span
-                            className="w-2.5 h-2.5 rounded-full border border-black"
-                            style={{ backgroundColor: row.color || "#0d9488" }}
-                          />
-                          <span>
-                            {locale === "bn" ? row.name_bn || row.name_en : row.name_en || row.name_bn}
-                          </span>
-                        </td>
-                        <td className="p-3.5 text-center font-bold">
-                          {locale === "bn" ? toBanglaDigits(row.count) : row.count}
-                        </td>
-                        <td className="p-3.5 text-right font-black text-black dark:text-white font-mono">
-                          {formatCurrency(row.totalAmount, locale)}
-                        </td>
-                        <td className="p-3.5 text-right font-black text-black dark:text-white">
-                          {formatPercent(row.percentage, locale)}
-                        </td>
-                      </tr>
-                    ))}
+                    {data.rows.map((row: any, idx: number) => {
+                      const catKey = row.categoryId || String(idx);
+                      const isExpanded = expandedCategories.has(catKey);
+
+                      return (
+                        <React.Fragment key={catKey}>
+                          <tr
+                            onClick={() => toggleCategory(catKey)}
+                            className="hover:bg-[#FED734]/15 dark:hover:bg-[#FED734]/20 cursor-pointer transition-colors select-none"
+                          >
+                            <td className="p-3.5 font-black text-black dark:text-white flex items-center gap-2.5">
+                              <button
+                                type="button"
+                                className="w-6 h-6 flex items-center justify-center rounded-md border-2 border-black bg-white dark:bg-[#262830] text-black dark:text-white shadow-[1px_1px_0px_#000000] shrink-0"
+                                title={isExpanded ? "ক্লোজ করুন" : "ওপেন করুন"}
+                                aria-label="Toggle Category Accordion"
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp className="w-3.5 h-3.5 stroke-[3]" />
+                                ) : (
+                                  <ChevronDown className="w-3.5 h-3.5 stroke-[3]" />
+                                )}
+                              </button>
+
+                              <span
+                                className="w-3 h-3 rounded-full border border-black shrink-0"
+                                style={{ backgroundColor: row.color || "#0d9488" }}
+                              />
+
+                              <div className="flex flex-col">
+                                <span className="font-black text-sm">
+                                  {locale === "bn" ? row.name_bn || row.name_en : row.name_en || row.name_bn}
+                                </span>
+                                <span className="text-[10px] font-bold text-gray-500 dark:text-gray-400">
+                                  {isExpanded
+                                    ? locale === "bn"
+                                      ? "বিস্তারিত বন্ধ করতে ক্লিক করুন (ক্লোজ)"
+                                      : "Click to close details"
+                                    : locale === "bn"
+                                    ? "খরচের বিস্তারিত দেখতে ক্লিক করুন (ওপেন)"
+                                    : "Click to open details"}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td className="p-3.5 text-center font-bold">
+                              <span className="px-2 py-0.5 rounded-full bg-[#FBF9F5] dark:bg-[#262830] border border-black text-xs font-black">
+                                {locale === "bn" ? toBanglaDigits(row.count) : row.count} টি
+                              </span>
+                            </td>
+
+                            <td className="p-3.5 text-right font-black text-black dark:text-white font-mono text-sm">
+                              {formatCurrency(row.totalAmount, locale)}
+                            </td>
+
+                            <td className="p-3.5 text-right font-black text-black dark:text-white">
+                              {formatPercent(row.percentage, locale)}
+                            </td>
+                          </tr>
+
+                          {/* Expanded Detailed Items Accordion Row */}
+                          {isExpanded && (
+                            <tr className="bg-[#FBF9F5] dark:bg-[#15161A] border-b-2 border-black">
+                              <td colSpan={4} className="p-3 sm:p-4">
+                                <div className="space-y-2 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] p-3.5 shadow-[2.5px_2.5px_0px_#000000] animate-in fade-in duration-150">
+                                  <div className="flex items-center justify-between pb-2 border-b border-black/10 dark:border-white/10 text-xs">
+                                    <span className="font-black text-black dark:text-white flex items-center gap-1.5">
+                                      <FolderOpen className="w-4 h-4 text-[#FED734] stroke-[2.5]" />
+                                      <span>
+                                        {locale === "bn" ? row.name_bn || row.name_en : row.name_en || row.name_bn} খাতের খরচের বিস্তারিত (
+                                        {locale === "bn" ? toBanglaDigits(row.items?.length || 0) : row.items?.length || 0}টি এন্ট্রি)
+                                      </span>
+                                    </span>
+                                    <span className="font-black font-mono text-black dark:text-white">
+                                      মোট: {formatCurrency(row.totalAmount, locale)}
+                                    </span>
+                                  </div>
+
+                                  {!row.items || row.items.length === 0 ? (
+                                    <p className="text-xs text-gray-500 py-3 text-center font-bold">
+                                      {locale === "bn" ? "কোনো বিস্তারিত রেকর্ড পাওয়া যায়নি" : "No item records found"}
+                                    </p>
+                                  ) : (
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-xs text-left border-collapse">
+                                        <thead>
+                                          <tr className="border-b border-black/20 text-gray-600 dark:text-gray-300 font-black">
+                                            <th className="py-2 px-2.5">তারিখ</th>
+                                            <th className="py-2 px-2.5">মার্কেট</th>
+                                            <th className="py-2 px-2.5">খরচের বিবরণ</th>
+                                            <th className="py-2 px-2.5">পেমেন্ট মাধ্যম</th>
+                                            <th className="py-2 px-2.5">ভাউচার নং</th>
+                                            <th className="py-2 px-2.5 text-right">পরিমাণ</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-black/10 dark:divide-white/10">
+                                          {row.items.map((item: any, itemIdx: number) => (
+                                            <tr key={item.id || itemIdx} className="hover:bg-[#FED734]/10">
+                                              <td className="py-2 px-2.5 font-bold whitespace-nowrap">
+                                                {formatDate(item.date, locale)}
+                                              </td>
+                                              <td className="py-2 px-2.5 font-bold">
+                                                {item.marketName}
+                                              </td>
+                                              <td className="py-2 px-2.5 font-black text-black dark:text-white">
+                                                {item.description || "—"}
+                                              </td>
+                                              <td className="py-2 px-2.5 font-bold">
+                                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-[#FED734] text-black border border-black font-black">
+                                                  {item.paymentMethod || "CASH"}
+                                                </span>
+                                              </td>
+                                              <td className="py-2 px-2.5 font-mono text-gray-600 dark:text-gray-400">
+                                                {item.attachmentUrl || "—"}
+                                              </td>
+                                              <td className="py-2 px-2.5 text-right font-black font-mono text-black dark:text-white text-sm">
+                                                {formatCurrency(item.amount, locale)}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
