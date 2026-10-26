@@ -50,15 +50,10 @@ export async function POST(req: Request) {
       const action = log.action;
 
       if (action === "BILLS_GENERATED" && Array.isArray(details.billIds) && details.billIds.length > 0) {
-        // Check if any payment was recorded for these bills
-        const paidPayment = await tx.payment.findFirst({
+        // Delete all payments recorded on these bills
+        await tx.payment.deleteMany({
           where: { billId: { in: details.billIds } },
-          select: { id: true, billId: true },
         });
-
-        if (paidPayment) {
-          throw new Error("এই ব্যাচের বিলে ইতোমধ্যে ভাড়া আদায় রেকর্ড করা হয়েছে, সম্পূর্ণ বিল ব্যাচ আনডো করা সম্ভব নয়।");
-        }
 
         // Delete all bill items and bills in this batch
         await tx.billItem.deleteMany({
