@@ -8,16 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
-  User,
   UserCheck,
   Plus,
   Pencil,
   Trash2,
   Users,
   AlertTriangle,
-  Check,
-  Phone,
-  ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -98,6 +94,7 @@ export function CollectorSelect({
 
   // Handle select change
   const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    e.stopPropagation();
     const val = e.target.value;
     if (val === "SELF") {
       onChange("SELF", currentUser?.name || "Self");
@@ -112,7 +109,11 @@ export function CollectorSelect({
   };
 
   // Open Add Modal
-  const openAddModal = () => {
+  const openAddModal = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setFormName("");
     setFormPhone("");
     setFormNotes("");
@@ -120,7 +121,11 @@ export function CollectorSelect({
   };
 
   // Open Edit Modal
-  const openEditModal = (item?: CollectorItem) => {
+  const openEditModal = (item?: CollectorItem, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const target = item || selectedCollector;
     if (!target) return;
     setTargetCollector(target);
@@ -131,16 +136,23 @@ export function CollectorSelect({
   };
 
   // Open Delete Modal
-  const openDeleteModal = (item?: CollectorItem) => {
+  const openDeleteModal = (item?: CollectorItem, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     const target = item || selectedCollector;
     if (!target) return;
     setTargetCollector(target);
     setIsDeleteOpen(true);
   };
 
-  // Submit Add Collector
-  const handleAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Submit Add Collector (NO <form> TAG - 100% immune to form bubbling / reload)
+  const handleAddSubmit = async (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!formName.trim()) {
       toast.error(isBn ? "আদায়কারীর নাম প্রদান করুন" : "Enter collector name");
       return;
@@ -181,9 +193,12 @@ export function CollectorSelect({
     }
   };
 
-  // Submit Edit Collector
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Submit Edit Collector (NO <form> TAG)
+  const handleEditSubmit = async (e?: React.SyntheticEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!targetCollector || !formName.trim()) {
       toast.error(isBn ? "আদায়কারীর নাম প্রদান করুন" : "Enter collector name");
       return;
@@ -228,7 +243,11 @@ export function CollectorSelect({
   };
 
   // Submit Delete Collector
-  const handleDeleteSubmit = async () => {
+  const handleDeleteSubmit = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!targetCollector) return;
 
     try {
@@ -281,7 +300,7 @@ export function CollectorSelect({
             type="button"
             size="sm"
             variant="outline"
-            onClick={openAddModal}
+            onClick={(e) => openAddModal(e)}
             className="h-6 px-2 text-[10px] font-black border-2 border-black bg-[#FED734] hover:bg-[#ffe169] text-black shadow-[1.5px_1.5px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             title={isBn ? "নতুন আদায়কারী যোগ করুন" : "Add new collector"}
           >
@@ -294,7 +313,11 @@ export function CollectorSelect({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => setIsManageOpen(true)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsManageOpen(true);
+            }}
             className="h-6 px-1.5 text-[10px] font-black border-2 border-black bg-white dark:bg-[#2B2C33] text-black dark:text-white shadow-[1.5px_1.5px_0px_#000000]"
             title={isBn ? "আদায়কারী তালিকা পরিচালনা" : "Manage collectors"}
           >
@@ -317,7 +340,7 @@ export function CollectorSelect({
               👤 {isBn ? "পোস্টিংকারী নিজেই আদায় করেছেন" : "Self (I collected personally)"} - ({currentUser?.name || "Me"})
             </option>
 
-            {/* Separator / Custom Collectors */}
+            {/* Custom Collectors */}
             {collectors.length > 0 && (
               <optgroup label={isBn ? "── নির্ধারিত আদায়কারীগণ (Field Collectors) ──" : "── Field Collectors ──"}>
                 {collectors.map((c) => (
@@ -336,7 +359,7 @@ export function CollectorSelect({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => openEditModal(selectedCollector)}
+            onClick={(e) => openEditModal(selectedCollector, e)}
             className="h-10 w-10 p-0 shrink-0 border-2 border-black bg-[#D8F2FF] hover:bg-[#bfe8ff] text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             title={isBn ? `"${selectedCollector.name}" এডিট করুন` : "Edit collector"}
           >
@@ -350,7 +373,7 @@ export function CollectorSelect({
             type="button"
             size="sm"
             variant="outline"
-            onClick={() => openDeleteModal(selectedCollector)}
+            onClick={(e) => openDeleteModal(selectedCollector, e)}
             className="h-10 w-10 p-0 shrink-0 border-2 border-black bg-[#FFD6E8] hover:bg-[#ffbfdb] text-red-600 shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             title={isBn ? `"${selectedCollector.name}" ডিলিট করুন` : "Delete collector"}
           >
@@ -375,7 +398,7 @@ export function CollectorSelect({
         </span>
       </div>
 
-      {/* 1. ADD COLLECTOR MODAL */}
+      {/* 1. ADD COLLECTOR MODAL (Pure div, NO nested form) */}
       <Dialog
         isOpen={isAddOpen}
         onClose={() => setIsAddOpen(false)}
@@ -383,16 +406,22 @@ export function CollectorSelect({
         description={isBn ? "ভাড়া আদায়কারীর নাম ও মোবাইল নম্বর যোগ করুন" : "Add rent collector name and phone"}
         maxWidth="md"
       >
-        <form onSubmit={handleAddSubmit} className="space-y-3.5 pt-2">
+        <div className="space-y-3.5 pt-2">
           <div>
             <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               {isBn ? "আদায়কারীর নাম (Collector Name) *" : "Collector Name *"}
             </label>
             <Input
               type="text"
-              required
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddSubmit(e);
+                }
+              }}
               placeholder={isBn ? "যেমন: মোঃ কাশেম / রহিম" : "e.g. Kashem / Rahim"}
               className="font-bold text-sm"
               autoFocus
@@ -407,6 +436,13 @@ export function CollectorSelect({
               type="tel"
               value={formPhone}
               onChange={(e) => setFormPhone(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddSubmit(e);
+                }
+              }}
               placeholder="01XXXXXXXXX"
               className="font-mono text-sm"
             />
@@ -420,6 +456,13 @@ export function CollectorSelect({
               type="text"
               value={formNotes}
               onChange={(e) => setFormNotes(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleAddSubmit(e);
+                }
+              }}
               placeholder={isBn ? "যেমন: মার্কেট ফিল্ড স্টাফ" : "e.g. Field Staff"}
               className="text-xs"
             />
@@ -429,24 +472,29 @@ export function CollectorSelect({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsAddOpen(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsAddOpen(false);
+              }}
               disabled={isSubmitting}
               className="text-xs font-black border-2 border-black"
             >
               {isBn ? "বাতিল" : "Cancel"}
             </Button>
             <Button
-              type="submit"
+              type="button"
+              onClick={(e) => handleAddSubmit(e)}
               disabled={isSubmitting}
-              className="text-xs font-black bg-[#FED734] hover:bg-[#ffe169] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+              className="text-xs font-black bg-[#FED734] hover:bg-[#ffe169] text-black border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             >
               {isSubmitting ? (isBn ? "সংরক্ষণ হচ্ছে..." : "Saving...") : (isBn ? "যোগ করুন এবং নির্বাচন করুন" : "Save & Select")}
             </Button>
           </div>
-        </form>
+        </div>
       </Dialog>
 
-      {/* 2. EDIT COLLECTOR MODAL */}
+      {/* 2. EDIT COLLECTOR MODAL (Pure div, NO nested form) */}
       <Dialog
         isOpen={isEditOpen}
         onClose={() => setIsEditOpen(false)}
@@ -454,16 +502,22 @@ export function CollectorSelect({
         description={isBn ? "আদায়কারীর নাম পরিবর্তন বা সংশোধন করুন" : "Update collector details"}
         maxWidth="md"
       >
-        <form onSubmit={handleEditSubmit} className="space-y-3.5 pt-2">
+        <div className="space-y-3.5 pt-2">
           <div>
             <label className="block text-xs font-black uppercase tracking-wider text-black dark:text-white mb-1">
               {isBn ? "আদায়কারীর নাম (Collector Name) *" : "Collector Name *"}
             </label>
             <Input
               type="text"
-              required
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleEditSubmit(e);
+                }
+              }}
               className="font-bold text-sm"
               autoFocus
             />
@@ -477,6 +531,13 @@ export function CollectorSelect({
               type="tel"
               value={formPhone}
               onChange={(e) => setFormPhone(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleEditSubmit(e);
+                }
+              }}
               placeholder="01XXXXXXXXX"
               className="font-mono text-sm"
             />
@@ -490,6 +551,13 @@ export function CollectorSelect({
               type="text"
               value={formNotes}
               onChange={(e) => setFormNotes(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleEditSubmit(e);
+                }
+              }}
               className="text-xs"
             />
           </div>
@@ -498,21 +566,26 @@ export function CollectorSelect({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsEditOpen(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsEditOpen(false);
+              }}
               disabled={isSubmitting}
               className="text-xs font-black border-2 border-black"
             >
               {isBn ? "বাতিল" : "Cancel"}
             </Button>
             <Button
-              type="submit"
+              type="button"
+              onClick={(e) => handleEditSubmit(e)}
               disabled={isSubmitting}
-              className="text-xs font-black bg-[#FED734] hover:bg-[#ffe169] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+              className="text-xs font-black bg-[#FED734] hover:bg-[#ffe169] text-black border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             >
               {isSubmitting ? (isBn ? "আপডেট হচ্ছে..." : "Updating...") : (isBn ? "আপডেট সংরক্ষণ করুন" : "Save Changes")}
             </Button>
           </div>
-        </form>
+        </div>
       </Dialog>
 
       {/* 3. DELETE COLLECTOR CONFIRMATION */}
@@ -543,7 +616,11 @@ export function CollectorSelect({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsDeleteOpen(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsDeleteOpen(false);
+              }}
               disabled={isSubmitting}
               className="text-xs font-black border-2 border-black"
             >
@@ -552,9 +629,9 @@ export function CollectorSelect({
             <Button
               type="button"
               variant="destructive"
-              onClick={handleDeleteSubmit}
+              onClick={(e) => handleDeleteSubmit(e)}
               disabled={isSubmitting}
-              className="text-xs font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+              className="text-xs font-black border-2 border-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px]"
             >
               {isSubmitting ? (isBn ? "মুছে ফেলা হচ্ছে..." : "Deleting...") : (isBn ? "হ্যাঁ, মুছে ফেলুন" : "Yes, Delete")}
             </Button>
@@ -578,9 +655,11 @@ export function CollectorSelect({
             <Button
               type="button"
               size="sm"
-              onClick={() => {
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 setIsManageOpen(false);
-                openAddModal();
+                openAddModal(e);
               }}
               className="h-7 text-xs font-black bg-[#FED734] hover:bg-[#ffe169] text-black border-2 border-black shadow-[2px_2px_0px_#000000]"
             >
@@ -619,7 +698,9 @@ export function CollectorSelect({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                         onChange(c.id, c.name);
                         setIsManageOpen(false);
                       }}
@@ -631,7 +712,7 @@ export function CollectorSelect({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => openEditModal(c)}
+                      onClick={(e) => openEditModal(c, e)}
                       className="h-7 w-7 p-0 border border-black bg-[#D8F2FF] text-black shadow-[1px_1px_0px_#000000]"
                       title={isBn ? "এডিট" : "Edit"}
                     >
@@ -641,7 +722,7 @@ export function CollectorSelect({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => openDeleteModal(c)}
+                      onClick={(e) => openDeleteModal(c, e)}
                       className="h-7 w-7 p-0 border border-black bg-[#FFD6E8] text-red-600 shadow-[1px_1px_0px_#000000]"
                       title={isBn ? "মুছে ফেলুন" : "Delete"}
                     >
@@ -657,7 +738,11 @@ export function CollectorSelect({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsManageOpen(false)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsManageOpen(false);
+              }}
               className="text-xs font-black border-2 border-black"
             >
               {isBn ? "বন্ধ করুন" : "Close"}

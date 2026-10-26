@@ -86,7 +86,12 @@ export function Dialog({
               )}
             </div>
             <button
-              onClick={onClose}
+              type="button"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onClose();
+              }}
               className="h-8 w-8 sm:h-9 sm:w-9 flex items-center justify-center rounded-xl border-2 border-black bg-white dark:bg-[#262830] hover:bg-[#FED734] dark:hover:bg-[#FED734] text-black dark:text-white dark:hover:text-black shadow-[2px_2px_0px_#000000] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition-all shrink-0 cursor-pointer"
               aria-label="Close"
             >
