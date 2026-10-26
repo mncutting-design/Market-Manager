@@ -150,6 +150,71 @@ export function BillingView() {
         )}
       </div>
 
+      {/* Monthly Billing & Arrears Summary KPI Cards */}
+      {bills.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <Card className="p-3.5 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+            <p className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+              {locale === "bn" ? "চলতি মাসের বিল" : "Current Month Bill"}
+            </p>
+            <p className="text-base md:text-xl font-black text-black dark:text-white mt-1 font-mono">
+              {formatCurrency(
+                bills.reduce((acc, b) => acc + (b.totalAmount || 0), 0),
+                locale
+              )}
+            </p>
+          </Card>
+
+          <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000]">
+            <p className="text-[11px] font-black text-[#FF4B55] dark:text-[#FF6B75] uppercase tracking-wider">
+              {locale === "bn" ? "পূর্বের অপরিশোধিত বকেয়া" : "Previous Arrears"}
+            </p>
+            <p className="text-base md:text-xl font-black text-[#FF4B55] dark:text-[#FF6B75] mt-1 font-mono">
+              {formatCurrency(
+                bills.reduce((acc, b) => acc + (b.carryForwardDue || 0), 0),
+                locale
+              )}
+            </p>
+          </Card>
+
+          <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FED734]/30 dark:bg-[#FED734]/20 shadow-[3px_3px_0px_#000000]">
+            <p className="text-[11px] font-black text-black dark:text-white uppercase tracking-wider">
+              {locale === "bn" ? "সর্বমোট দাবি (বকেয়া সহ)" : "Total Demand"}
+            </p>
+            <p className="text-base md:text-xl font-black text-black dark:text-white mt-1 font-mono">
+              {formatCurrency(
+                bills.reduce((acc, b) => acc + (b.totalBillWithArrears || (b.totalAmount + (b.carryForwardDue || 0))), 0),
+                locale
+              )}
+            </p>
+          </Card>
+
+          <Card className="p-3.5 rounded-xl border-2 border-black bg-[#E8F8F0] dark:bg-[#132A1E] shadow-[3px_3px_0px_#000000]">
+            <p className="text-[11px] font-black text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
+              {locale === "bn" ? "চলতি মাসে আদায়" : "Collected"}
+            </p>
+            <p className="text-base md:text-xl font-black text-emerald-700 dark:text-emerald-400 mt-1 font-mono">
+              {formatCurrency(
+                bills.reduce((acc, b) => acc + (b.paidAmount || 0), 0),
+                locale
+              )}
+            </p>
+          </Card>
+
+          <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000] col-span-2 sm:col-span-1">
+            <p className="text-[11px] font-black text-[#FF4B55] dark:text-[#FF6B75] uppercase tracking-wider">
+              {locale === "bn" ? "সর্বমোট অবশিষ্ট বকেয়া" : "Total Pending Due"}
+            </p>
+            <p className="text-base md:text-xl font-black text-[#FF4B55] dark:text-[#FF6B75] mt-1 font-mono">
+              {formatCurrency(
+                bills.reduce((acc, b) => acc + (b.totalPayableWithArrears || (b.dueAmount + (b.carryForwardDue || 0))), 0),
+                locale
+              )}
+            </p>
+          </Card>
+        </div>
+      )}
+
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
@@ -221,46 +286,76 @@ export function BillingView() {
                   <p className="text-xs text-gray-600 dark:text-gray-400 font-bold truncate">{bill.shop.market.name}</p>
 
                   {/* Bill Items chips */}
-                  {bill.billItems?.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2.5">
-                      <span className="px-2 py-0.5 rounded-md bg-[#FBF9F5] dark:bg-[#262830] text-[11px] text-black dark:text-white border-2 border-black font-black shadow-[1px_1px_0px_#000000]">
-                        {t("billing.rentAmount")}: {formatCurrency(bill.rentAmount, locale)}
+                  <div className="flex flex-wrap gap-1.5 mt-2.5">
+                    <span className="px-2 py-0.5 rounded-md bg-[#FBF9F5] dark:bg-[#262830] text-[11px] text-black dark:text-white border-2 border-black font-black shadow-[1px_1px_0px_#000000]">
+                      {t("billing.rentAmount")}: {formatCurrency(bill.rentAmount, locale)}
+                    </span>
+                    {bill.billItems?.map((item: any) => (
+                      <span
+                        key={item.id}
+                        className="px-2 py-0.5 rounded-md bg-[#FED734] text-black border-2 border-black text-[11px] font-black shadow-[1px_1px_0px_#000000]"
+                      >
+                        {item.description}: {formatCurrency(item.amount, locale)}
                       </span>
-                      {bill.billItems.map((item: any) => (
-                        <span
-                          key={item.id}
-                          className="px-2 py-0.5 rounded-md bg-[#FED734] text-black border-2 border-black text-[11px] font-black shadow-[1px_1px_0px_#000000]"
-                        >
-                          {item.description}: {formatCurrency(item.amount, locale)}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Previous Due Carry-Forward Alert */}
-                  {bill.carryForwardDue > 0 && (
-                    <div className="mt-2.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#FFEBEF] text-[#FF4B55] border-2 border-black text-xs font-black shadow-[1.5px_1.5px_0px_#000000]">
-                      <span>{t("billing.previousDue")}:</span>
-                      <span className="font-black">{formatCurrency(bill.carryForwardDue, locale)}</span>
-                    </div>
-                  )}
+                    ))}
+                    {bill.carryForwardDue > 0 && (
+                      <span className="px-2 py-0.5 rounded-md bg-[#FFEBEF] dark:bg-[#2C1417] text-[#FF4B55] dark:text-[#FF6B75] border-2 border-black text-[11px] font-black shadow-[1px_1px_0px_#000000]">
+                        {locale === "bn" ? "পূর্বের অপরিশোধিত বকেয়া" : "Previous Arrears"}: +{formatCurrency(bill.carryForwardDue, locale)}
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Amount breakdown and Action Buttons - 100% Mobile Responsive */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between lg:justify-end gap-3 pt-3 lg:pt-0 border-t-2 lg:border-t-0 border-black/10 dark:border-white/10">
-                  <div className="text-left sm:text-right">
-                    <p className="text-xs text-gray-600 dark:text-gray-400 font-bold">{t("billing.totalBill")}</p>
-                    <p className="text-base font-black text-black dark:text-white">
-                      {formatCurrency(bill.totalAmount, locale)}
-                    </p>
-                    {bill.dueAmount > 0 ? (
-                      <p className="text-xs font-black text-[#FF4B55] mt-0.5">
-                        {t("billing.dueAmount")}: {formatCurrency(bill.dueAmount, locale)}
-                      </p>
+                  <div className="text-left sm:text-right space-y-1">
+                    {bill.carryForwardDue > 0 ? (
+                      <div className="space-y-0.5">
+                        <div className="flex sm:justify-end items-center gap-2 text-xs text-gray-600 dark:text-gray-400 font-bold">
+                          <span>{locale === "bn" ? "চলতি মাসের বিল:" : "Current Month:"}</span>
+                          <span className="font-mono text-black dark:text-white font-bold">{formatCurrency(bill.totalAmount, locale)}</span>
+                        </div>
+                        <div className="flex sm:justify-end items-center gap-2 text-xs font-black text-[#FF4B55] dark:text-[#FF6B75]">
+                          <span>{locale === "bn" ? "পূর্বের বকেয়া:" : "Previous Arrears:"}</span>
+                          <span className="font-mono font-black">+ {formatCurrency(bill.carryForwardDue, locale)}</span>
+                        </div>
+                        <div className="pt-1 border-t-2 border-black/10 dark:border-white/10">
+                          <p className="text-[11px] text-gray-700 dark:text-gray-300 font-black uppercase tracking-wider">
+                            {locale === "bn" ? "সর্বমোট প্রদেয় বিল:" : "Total Bill with Arrears:"}
+                          </p>
+                          <p className="text-base sm:text-lg font-black text-black dark:text-white font-mono">
+                            {formatCurrency(bill.totalBillWithArrears || (bill.totalAmount + bill.carryForwardDue), locale)}
+                          </p>
+                        </div>
+                        <div>
+                          {(bill.totalPayableWithArrears || (bill.dueAmount + bill.carryForwardDue)) > 0 ? (
+                            <p className="text-xs font-black text-[#FF4B55] dark:text-[#FF6B75] font-mono">
+                              {locale === "bn" ? "সর্বমোট বকেয়া: " : "Total Due: "}
+                              {formatCurrency(bill.totalPayableWithArrears || (bill.dueAmount + bill.carryForwardDue), locale)}
+                            </p>
+                          ) : (
+                            <p className="text-xs font-black text-[#00BA88] mt-0.5">
+                              {t("status.paid")}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     ) : (
-                      <p className="text-xs font-black text-[#00BA88] mt-0.5">
-                        {t("status.paid")}
-                      </p>
+                      <div>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 font-bold">{t("billing.totalBill")}</p>
+                        <p className="text-base font-black text-black dark:text-white font-mono">
+                          {formatCurrency(bill.totalAmount, locale)}
+                        </p>
+                        {bill.dueAmount > 0 ? (
+                          <p className="text-xs font-black text-[#FF4B55] mt-0.5 font-mono">
+                            {t("billing.dueAmount")}: {formatCurrency(bill.dueAmount, locale)}
+                          </p>
+                        ) : (
+                          <p className="text-xs font-black text-[#00BA88] mt-0.5">
+                            {t("status.paid")}
+                          </p>
+                        )}
+                      </div>
                     )}
                   </div>
 
@@ -283,7 +378,7 @@ export function BillingView() {
                     )}
 
                     {/* Collect payment button */}
-                    {bill.dueAmount > 0 && (
+                    {((bill.dueAmount > 0) || (bill.carryForwardDue || 0) > 0) && (
                       <Button
                         size="sm"
                         variant="primary"
@@ -293,7 +388,7 @@ export function BillingView() {
                             marketId: bill.shop.marketId,
                             shopId: bill.shopId,
                             billId: bill.id,
-                            dueAmount: bill.dueAmount,
+                            dueAmount: bill.totalPayableWithArrears || (bill.dueAmount + (bill.carryForwardDue || 0)),
                           })
                         }
                       >

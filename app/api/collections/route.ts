@@ -210,11 +210,52 @@ export async function POST(req: Request) {
         },
       });
 
-      // 2. Recalculate bill amounts
+      // 2. FIFO Payment Allocation across Prior Unpaid Bills & Current Bill
+      const priorUnpaidBills = await tx.bill.findMany({
+        where: {
+          shopId: bill.shopId,
+          status: { in: ["DUE", "PARTIAL"] },
+          OR: [
+            { year: { lt: bill.year } },
+            { year: bill.year, month: { lt: bill.month } },
+          ],
+        },
+        orderBy: [{ year: "asc" }, { month: "asc" }],
+      });
+
+      let remainingToAllocate = paymentPaisa;
+      let arrearsClearedPaisa = 0;
+
+      // Allocate to oldest unpaid bills first
+      for (const pBill of priorUnpaidBills) {
+        if (remainingToAllocate <= 0) break;
+
+        const pBillDue = Math.max(0, pBill.totalAmount - pBill.paidAmount);
+        if (pBillDue <= 0) continue;
+
+        const alloc = Math.min(remainingToAllocate, pBillDue);
+        const pNewPaid = pBill.paidAmount + alloc;
+        const pNewDue = Math.max(0, pBill.totalAmount - pNewPaid);
+        const pNewStatus = pNewPaid >= pBill.totalAmount ? "PAID" : "PARTIAL";
+
+        await tx.bill.update({
+          where: { id: pBill.id },
+          data: {
+            paidAmount: pNewPaid,
+            dueAmount: pNewDue,
+            status: pNewStatus,
+          },
+        });
+
+        remainingToAllocate -= alloc;
+        arrearsClearedPaisa += alloc;
+      }
+
+      // Remaining payment applies to current target bill
       const itemsTotal = (bill.billItems || []).reduce((acc: number, item: any) => acc + (item.amount || 0), 0);
       const computedTotal = bill.rentAmount + itemsTotal;
       const effectiveTotal = Math.max(bill.totalAmount, computedTotal);
-      const newPaidAmount = bill.paidAmount + paymentPaisa;
+      const newPaidAmount = bill.paidAmount + remainingToAllocate;
       const newDueAmount = Math.max(0, effectiveTotal - newPaidAmount);
 
       let newStatus = "DUE";
@@ -234,7 +275,7 @@ export async function POST(req: Request) {
         },
       });
 
-      return { payment, updatedBill };
+      return { payment, updatedBill, arrearsClearedPaisa };
     });
 
     // Record audit log for collected payment
@@ -277,6 +318,7 @@ export async function POST(req: Request) {
       paidNow: result.payment.amount,
       totalPaidSoFar: result.updatedBill.paidAmount,
       remainingDue: result.updatedBill.dueAmount,
+      arrearsCleared: result.arrearsClearedPaisa,
       paymentMethod: result.payment.method,
       reference: result.payment.reference,
       receivedBy: result.payment.collector?.name || result.payment.receivedBy || result.payment.receivedByUser?.name || collectorName,

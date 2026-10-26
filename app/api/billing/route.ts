@@ -78,18 +78,24 @@ export async function GET(req: Request) {
       const effectiveDue = Math.max(0, effectiveTotal - bill.paidAmount);
 
       const priorBills = unpaidByShop.get(bill.shopId) || [];
-      const carryForwardDue = priorBills
+      const priorUnpaidList = priorBills
         .filter((b) => b.year < bill.year || (b.year === bill.year && b.month < bill.month))
-        .reduce((sum, b) => sum + b.dueAmount, 0);
+        .sort((a, b) => (a.year !== b.year ? a.year - b.year : a.month - b.month));
 
+      const carryForwardDue = priorUnpaidList.reduce((sum, b) => sum + b.dueAmount, 0);
+      const totalBillWithArrears = effectiveTotal + carryForwardDue;
       const totalPayableWithArrears = effectiveDue + carryForwardDue;
 
       return {
         ...bill,
         totalAmount: effectiveTotal,
         dueAmount: effectiveDue,
+        currentMonthBill: effectiveTotal,
+        currentMonthDue: effectiveDue,
         carryForwardDue,
+        totalBillWithArrears,
         totalPayableWithArrears,
+        priorUnpaidList,
       };
     });
 

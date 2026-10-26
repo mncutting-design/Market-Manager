@@ -150,7 +150,8 @@ export function QuickCollectModal() {
         if (chosenBill) {
           setSelectedBillId(chosenBill.id);
           setActiveBill(chosenBill);
-          setAmountBDT(Math.round(chosenBill.dueAmount / 100));
+          const fullPayable = chosenBill.totalPayableWithArrears || (chosenBill.dueAmount + (chosenBill.carryForwardDue || 0));
+          setAmountBDT(Math.round(fullPayable / 100));
         } else {
           setSelectedBillId("");
           setActiveBill(null);
@@ -411,16 +412,20 @@ export function QuickCollectModal() {
                 const found = bills.find((b) => b.id === bId);
                 if (found) {
                   setActiveBill(found);
-                  setAmountBDT(Math.round(found.dueAmount / 100));
+                  const fullPayable = found.totalPayableWithArrears || (found.dueAmount + (found.carryForwardDue || 0));
+                  setAmountBDT(Math.round(fullPayable / 100));
                 }
               }}
               className="text-xs font-bold"
             >
-              {bills.map((b) => (
-                <option key={b.id} value={b.id}>
-                  {locale === "bn" ? toBanglaDigits(b.month) : b.month}/{locale === "bn" ? toBanglaDigits(b.year) : b.year} — {locale === "bn" ? "বকেয়া:" : "Due:"} {formatCurrency(b.dueAmount, locale)} {b.status === "PAID" ? `(${locale === "bn" ? "পরিশোধিত" : "PAID"})` : ""}
-                </option>
-              ))}
+              {bills.map((b) => {
+                const bFullDue = b.totalPayableWithArrears || (b.dueAmount + (b.carryForwardDue || 0));
+                return (
+                  <option key={b.id} value={b.id}>
+                    {locale === "bn" ? toBanglaDigits(b.month) : b.month}/{locale === "bn" ? toBanglaDigits(b.year) : b.year} — {locale === "bn" ? "বকেয়া:" : "Due:"} {formatCurrency(bFullDue, locale)} {b.carryForwardDue > 0 ? (locale === "bn" ? `(পূর্বের বকেয়া সহ)` : `(incl. arrears)`) : b.status === "PAID" ? `(${locale === "bn" ? "পরিশোধিত" : "PAID"})` : ""}
+                  </option>
+                );
+              })}
             </Select>
           </div>
         )}
@@ -441,12 +446,20 @@ export function QuickCollectModal() {
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-600 dark:text-neutral-400 font-bold">{t("billing.totalBill")}:</span>
-              <span className="font-black text-black dark:text-white">{formatCurrency(activeBill.totalAmount, locale)}</span>
+              <span className="text-neutral-600 dark:text-neutral-400 font-bold">
+                {activeBill.carryForwardDue > 0 ? (locale === "bn" ? "চলতি মাসের বিল:" : "Current Month Bill:") : t("billing.totalBill")}:
+              </span>
+              <span className="font-black text-black dark:text-white font-mono">{formatCurrency(activeBill.totalAmount, locale)}</span>
             </div>
+            {activeBill.carryForwardDue > 0 && (
+              <div className="flex justify-between font-black text-[#FF4B55] dark:text-[#FF6B75]">
+                <span>{locale === "bn" ? "পূর্বের অপরিশোধিত বকেয়া:" : "Previous Unpaid Arrears:"}</span>
+                <span className="font-mono">+ {formatCurrency(activeBill.carryForwardDue, locale)}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-neutral-600 dark:text-neutral-400 font-bold">{t("billing.paidAmount")}:</span>
-              <span className="font-black text-[#00BA88]">
+              <span className="font-black text-[#00BA88] font-mono">
                 {formatCurrency(activeBill.paidAmount, locale)}
               </span>
             </div>
@@ -466,9 +479,13 @@ export function QuickCollectModal() {
               </div>
             )}
             <div className="flex justify-between pt-1 border-t-2 border-black/10 dark:border-white/10 font-black text-sm">
-              <span className="text-[#FF4B55]">{t("collections.totalDue")}:</span>
               <span className="text-[#FF4B55]">
-                {formatCurrency(activeBill.dueAmount, locale)}
+                {activeBill.carryForwardDue > 0
+                  ? (locale === "bn" ? "সর্বমোট প্রদেয় বকেয়া (পূর্বের বকেয়া সহ):" : "Total Due (with Arrears):")
+                  : t("collections.totalDue")}:
+              </span>
+              <span className="text-[#FF4B55] font-mono font-black">
+                {formatCurrency(activeBill.totalPayableWithArrears || (activeBill.dueAmount + (activeBill.carryForwardDue || 0)), locale)}
               </span>
             </div>
           </div>

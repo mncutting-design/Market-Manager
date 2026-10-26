@@ -151,20 +151,20 @@ export function GenerateBillsModal() {
           <p className="text-xs text-neutral-600 dark:text-neutral-400 font-bold mt-1">{t("settings.billDueDayDesc")}</p>
         </div>
 
-        {/* Info card - Strictly manual additional charges */}
+        {/* Info card - Strictly manual additional charges & automatic carry-forward */}
         <div className="p-3.5 rounded-xl bg-[#FBF9F5] dark:bg-[#262830] border-2 border-black text-xs text-black dark:text-white space-y-1.5 shadow-[2px_2px_0px_#000000]">
           <p className="font-black text-black dark:text-white flex items-center gap-1.5">
             <CheckCircle2 className="w-4 h-4 text-black dark:text-[#FED734] shrink-0 stroke-[2.5]" />
             <span>
               {locale === "bn"
-                ? "শুধুমাত্র নির্ধারিত ভাড়া বিল তৈরি হবে (ম্যানুয়াল চার্জ ব্যবস্থা)"
-                : "Base Rent Only (Manual Charges System)"}
+                ? "মূল ভাড়া ও পূর্বের বকেয়া সমন্বয় ব্যবস্থা"
+                : "Base Rent & Prior Arrears Integration"}
             </span>
           </p>
           <p className="text-[11px] text-neutral-600 dark:text-neutral-300 font-bold leading-relaxed">
             {locale === "bn"
-              ? "কোনো অতিরিক্ত চার্জ স্বয়ংক্রিয়ভাবে যোগ হবে না। প্রতিটি দোকানের কেবল চুক্তি অনুযায়ী নির্ধারিত মূল ভাড়া বিল তৈরি হবে। অতিরিক্ত যে কোনো খরচ (যেমন: বিদ্যুৎ, পানি, সার্ভিস, জেনারেটর ইত্যাদি) আপনি প্রয়োজন অনুযায়ী 'অতিরিক্ত খরচ' বাটনে চাপ দিয়ে সম্পূর্ণ ম্যানুয়ালি যোগ করতে পারবেন।"
-              : "No charges will be added automatically. Bills will only include the agreed base rent. Any extra costs (e.g. electricity, water, service, generator) can be added manually as needed via the 'Extra Costs' button on each bill."}
+              ? "প্রতিটি দোকানের চুক্তি অনুযায়ী নির্ধারিত মূল ভাড়া বিল তৈরি হবে। যদি কোনো দোকানের পূর্ববর্তী মাসের বকেয়া পাওনা থাকে, তবে তা স্বয়ংক্রিয়ভাবে এই নতুন বিলের সাথে যোগ হয়ে সর্বমোট দাবি ও বকেয়া হিসেবে প্রদর্শিত হবে। এছাড়া বিদ্যুৎ, পানি বা অতিরিক্ত খরচ আপনি বিল পেইজ থেকে 'অতিরিক্ত খরচ' বাটনে চাপ দিয়ে সম্পূর্ণ ম্যানুয়ালি যোগ করতে পারবেন।"
+              : "Base rent bills will be generated according to lease agreements. Any unpaid dues from previous months will automatically be carried forward and added to the new bill as total payable demand. Variable utilities can be managed via the 'Extra Costs' button."}
           </p>
         </div>
 
