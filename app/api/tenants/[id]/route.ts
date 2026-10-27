@@ -263,17 +263,35 @@ export async function PUT(
       if (advanceDepositChanged) {
         const delta = newAdvanceDepositPaisa - existing.advanceDeposit;
         if (delta !== 0) {
+          const reasonText = note?.trim() || (delta > 0
+            ? `Admin updated security deposit: +৳${(delta / 100).toLocaleString()}`
+            : `Admin adjusted security deposit: -৳${(Math.abs(delta) / 100).toLocaleString()}`);
+
+          // Legacy table
           await tx.advanceTransaction.create({
             data: {
               tenantId: existing.id,
               type: delta > 0 ? "TOPUP" : "DEDUCTION",
               amount: Math.abs(delta),
-              reason: note?.trim() || (delta > 0
-                ? `Admin updated security deposit: +৳${(delta / 100).toLocaleString()}`
-                : `Admin adjusted security deposit: -৳${(Math.abs(delta) / 100).toLocaleString()}`),
+              reason: reasonText,
               createdBy: session.name || "Admin",
               createdByName: session.name || "Admin",
               enteredById: session.id,
+            },
+          });
+
+          // New DepositTransaction ledger
+          await tx.depositTransaction.create({
+            data: {
+              tenantId: existing.id,
+              marketId: existing.shop.marketId,
+              shopId: existing.shop.id,
+              type: delta > 0 ? "TOPUP" : "DEDUCTION",
+              amount: Math.abs(delta),
+              method: "CASH",
+              enteredById: session.id,
+              reason: reasonText,
+              status: "POSTED",
             },
           });
         }

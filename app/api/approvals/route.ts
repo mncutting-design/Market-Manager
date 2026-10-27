@@ -613,19 +613,43 @@ export async function PUT(req: Request) {
           const oldAdvance = tenantBefore.advanceDeposit;
           const delta = newAdvance - oldAdvance;
           if (delta !== 0) {
+            const reasonText = proposed.note?.trim() || (delta > 0
+              ? `Admin approved jamanot edit: +৳${(delta / 100).toLocaleString()}`
+              : `Admin approved jamanot deduction: -৳${(Math.abs(delta) / 100).toLocaleString()}`);
+
+            // Legacy table
             await tx.advanceTransaction.create({
               data: {
                 tenantId: cr.entityId,
                 type: delta > 0 ? "TOPUP" : "DEDUCTION",
                 amount: Math.abs(delta),
-                reason: proposed.note?.trim() || (delta > 0
-                  ? `Admin approved jamanot edit: +৳${(delta / 100).toLocaleString()}`
-                  : `Admin approved jamanot deduction: -৳${(Math.abs(delta) / 100).toLocaleString()}`),
+                reason: reasonText,
                 createdBy: session.name || "Admin",
                 createdByName: session.name || "Admin",
                 enteredById: session.id,
               },
             });
+
+            // New DepositTransaction ledger
+            const tenantFull = await tx.tenant.findUnique({
+              where: { id: cr.entityId },
+              include: { shop: true },
+            });
+            if (tenantFull) {
+              await tx.depositTransaction.create({
+                data: {
+                  tenantId: tenantFull.id,
+                  marketId: tenantFull.shop.marketId,
+                  shopId: tenantFull.shop.id,
+                  type: delta > 0 ? "TOPUP" : "DEDUCTION",
+                  amount: Math.abs(delta),
+                  method: "CASH",
+                  enteredById: session.id,
+                  reason: reasonText,
+                  status: "POSTED",
+                },
+              });
+            }
           }
         }
       } else if (cr.entityType === "BILL") {
