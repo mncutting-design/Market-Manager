@@ -54,6 +54,24 @@ export async function POST(req: Request) {
         throw new Error("Tenant not found");
       }
 
+      // If tenant has no depositTransactions yet, auto-bootstrap from advanceDeposit
+      if (tenant.depositTransactions.length === 0 && tenant.advanceDeposit > 0) {
+        const initialTx = await tx.depositTransaction.create({
+          data: {
+            tenantId: tenant.id,
+            marketId: tenant.shop.marketId,
+            shopId: tenant.shop.id,
+            type: "RECEIVED",
+            amount: tenant.advanceDeposit,
+            transactionDate: tenant.startDate || tenant.createdAt,
+            method: "CASH",
+            reason: "Initial lease security deposit",
+            status: "POSTED",
+          },
+        });
+        tenant.depositTransactions = [initialTx];
+      }
+
       const availableDeposit = computeDepositBalance(tenant.depositTransactions);
       const candidateBills = specificBillIds && specificBillIds.length > 0
         ? tenant.bills.filter((b) => specificBillIds.includes(b.id))
