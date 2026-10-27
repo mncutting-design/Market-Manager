@@ -53,3 +53,7 @@ next-env.d.ts
 scripts/check-user-relations.ts
 scripts/delete-duplicate-admin.ts
 scripts/list-users.ts
+
+# database backups
+backups/
+*.sql

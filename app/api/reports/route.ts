@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-
+import {
+  calculateFinancialStatement,
+  getDhakaMonthRange,
+  getDhakaYearRange,
+  isTimestampInPeriod,
+} from "@/lib/accounting";
+import {
+  computeDepositBalance,
+  calculateDepositRunningBalances,
+} from "@/lib/deposit-ledger";
 
 export async function GET(req: Request) {
   try {
@@ -129,27 +138,97 @@ export async function GET(req: Request) {
         };
       });
 
-      return NextResponse.json({ reportType, rows });
+      // Calculate Standard Financial Statement for this period & market
+      const { startDate: periodStart, endDate: periodEnd } = getDhakaMonthRange(year, month || 1);
+
+      const payWhere: any = {
+        paidOn: { gte: periodStart, lte: periodEnd },
+      };
+      const expWhereMonth: any = {
+        date: { gte: periodStart, lte: periodEnd },
+      };
+      const depWhereMonth: any = {
+        transactionDate: { gte: periodStart, lte: periodEnd },
+        status: "POSTED",
+      };
+      const allDepWhere: any = {
+        status: "POSTED",
+      };
+
+      if (marketId !== "ALL") {
+        payWhere.bill = { shop: { marketId } };
+        expWhereMonth.marketId = marketId;
+        depWhereMonth.marketId = marketId;
+        allDepWhere.marketId = marketId;
+      }
+
+      const [paymentsInPeriod, expensesInPeriod, depositsInPeriod, allHistoricalDeposits] = await Promise.all([
+        prisma.payment.findMany({ where: payWhere, select: { amount: true, paidOn: true, method: true } }),
+        prisma.expense.findMany({
+          where: expWhereMonth,
+          include: { category: true },
+        }),
+        prisma.depositTransaction.findMany({
+          where: depWhereMonth,
+          include: { reversesTransaction: true },
+        }),
+        prisma.depositTransaction.findMany({
+          where: allDepWhere,
+          include: { reversesTransaction: true },
+        }),
+      ]);
+
+      const financialStatement = calculateFinancialStatement({
+        period: { startDate: periodStart, endDate: periodEnd, year, month },
+        payments: paymentsInPeriod,
+        expenses: expensesInPeriod,
+        depositTransactions: depositsInPeriod,
+        allHistoricalDepositTransactions: allHistoricalDeposits,
+      });
+
+      // Breakdown of operating expenses by category
+      const expenseByCategoryMap = new Map<string, { categoryId: string; name_bn: string; name_en: string; color: string; amount: number }>();
+      for (const e of expensesInPeriod) {
+        const catId = e.categoryId || "uncategorized";
+        if (!expenseByCategoryMap.has(catId)) {
+          expenseByCategoryMap.set(catId, {
+            categoryId: catId,
+            name_bn: e.category?.name_bn || "অন্যান্য খরচ",
+            name_en: e.category?.name_en || "Other Expense",
+            color: e.category?.color || "#0d9488",
+            amount: 0,
+          });
+        }
+        expenseByCategoryMap.get(catId)!.amount += e.amount;
+      }
+
+      return NextResponse.json({
+        reportType,
+        rows,
+        financialStatement,
+        expensesByCategory: Array.from(expenseByCategoryMap.values()),
+      });
     }
 
     // 1b. Month-Wise Summary Report (12 Months Financial Statement)
     if (reportType === "month_wise_summary") {
+      const { startDate: yearStart, endDate: yearEnd } = getDhakaYearRange(year);
+
       const billWhere: any = { year };
-      const expWhere: any = {
-        date: {
-          gte: new Date(year, 0, 1),
-          lte: new Date(year, 11, 31, 23, 59, 59),
-        },
-      };
+      const payYearWhere: any = { paidOn: { gte: yearStart, lte: yearEnd } };
+      const expYearWhere: any = { date: { gte: yearStart, lte: yearEnd } };
+      const depYearWhere: any = { status: "POSTED" };
 
       if (marketId !== "ALL") {
         billWhere.shop = { marketId, isActive: true };
-        expWhere.marketId = marketId;
+        payYearWhere.bill = { shop: { marketId } };
+        expYearWhere.marketId = marketId;
+        depYearWhere.marketId = marketId;
       } else {
         billWhere.shop = { isActive: true };
       }
 
-      const [allBills, allExpenses] = await Promise.all([
+      const [allBills, allPayments, allExpenses, allDeposits] = await Promise.all([
         prisma.bill.findMany({
           where: billWhere,
           select: {
@@ -160,84 +239,98 @@ export async function GET(req: Request) {
             status: true,
           },
         }),
+        prisma.payment.findMany({
+          where: payYearWhere,
+          select: { amount: true, paidOn: true, method: true },
+        }),
         prisma.expense.findMany({
-          where: expWhere,
-          select: {
-            date: true,
-            amount: true,
-          },
+          where: expYearWhere,
+          select: { amount: true, date: true, categoryId: true },
+        }),
+        prisma.depositTransaction.findMany({
+          where: depYearWhere,
+          include: { reversesTransaction: true },
         }),
       ]);
 
       const rows = Array.from({ length: 12 }, (_, i) => {
         const m = i + 1;
+        const { startDate: mStart, endDate: mEnd } = getDhakaMonthRange(year, m);
+
+        const mStmt = calculateFinancialStatement({
+          period: { startDate: mStart, endDate: mEnd, year, month: m },
+          payments: allPayments,
+          expenses: allExpenses,
+          depositTransactions: allDeposits,
+          allHistoricalDepositTransactions: allDeposits,
+        });
+
         const mBills = allBills.filter((b) => b.month === m);
-        const mExpenses = allExpenses.filter((e) => new Date(e.date).getMonth() + 1 === m);
-
         const totalBilled = mBills.reduce((sum, b) => sum + b.totalAmount, 0);
-        const totalCollected = mBills.reduce((sum, b) => sum + b.paidAmount, 0);
+        const totalCollected = mStmt.collection.totalCollection;
         const totalDue = mBills.reduce((sum, b) => sum + b.dueAmount, 0);
-        const totalExpense = mExpenses.reduce((sum, e) => sum + e.amount, 0);
-        const netProfit = totalCollected - totalExpense;
-        const collectionRate = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
-
-        const paidCount = mBills.filter((b) => b.status === "PAID").length;
-        const partialCount = mBills.filter((b) => b.status === "PARTIAL").length;
-        const dueCount = mBills.filter((b) => b.status === "DUE").length;
+        const totalExpense = mStmt.outflow.totalOutflow;
+        const netProfit = mStmt.summary.operatingProfit;
+        const netCashFlow = mStmt.summary.netCashFlow;
+        const collectionRate = totalBilled > 0 ? (mStmt.collection.rentChargesReceived / totalBilled) * 100 : 0;
 
         return {
           month: m,
+          statement: mStmt,
           totalBilled,
           totalCollected,
           totalDue,
           totalExpense,
           netProfit,
+          netCashFlow,
           collectionRate,
-          paidCount,
-          partialCount,
-          dueCount,
+          paidCount: mBills.filter((b) => b.status === "PAID").length,
+          partialCount: mBills.filter((b) => b.status === "PARTIAL").length,
+          dueCount: mBills.filter((b) => b.status === "DUE").length,
           totalBills: mBills.length,
         };
       });
 
-      const yearlyBilled = rows.reduce((acc, r) => acc + r.totalBilled, 0);
-      const yearlyCollected = rows.reduce((acc, r) => acc + r.totalCollected, 0);
-      const yearlyDue = rows.reduce((acc, r) => acc + r.totalDue, 0);
-      const yearlyExpense = rows.reduce((acc, r) => acc + r.totalExpense, 0);
-      const yearlyNetProfit = yearlyCollected - yearlyExpense;
-      const yearlyCollectionRate = yearlyBilled > 0 ? (yearlyCollected / yearlyBilled) * 100 : 0;
+      const yearlyStatement = calculateFinancialStatement({
+        period: { startDate: yearStart, endDate: yearEnd, year },
+        payments: allPayments,
+        expenses: allExpenses,
+        depositTransactions: allDeposits,
+        allHistoricalDepositTransactions: allDeposits,
+      });
 
       return NextResponse.json({
         reportType,
         year,
         rows,
+        statement: yearlyStatement,
         summary: {
-          yearlyBilled,
-          yearlyCollected,
-          yearlyDue,
-          yearlyExpense,
-          yearlyNetProfit,
-          yearlyCollectionRate,
+          yearlyBilled: rows.reduce((acc, r) => acc + r.totalBilled, 0),
+          yearlyCollected: yearlyStatement.collection.totalCollection,
+          yearlyDue: rows.reduce((acc, r) => acc + r.totalDue, 0),
+          yearlyExpense: yearlyStatement.outflow.totalOutflow,
+          yearlyNetProfit: yearlyStatement.summary.operatingProfit,
+          yearlyNetCashFlow: yearlyStatement.summary.netCashFlow,
+          yearlyCollectionRate:
+            rows.reduce((acc, r) => acc + r.totalBilled, 0) > 0
+              ? (yearlyStatement.collection.rentChargesReceived / rows.reduce((acc, r) => acc + r.totalBilled, 0)) * 100
+              : 0,
         },
       });
     }
 
-    // 2. Market Profit & Loss Statement
+    // 2. Market Profit & Loss Statement (Operating Profit & Net Cash Flow)
     if (reportType === "market_pnl") {
-      const billWhere: any = { year };
-      const expWhere: any = {
-        date: {
-          gte: new Date(year, 0, 1),
-          lte: new Date(year, 11, 31, 23, 59, 59),
-        },
-      };
-
+      let pStart: Date;
+      let pEnd: Date;
       if (month && month > 0 && month <= 12) {
-        billWhere.month = month;
-        expWhere.date = {
-          gte: new Date(year, month - 1, 1),
-          lte: new Date(year, month, 0, 23, 59, 59),
-        };
+        const range = getDhakaMonthRange(year, month);
+        pStart = range.startDate;
+        pEnd = range.endDate;
+      } else {
+        const range = getDhakaYearRange(year);
+        pStart = range.startDate;
+        pEnd = range.endDate;
       }
 
       const markets = await prisma.market.findMany({
@@ -247,57 +340,277 @@ export async function GET(req: Request) {
             where: { isActive: true },
             include: {
               bills: {
-                where: billWhere,
-              },
-              tenants: {
-                where: { isActive: true },
-                include: { advanceTransactions: true },
+                where: {
+                  year,
+                  ...(month && month > 0 && month <= 12 ? { month } : {}),
+                },
               },
             },
           },
           expenses: {
-            where: expWhere,
+            where: {
+              date: { gte: pStart, lte: pEnd },
+            },
+          },
+          depositTransactions: {
+            where: {
+              status: "POSTED",
+            },
+            include: { reversesTransaction: true },
+          },
+        },
+      });
+
+      // Get all payments for these markets in the period
+      const payments = await prisma.payment.findMany({
+        where: {
+          paidOn: { gte: pStart, lte: pEnd },
+          bill: {
+            shop: {
+              isActive: true,
+              ...(marketId !== "ALL" ? { marketId } : {}),
+            },
+          },
+        },
+        include: {
+          bill: {
+            select: {
+              month: true,
+              year: true,
+              shopId: true,
+              rentAmount: true,
+              totalAmount: true,
+              shop: { select: { marketId: true } },
+            },
           },
         },
       });
 
       const rows = markets.map((m) => {
+        const mPayments = payments.filter((p) => p.bill.shop.marketId === m.id);
+        const mExpenses = m.expenses;
+        const mDepositsInPeriod = m.depositTransactions.filter((dt) =>
+          isTimestampInPeriod(dt.transactionDate, pStart, pEnd)
+        );
+
+        const stmt = calculateFinancialStatement({
+          period: { startDate: pStart, endDate: pEnd, year, month },
+          payments: mPayments,
+          expenses: mExpenses,
+          depositTransactions: mDepositsInPeriod,
+          allHistoricalDepositTransactions: m.depositTransactions,
+        });
+
         const bills = m.shops.flatMap((s) => s.bills);
         const totalBilled = bills.reduce((sum, b) => sum + b.totalAmount, 0);
-        const totalCollected = bills.reduce((sum, b) => sum + b.paidAmount, 0);
         const totalDue = bills.reduce((sum, b) => sum + b.dueAmount, 0);
-        const totalExpenses = m.expenses.reduce((sum, e) => sum + e.amount, 0);
-        const netProfit = totalCollected - totalExpenses;
-        const collectionRate = totalBilled > 0 ? (totalCollected / totalBilled) * 100 : 0;
-
-        // Advance held is a LIABILITY, never recognized as revenue or profit
-        let advanceLiability = 0;
-        for (const shop of m.shops) {
-          for (const t of (shop as any).tenants || []) {
-            let bal = 0;
-            for (const tx of t.advanceTransactions || []) {
-              if (tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP") bal += tx.amount;
-              else if (tx.type === "ADJUSTED_TO_DUE" || tx.type === "DEDUCTION" || tx.type === "REFUND") bal -= tx.amount;
-            }
-            advanceLiability += Math.max(0, bal);
-          }
-        }
 
         return {
           marketId: m.id,
           marketName: m.name,
           totalShops: m.shops.length,
           totalBilled,
-          totalCollected,
+          totalCollected: stmt.collection.totalCollection,
           totalDue,
-          totalExpenses,
-          netProfit,
-          collectionRate,
-          advanceLiability, // Liability line item!
+          totalExpenses: stmt.outflow.totalOutflow,
+          netProfit: stmt.summary.operatingProfit, // Primary profit metric
+          netCashFlow: stmt.summary.netCashFlow,   // Secondary series
+          depositHeld: stmt.summary.depositHeldAtPeriodEnd,
+          depositReceived: stmt.collection.depositReceived,
+          depositRefunded: stmt.outflow.depositRefunded,
+          depositUsed: stmt.outflow.depositUsed,
+          collectionRate: totalBilled > 0 ? (stmt.collection.rentChargesReceived / totalBilled) * 100 : 0,
+          statement: stmt,
         };
       });
 
+      // Sort by operating profit as requested by prompt
+      rows.sort((a, b) => b.netProfit - a.netProfit);
+
       return NextResponse.json({ reportType, rows });
+    }
+
+    // 2a. Deposit Report (Per-Tenant, Per-Market, Channel Breakdown)
+    if (reportType === "deposit_report") {
+      let pStart: Date;
+      let pEnd: Date;
+      if (month && month > 0 && month <= 12) {
+        const range = getDhakaMonthRange(year, month);
+        pStart = range.startDate;
+        pEnd = range.endDate;
+      } else {
+        const range = getDhakaYearRange(year);
+        pStart = range.startDate;
+        pEnd = range.endDate;
+      }
+
+      const depWhere: any = { status: "POSTED" };
+      if (marketId !== "ALL") depWhere.marketId = marketId;
+
+      const [allDeposits, markets, activeTenants, paymentsInPeriod, expensesInPeriod] = await Promise.all([
+        prisma.depositTransaction.findMany({
+          where: depWhere,
+          include: {
+            tenant: { select: { id: true, name: true, phone: true, status: true, shop: { select: { shopNumber: true, market: { select: { id: true, name: true } } } } } },
+            shop: { select: { id: true, shopNumber: true } },
+            market: { select: { id: true, name: true } },
+            paymentAccount: true,
+            reversesTransaction: true,
+          },
+          orderBy: [{ transactionDate: "asc" }, { createdAt: "asc" }],
+        }),
+        prisma.market.findMany({
+          where: marketId !== "ALL" ? { id: marketId, isActive: true } : { isActive: true },
+          select: { id: true, name: true },
+        }),
+        prisma.tenant.findMany({
+          where: {
+            ...(marketId !== "ALL" ? { shop: { marketId } } : {}),
+          },
+          include: {
+            shop: { select: { shopNumber: true, market: { select: { id: true, name: true } } } },
+            depositTransactions: { where: { status: "POSTED" } },
+          },
+        }),
+        prisma.payment.findMany({
+          where: {
+            paidOn: { gte: pStart, lte: pEnd },
+            ...(marketId !== "ALL" ? { bill: { shop: { marketId } } } : {}),
+          },
+          select: { amount: true, paidOn: true, method: true },
+        }),
+        prisma.expense.findMany({
+          where: {
+            date: { gte: pStart, lte: pEnd },
+            ...(marketId !== "ALL" ? { marketId } : {}),
+          },
+          select: { amount: true, date: true },
+        }),
+      ]);
+
+      const financialStatement = calculateFinancialStatement({
+        period: { startDate: pStart, endDate: pEnd, year, month },
+        payments: paymentsInPeriod,
+        expenses: expensesInPeriod,
+        depositTransactions: allDeposits.filter((dt) => isTimestampInPeriod(dt.transactionDate, pStart, pEnd)),
+        allHistoricalDepositTransactions: allDeposits,
+      });
+
+      // Per-Market Summary
+      const perMarketSummary = markets.map((m) => {
+        const mDeposits = allDeposits.filter((d) => d.marketId === m.id);
+        const mInPeriod = mDeposits.filter((d) => isTimestampInPeriod(d.transactionDate, pStart, pEnd));
+        const mTenants = activeTenants.filter((t) => t.shop?.market?.id === m.id);
+
+        let held = 0;
+        for (const t of mTenants) {
+          held += computeDepositBalance(t.depositTransactions);
+        }
+
+        let received = 0;
+        let refunded = 0;
+        let used = 0;
+        for (const d of mInPeriod) {
+          if (d.type === "RECEIVED" || d.type === "TOPUP") received += d.amount;
+          else if (d.type === "REFUND") refunded += d.amount;
+          else if (d.type === "ADJUSTED_TO_DUE" || d.type === "DEDUCTION") used += d.amount;
+          else if (d.type === "REVERSAL") {
+            if (d.reversesTransaction && (d.reversesTransaction.type === "RECEIVED" || d.reversesTransaction.type === "TOPUP")) {
+              received -= d.amount;
+            } else if (d.reversesTransaction && d.reversesTransaction.type === "REFUND") {
+              refunded -= d.amount;
+            }
+          }
+        }
+
+        return {
+          marketId: m.id,
+          marketName: m.name,
+          tenantCount: mTenants.length,
+          depositHeld: held,
+          periodReceived: received,
+          periodRefunded: refunded,
+          periodUsed: used,
+          netMovement: received - refunded - used,
+        };
+      });
+
+      // Channel & Bank Breakdown
+      const channelBreakdown: Record<string, { channel: string; in: number; out: number; count: number }> = {
+        CASH: { channel: "CASH", in: 0, out: 0, count: 0 },
+        BKASH: { channel: "BKASH", in: 0, out: 0, count: 0 },
+        NAGAD: { channel: "NAGAD", in: 0, out: 0, count: 0 },
+        BANK: { channel: "BANK", in: 0, out: 0, count: 0 },
+        CHEQUE: { channel: "CHEQUE", in: 0, out: 0, count: 0 },
+      };
+
+      const accountBreakdown: Record<string, { accountId: string; accountName: string; number: string; in: number; out: number }> = {};
+
+      for (const d of allDeposits.filter((dt) => isTimestampInPeriod(dt.transactionDate, pStart, pEnd))) {
+        const method = (d.method || "CASH").toUpperCase();
+        if (!channelBreakdown[method]) {
+          channelBreakdown[method] = { channel: method, in: 0, out: 0, count: 0 };
+        }
+        channelBreakdown[method].count += 1;
+
+        const accKey = d.paymentAccountId || method;
+        const accName = d.paymentAccount
+          ? `${d.paymentAccount.name_bn || d.paymentAccount.name_en} (${d.paymentAccount.number})`
+          : d.bankName || (method === "CASH" ? "নগদ / Cash" : method);
+
+        if (!accountBreakdown[accKey]) {
+          accountBreakdown[accKey] = {
+            accountId: accKey,
+            accountName: accName,
+            number: d.paymentAccount?.number || "",
+            in: 0,
+            out: 0,
+          };
+        }
+
+        if (d.type === "RECEIVED" || d.type === "TOPUP") {
+          channelBreakdown[method].in += d.amount;
+          accountBreakdown[accKey].in += d.amount;
+        } else if (d.type === "REFUND") {
+          channelBreakdown[method].out += d.amount;
+          accountBreakdown[accKey].out += d.amount;
+        }
+      }
+
+      // Per-tenant list
+      const tenantLedgers = activeTenants.map((t) => {
+        const balance = computeDepositBalance(t.depositTransactions);
+        const tDeposits = allDeposits.filter((d) => d.tenantId === t.id);
+        const inPeriod = tDeposits.filter((d) => isTimestampInPeriod(d.transactionDate, pStart, pEnd));
+
+        return {
+          tenantId: t.id,
+          tenantName: t.name,
+          phone: t.phone,
+          shopNumber: t.shop?.shopNumber,
+          marketName: t.shop?.market?.name,
+          status: t.status,
+          currentBalance: balance,
+          periodDeposited: inPeriod
+            .filter((d) => d.type === "RECEIVED" || d.type === "TOPUP")
+            .reduce((s, d) => s + d.amount, 0),
+          periodRefunded: inPeriod
+            .filter((d) => d.type === "REFUND")
+            .reduce((s, d) => s + d.amount, 0),
+          periodAdjusted: inPeriod
+            .filter((d) => d.type === "ADJUSTED_TO_DUE" || d.type === "DEDUCTION")
+            .reduce((s, d) => s + d.amount, 0),
+        };
+      });
+
+      return NextResponse.json({
+        reportType,
+        statement: financialStatement,
+        perMarketSummary,
+        channelBreakdown: Object.values(channelBreakdown),
+        accountBreakdown: Object.values(accountBreakdown),
+        tenantLedgers,
+      });
     }
 
     // 2b. Settlements Report

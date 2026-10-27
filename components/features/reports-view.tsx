@@ -128,6 +128,44 @@ export function ReportsView() {
         [locale === "bn" ? "সর্বমোট বকেয়া (টাকা)" : "Total Due (BDT)"]: Math.round((r.dueAmount || 0) / 100),
         [t("common.status")]: r.status,
       }));
+    } else if (reportType === "deposit_report") {
+      fileName = `deposit-report-${reportMonth > 0 ? reportMonth + "-" : ""}${reportYear}`;
+      const tenantRows = (data.tenants || []).map((t: any) => ({
+        [locale === "bn" ? "দোকান নং" : "Shop No"]: t.shopNumber || "",
+        [locale === "bn" ? "ভাড়াটিয়া" : "Tenant"]: t.tenantName || "",
+        [locale === "bn" ? "মোবাইল" : "Phone"]: t.phone || "",
+        [locale === "bn" ? "মার্কেট" : "Market"]: t.marketName || "",
+        [locale === "bn" ? "স্ট্যাটাস" : "Status"]: t.status || "",
+        [locale === "bn" ? "জামানত স্থিতি (টাকা)" : "Deposit Balance (BDT)"]: Math.round((t.currentBalance || 0) / 100),
+        [locale === "bn" ? "লেনদেন সংখ্যা" : "Transactions"]: t.transactionsCount || 0,
+      }));
+      const ledgerRows = (data.timeline || []).map((tx: any) => ({
+        [locale === "bn" ? "তারিখ" : "Date"]: formatDate(tx.transactionDate, "en"),
+        [locale === "bn" ? "দোকান" : "Shop"]: tx.shopNumber || "",
+        [locale === "bn" ? "ভাড়াটিয়া" : "Tenant"]: tx.tenantName || "",
+        [locale === "bn" ? "ধরন" : "Type"]: tx.type,
+        [locale === "bn" ? "মাধ্যম" : "Channel"]: tx.method,
+        [locale === "bn" ? "অ্যাকাউন্ট" : "Account"]: tx.accountName || "",
+        [locale === "bn" ? "পরিমাণ (টাকা)" : "Signed Amount (BDT)"]: Math.round((tx.signedAmount || 0) / 100),
+        [locale === "bn" ? "রানিং স্থিতি (টাকা)" : "Running Balance (BDT)"]: Math.round((tx.runningBalance || 0) / 100),
+        [locale === "bn" ? "বিবরণ" : "Reason"]: tx.reason || "",
+        [locale === "bn" ? "এন্ট্রি করেছেন" : "Entered By"]: tx.enteredBy || "",
+        [locale === "bn" ? "স্ট্যাটাস" : "Status"]: tx.status,
+      }));
+      const channelRows = Object.entries(data.channelBreakdown || {}).map(([key, val]: any) => ({
+        [locale === "bn" ? "পেমেন্ট মাধ্যম" : "Channel"]: key,
+        [locale === "bn" ? "জমা (টাকা)" : "Inflow (BDT)"]: Math.round((val.in || 0) / 100),
+        [locale === "bn" ? "ফেরত (টাকা)" : "Outflow (BDT)"]: Math.round((val.out || 0) / 100),
+        [locale === "bn" ? "নেট প্রবাহ (টাকা)" : "Net (BDT)"]: Math.round(((val.in || 0) - (val.out || 0)) / 100),
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(tenantRows), "Tenant Balances");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ledgerRows), "Ledger Timeline");
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(channelRows), "Channels");
+      XLSX.writeFile(wb, `${fileName}.xlsx`);
+      toast.success(locale === "bn" ? "এক্সেল সফলভাবে তৈরি হয়েছে!" : "Excel downloaded successfully!");
+      return;
     } else if (reportType === "month_wise_summary" && data.rows) {
       fileName = `month-wise-report-${reportYear}`;
       sheetData = data.rows.map((r: any) => ({
@@ -232,6 +270,8 @@ export function ReportsView() {
     switch (reportType) {
       case "monthly_collection":
         return locale === "bn" ? "মাসিক ভাড়া ও ইউটিলিটি আদায় বিবরণী" : "Monthly Rent & Utility Collection Report";
+      case "deposit_report":
+        return locale === "bn" ? "ভাড়াটিয়া জামানত ও লেজার প্রতিবেদন" : "Tenant Deposit & Ledger Report";
       case "month_wise_summary":
         return locale === "bn" ? "মাসভিত্তিক সমন্বিত আর্থিক বিবরণী (১২ মাস)" : "Month-wise Financial Statement (12 Months)";
       case "market_pnl":
@@ -472,6 +512,7 @@ export function ReportsView() {
       <div className="flex p-1.5 bg-[#FBF9F5] dark:bg-[#1E1F24] border-2 border-black shadow-[3px_3px_0px_#000000] rounded-xl overflow-x-auto no-scrollbar no-print gap-1">
         {[
           { id: "monthly_collection", labelKey: "reports.monthlyCollection" },
+          { id: "deposit_report", customLabel: locale === "bn" ? "জামানত হিসাব ও লেজার" : "Deposit & Ledger" },
           { id: "month_wise_summary", labelKey: "reports.monthWiseSummary" },
           { id: "market_pnl", labelKey: "reports.marketProfitLoss" },
           { id: "expense_by_category", labelKey: "reports.expenseByCategory" },
@@ -637,9 +678,138 @@ export function ReportsView() {
             const totalDue = (data.rows || []).reduce((sum: number, r: any) => sum + (r.dueAmount || 0), 0);
 
             return (
-              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs md:text-sm border-collapse">
+              <div className="space-y-5">
+                {/* Comprehensive Accounting Statement (Single Source of Truth) */}
+                {data.financialStatement && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#1E1F24] border-2 border-black shadow-[4px_4px_0px_#000000]">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-3 border-b-2 border-black gap-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-lg bg-[#FED734] border-2 border-black flex items-center justify-center font-black text-black shadow-[1px_1px_0px_#000000]">
+                          ৳
+                        </div>
+                        <h3 className="text-sm sm:text-base font-black text-black dark:text-white uppercase tracking-wider">
+                          {locale === "bn" ? "আর্থিক বিবরণী ও জামানত সমন্বয় (Financial Statement)" : "Comprehensive Financial Statement"}
+                        </h3>
+                      </div>
+                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-black bg-neutral-100 dark:bg-neutral-800 text-black dark:text-white shrink-0 self-start sm:self-auto">
+                        Single Source of Truth (Asia/Dhaka)
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {/* 1. Collection */}
+                      <div className="p-3.5 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] shadow-[2px_2px_0px_#000000] flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between border-b-2 border-black/10 pb-1.5">
+                            <span className="text-xs font-black uppercase text-[#00BA88] tracking-wider">
+                              {locale === "bn" ? "১. মোট আদায় (Collection)" : "1. Collection"}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500">Inflows</span>
+                          </div>
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "ভাড়া ও চার্জ (ক্যাশ/ব্যাংক):" : "Rent & Charges Received:"}</span>
+                              <span className="font-mono font-black">{formatCurrency(data.financialStatement.collection.rentChargesReceived, locale)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "জামানত থেকে ভাড়া:" : "Rent from Deposit:"}</span>
+                              <span className="font-mono font-black text-amber-700 dark:text-amber-400">+{formatCurrency(data.financialStatement.collection.rentFromDeposit, locale)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "জামানত থেকে অন্যান্য আয়:" : "Other Income from Deposit:"}</span>
+                              <span className="font-mono font-black text-amber-700 dark:text-amber-400">+{formatCurrency(data.financialStatement.collection.otherIncomeFromDeposit, locale)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "জামানত গ্রহণ (+):" : "Deposit Received (+):"}</span>
+                              <span className="font-mono font-black text-[#00BA88]">+{formatCurrency(data.financialStatement.collection.depositReceived, locale)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t-2 border-black flex justify-between items-center text-xs sm:text-sm font-black bg-[#E6F8F2] dark:bg-[#122A20] -mx-3.5 -mb-3.5 p-3 rounded-b-xl border-t-2 border-black">
+                          <span className="text-black dark:text-white">{locale === "bn" ? "সর্বমোট আদায়:" : "Total Collection:"}</span>
+                          <span className="font-mono text-[#00BA88] font-black">{formatCurrency(data.financialStatement.collection.totalCollection, locale)}</span>
+                        </div>
+                      </div>
+
+                      {/* 2. Outflow */}
+                      <div className="p-3.5 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] shadow-[2px_2px_0px_#000000] flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between border-b-2 border-black/10 pb-1.5">
+                            <span className="text-xs font-black uppercase text-[#FF4B55] tracking-wider">
+                              {locale === "bn" ? "২. মোট ব্যয়/বহির্গমন (Outflow)" : "2. Outflow"}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500">Outflows</span>
+                          </div>
+                          <div className="space-y-1.5 text-xs">
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "পরিচালন ব্যয়:" : "Operating Expenses:"}</span>
+                              <span className="font-mono font-black">{formatCurrency(data.financialStatement.outflow.operatingExpenses, locale)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "ব্যবহৃত জামানত:" : "Deposit Used:"}</span>
+                              <span className="font-mono font-black text-amber-700 dark:text-amber-400">{formatCurrency(data.financialStatement.outflow.depositUsed, locale)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-700 dark:text-gray-300 font-bold">{locale === "bn" ? "জামানত ফেরত (-):" : "Deposit Refunded (-):"}</span>
+                              <span className="font-mono font-black text-[#FF4B55]">-{formatCurrency(data.financialStatement.outflow.depositRefunded, locale)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-3 pt-2 border-t-2 border-black flex justify-between items-center text-xs sm:text-sm font-black bg-[#FFEBEF] dark:bg-[#2C1417] -mx-3.5 -mb-3.5 p-3 rounded-b-xl border-t-2 border-black">
+                          <span className="text-black dark:text-white">{locale === "bn" ? "সর্বমোট ব্যয়:" : "Total Outflow:"}</span>
+                          <span className="font-mono text-[#FF4B55] font-black">{formatCurrency(data.financialStatement.outflow.totalOutflow, locale)}</span>
+                        </div>
+                      </div>
+
+                      {/* 3. Summary */}
+                      <div className="p-3.5 rounded-xl border-2 border-black bg-[#FBF9F5] dark:bg-[#262830] shadow-[2px_2px_0px_#000000] flex flex-col justify-between">
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between border-b-2 border-black/10 pb-1.5">
+                            <span className="text-xs font-black uppercase text-[#00BCD4] tracking-wider">
+                              {locale === "bn" ? "৩. আর্থিক সারসংক্ষেপ" : "3. Summary"}
+                            </span>
+                            <span className="text-[10px] font-bold text-gray-500">Net & Held</span>
+                          </div>
+                          <div className="space-y-2 text-xs">
+                            <div className="p-2 rounded-lg border border-black/10 bg-white dark:bg-[#1E1F24] flex justify-between items-center">
+                              <div>
+                                <span className="text-[11px] font-black text-black dark:text-white block">{locale === "bn" ? "নেট ক্যাশ ফ্লো" : "Net Cash Flow"}</span>
+                                <span className="text-[9px] text-gray-500">Collection - Outflow</span>
+                              </div>
+                              <span className={`font-mono font-black text-sm ${data.financialStatement.summary.netCashFlow >= 0 ? "text-[#00BA88]" : "text-[#FF4B55]"}`}>
+                                {formatCurrency(data.financialStatement.summary.netCashFlow, locale)}
+                              </span>
+                            </div>
+
+                            <div className="p-2 rounded-lg border border-black/10 bg-[#FED734]/20 flex justify-between items-center">
+                              <div>
+                                <span className="text-[11px] font-black text-black dark:text-white block">{locale === "bn" ? "অপারেটিং প্রফিট" : "Operating Profit"}</span>
+                                <span className="text-[9px] text-gray-700">জামানত বাদ দিয়ে প্রকৃত লাভ</span>
+                              </div>
+                              <span className={`font-mono font-black text-sm ${data.financialStatement.summary.operatingProfit >= 0 ? "text-[#00BA88]" : "text-[#FF4B55]"}`}>
+                                {formatCurrency(data.financialStatement.summary.operatingProfit, locale)}
+                              </span>
+                            </div>
+
+                            <div className="p-2 rounded-lg border border-black/10 bg-white dark:bg-[#1E1F24] flex justify-between items-center">
+                              <div>
+                                <span className="text-[11px] font-black text-black dark:text-white block">{locale === "bn" ? "জামানত স্থিতি" : "Deposit Held at End"}</span>
+                                <span className="text-[9px] text-gray-500">ভাড়াটিয়াদের দায় (Liability)</span>
+                              </div>
+                              <span className="font-mono font-black text-sm text-[#00BCD4]">
+                                {formatCurrency(data.financialStatement.summary.depositHeldAtPeriodEnd, locale)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs md:text-sm border-collapse">
                     <thead>
                       <tr className="border-b-2 border-black bg-[#FED734] text-black font-black">
                         <th className="p-3 whitespace-nowrap">{t("shops.shopNumber")}</th>
@@ -802,8 +972,255 @@ export function ReportsView() {
                   </table>
                 </div>
               </Card>
+            </div>
             );
           })()}
+
+          {/* 1a. Comprehensive Deposit Report */}
+          {reportType === "deposit_report" && data && (
+            <div className="space-y-6">
+              {/* 4 Financial KPI Cards */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <Card className="p-3.5 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+                  <p className="text-[11px] font-black text-gray-600 dark:text-gray-400 uppercase tracking-wider">
+                    {locale === "bn" ? "মোট জামানত স্থিতি" : "Total Deposit Held"}
+                  </p>
+                  <p className="text-xl sm:text-2xl font-black text-black dark:text-white mt-1 font-mono">
+                    {formatCurrency(data.summary?.totalHeld || 0, locale)}
+                  </p>
+                  <span className="text-[10px] text-[#00BCD4] font-black block mt-1">
+                    {locale === "bn" ? "ভাড়াটিয়া দায় (Liability)" : "Liability"}
+                  </span>
+                </Card>
+
+                <Card className="p-3.5 rounded-xl border-2 border-black bg-[#E6F8F2] dark:bg-[#122A20] shadow-[3px_3px_0px_#000000]">
+                  <p className="text-[11px] font-black text-[#00BA88] uppercase tracking-wider">
+                    {locale === "bn" ? "এ সময়ে আদায়কৃত (+)" : "Received This Period"}
+                  </p>
+                  <p className="text-xl sm:text-2xl font-black text-[#00BA88] mt-1 font-mono">
+                    +{formatCurrency(data.summary?.periodReceived || 0, locale)}
+                  </p>
+                  <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold block mt-1">
+                    {locale === "bn" ? "নগদ / ব্যাংক জমা" : "Inflows"}
+                  </span>
+                </Card>
+
+                <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FFEBEF] dark:bg-[#2C1417] shadow-[3px_3px_0px_#000000]">
+                  <p className="text-[11px] font-black text-[#FF4B55] uppercase tracking-wider">
+                    {locale === "bn" ? "এ সময়ে ফেরত (-)" : "Refunded This Period"}
+                  </p>
+                  <p className="text-xl sm:text-2xl font-black text-[#FF4B55] mt-1 font-mono">
+                    -{formatCurrency(data.summary?.periodRefunded || 0, locale)}
+                  </p>
+                  <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold block mt-1">
+                    {locale === "bn" ? "ভাড়াটিয়াকে ফেরত" : "Outflows"}
+                  </span>
+                </Card>
+
+                <Card className="p-3.5 rounded-xl border-2 border-black bg-[#FEF3C7] dark:bg-[#2E2009] shadow-[3px_3px_0px_#000000]">
+                  <p className="text-[11px] font-black text-[#D97706] uppercase tracking-wider">
+                    {locale === "bn" ? "ব্যবহৃত / সমন্বয়কৃত" : "Used This Period"}
+                  </p>
+                  <p className="text-xl sm:text-2xl font-black text-[#D97706] mt-1 font-mono">
+                    {formatCurrency(data.summary?.periodUsed || 0, locale)}
+                  </p>
+                  <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold block mt-1">
+                    {locale === "bn" ? "বকেয়া ভাড়া ও কর্তন" : "Non-cash Adjusted"}
+                  </span>
+                </Card>
+              </div>
+
+              {/* Per-Market Summary Table */}
+              {data.perMarketSummary && data.perMarketSummary.length > 0 && (
+                <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+                  <div className="p-3 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black font-black text-xs uppercase tracking-wider flex items-center justify-between">
+                    <span>{locale === "bn" ? "মার্কেটভিত্তিক জামানত সারসংক্ষেপ (Per-Market Summary)" : "Per-Market Deposit Summary"}</span>
+                    <span>{data.perMarketSummary.length} {locale === "bn" ? "টি মার্কেট" : "Markets"}</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs md:text-sm">
+                      <thead className="bg-[#FED734] border-b-2 border-black font-black text-black">
+                        <tr>
+                          <th className="p-3">{t("markets.marketName")}</th>
+                          <th className="p-3 text-center">{locale === "bn" ? "ভাড়াটিয়া সংখ্যা" : "Tenants"}</th>
+                          <th className="p-3 text-right">{locale === "bn" ? "জামানত স্থিতি (Held)" : "Deposit Held"}</th>
+                          <th className="p-3 text-right text-[#00BA88]">{locale === "bn" ? "জমা (+)" : "Received"}</th>
+                          <th className="p-3 text-right text-[#FF4B55]">{locale === "bn" ? "ফেরত (-)" : "Refunded"}</th>
+                          <th className="p-3 text-right text-[#D97706]">{locale === "bn" ? "ব্যবহৃত" : "Used"}</th>
+                          <th className="p-3 text-right">{locale === "bn" ? "নেট পরিবর্তন" : "Net Movement"}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 font-bold">
+                        {data.perMarketSummary.map((m: any) => (
+                          <tr key={m.marketId} className="hover:bg-[#FED734]/10">
+                            <td className="p-3 font-black text-black dark:text-white">{m.marketName}</td>
+                            <td className="p-3 text-center">{locale === "bn" ? toBanglaDigits(m.tenantCount) : m.tenantCount}</td>
+                            <td className="p-3 text-right font-mono font-black">{formatCurrency(m.depositHeld, locale)}</td>
+                            <td className="p-3 text-right font-mono text-[#00BA88]">+{formatCurrency(m.periodReceived, locale)}</td>
+                            <td className="p-3 text-right font-mono text-[#FF4B55]">-{formatCurrency(m.periodRefunded, locale)}</td>
+                            <td className="p-3 text-right font-mono text-[#D97706]">{formatCurrency(m.periodUsed, locale)}</td>
+                            <td className={`p-3 text-right font-mono font-black ${m.netMovement >= 0 ? "text-[#00BA88]" : "text-[#FF4B55]"}`}>
+                              {m.netMovement >= 0 ? "+" : ""}{formatCurrency(m.netMovement, locale)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              )}
+
+              {/* Channel and Account Breakdown Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Channel */}
+                <Card className="p-4 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white mb-3">
+                    {locale === "bn" ? "পেমেন্ট মাধ্যম বিবরণী (Channel Breakdown)" : "Channel Breakdown"}
+                  </h4>
+                  <div className="space-y-2">
+                    {Object.entries(data.channelBreakdown || {}).map(([key, val]: any) => (
+                      <div key={key} className="flex justify-between items-center p-2 rounded-lg border border-black/10 bg-[#FBF9F5] dark:bg-[#262830] text-xs font-bold">
+                        <span className="font-black">{key}</span>
+                        <div className="flex gap-3 text-right font-mono">
+                          <span className="text-[#00BA88]">+{formatCurrency(val.in || 0, locale)}</span>
+                          <span className="text-[#FF4B55]">-{formatCurrency(val.out || 0, locale)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+
+                {/* Account */}
+                <Card className="p-4 rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[3px_3px_0px_#000000]">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-black dark:text-white mb-3">
+                    {locale === "bn" ? "অ্যাকাউন্ট ও ব্যাংক বিবরণী (Accounts Breakdown)" : "Account / Bank Breakdown"}
+                  </h4>
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
+                    {(data.accountBreakdown || []).map((acc: any) => (
+                      <div key={acc.accountId} className="flex justify-between items-center p-2 rounded-lg border border-black/10 bg-[#FBF9F5] dark:bg-[#262830] text-xs font-bold">
+                        <div>
+                          <p className="font-black text-black dark:text-white">{acc.accountName}</p>
+                          {acc.number && <p className="text-[10px] text-gray-500 font-mono">{acc.number}</p>}
+                        </div>
+                        <div className="flex gap-3 text-right font-mono">
+                          <span className="text-[#00BA88]">+{formatCurrency(acc.in || 0, locale)}</span>
+                          <span className="text-[#FF4B55]">-{formatCurrency(acc.out || 0, locale)}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Per-Tenant Balances Table */}
+              <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+                <div className="p-3 bg-[#FED734] border-b-2 border-black font-black text-xs uppercase tracking-wider text-black flex items-center justify-between">
+                  <span>{locale === "bn" ? "ভাড়াটিয়াভিত্তিক জামানত লেজার তালিকা (Tenant Balances)" : "Per-Tenant Deposit Balances"}</span>
+                  <span>{(data.tenants || []).length} {locale === "bn" ? "জন" : "tenants"}</span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs md:text-sm">
+                    <thead className="bg-neutral-100 dark:bg-neutral-800 border-b-2 border-black font-black">
+                      <tr>
+                        <th className="p-3">{t("shops.shopNumber")}</th>
+                        <th className="p-3">{t("tenants.tenantName")}</th>
+                        <th className="p-3">{t("markets.marketName")}</th>
+                        <th className="p-3 text-center">{t("common.status")}</th>
+                        <th className="p-3 text-right">{locale === "bn" ? "জামানত স্থিতি (টাকা)" : "Deposit Balance (BDT)"}</th>
+                        <th className="p-3 text-center">{locale === "bn" ? "লেনদেন" : "Transactions"}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 font-bold">
+                      {(data.tenants || []).map((tItem: any) => (
+                        <tr key={tItem.tenantId} className="hover:bg-[#FED734]/10">
+                          <td className="p-3 font-black text-black dark:text-white">{tItem.shopNumber}</td>
+                          <td className="p-3">
+                            <p className="font-black text-black dark:text-white">{tItem.tenantName}</p>
+                            <p className="text-[11px] text-gray-500 font-mono">{tItem.phone}</p>
+                          </td>
+                          <td className="p-3 text-gray-600 dark:text-gray-400">{tItem.marketName}</td>
+                          <td className="p-3 text-center">
+                            <span className="px-2 py-0.5 rounded text-[10px] font-black border border-black bg-neutral-100 dark:bg-neutral-800">
+                              {tItem.status}
+                            </span>
+                          </td>
+                          <td className="p-3 text-right font-mono font-black text-sm text-black dark:text-white">
+                            {formatCurrency(tItem.currentBalance, locale)}
+                          </td>
+                          <td className="p-3 text-center font-mono">
+                            {locale === "bn" ? toBanglaDigits(tItem.transactionsCount) : tItem.transactionsCount}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+
+              {/* Full Ledger Timeline Table */}
+              {data.timeline && data.timeline.length > 0 && (
+                <Card className="overflow-hidden rounded-xl border-2 border-black bg-white dark:bg-[#1E1F24] shadow-[4px_4px_0px_#000000]">
+                  <div className="p-3 bg-[#FBF9F5] dark:bg-[#262830] border-b-2 border-black font-black text-xs uppercase tracking-wider flex items-center justify-between">
+                    <span>{locale === "bn" ? "জামানত লেনদেন টাইমলাইন (Ledger Timeline)" : "Deposit Ledger Transactions Timeline"}</span>
+                    <span>{data.timeline.length} {locale === "bn" ? "টি এন্ট্রি" : "entries"}</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs md:text-sm">
+                      <thead className="bg-[#FED734] border-b-2 border-black font-black text-black text-[11px] uppercase tracking-wider">
+                        <tr>
+                          <th className="p-3">তারিখ</th>
+                          <th className="p-3">দোকান ও ভাড়াটিয়া</th>
+                          <th className="p-3">ধরন</th>
+                          <th className="p-3">মাধ্যম</th>
+                          <th className="p-3 text-right">পরিমাণ (Signed)</th>
+                          <th className="p-3 text-right">রানিং স্থিতি</th>
+                          <th className="p-3">বিবরণ / নোট</th>
+                          <th className="p-3">এন্ট্রি করেছেন</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 font-bold">
+                        {data.timeline.map((tx: any) => {
+                          const isCredit = tx.signedAmount > 0;
+                          return (
+                            <tr key={tx.id} className="hover:bg-[#FED734]/10">
+                              <td className="p-3 text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                                {formatDate(tx.transactionDate, locale)}
+                              </td>
+                              <td className="p-3">
+                                <span className="font-black text-black dark:text-white block">{tx.shopNumber}</span>
+                                <span className="text-[11px] text-gray-500">{tx.tenantName}</span>
+                              </td>
+                              <td className="p-3">
+                                <span className="px-2 py-0.5 rounded text-[10px] font-black uppercase border border-black bg-white dark:bg-[#1E1F24]">
+                                  {tx.type}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <span className="font-bold text-black dark:text-white block">{tx.method}</span>
+                                {tx.accountName && <span className="text-[10px] text-gray-500">{tx.accountName}</span>}
+                              </td>
+                              <td className={`p-3 text-right font-mono font-black ${isCredit ? "text-[#00BA88]" : "text-[#FF4B55]"}`}>
+                                {isCredit ? "+" : "-"} {formatCurrency(Math.abs(tx.amount || 0), locale)}
+                              </td>
+                              <td className="p-3 text-right font-mono font-black text-black dark:text-white">
+                                {formatCurrency(tx.runningBalance || 0, locale)}
+                              </td>
+                              <td className="p-3 text-xs max-w-xs truncate text-gray-700 dark:text-gray-300">
+                                {tx.reason || "—"}
+                              </td>
+                              <td className="p-3 text-xs text-gray-500 whitespace-nowrap">
+                                {tx.enteredBy || "Admin"}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              )}
+            </div>
+          )}
 
           {/* 1b. Month-Wise Financial Statement */}
           {reportType === "month_wise_summary" && data.rows && (

@@ -242,8 +242,12 @@ export function DashboardView() {
               </p>
               <p className="text-xs text-gray-700 font-bold">
                 {locale === "bn"
-                  ? "ভাড়াটিয়া তথ্য পরিবর্তন অথবা জামানত জমা (টপ-আপ) আবেদন অনুমোদন বা বাতিল করতে ক্লিক করুন।"
-                  : "Review pending tenant edits and advance deposit top-up requests."}
+                  ? kpis.pendingDepositRefundsCount > 0
+                    ? `জামানত ফেরত (${toBanglaDigits(kpis.pendingDepositRefundsCount)}টি), ভাড়াটিয়া তথ্য পরিবর্তন বা টপ-আপ আবেদন অনুমোদন করতে ক্লিক করুন।`
+                    : "ভাড়াটিয়া তথ্য পরিবর্তন অথবা জামানত জমা (টপ-আপ) আবেদন অনুমোদন বা বাতিল করতে ক্লিক করুন।"
+                  : kpis.pendingDepositRefundsCount > 0
+                    ? `Review ${kpis.pendingDepositRefundsCount} pending deposit refund(s), tenant edits, or top-up requests.`
+                    : "Review pending tenant edits and advance deposit top-up requests."}
               </p>
             </div>
           </div>
@@ -396,25 +400,36 @@ export function DashboardView() {
           </div>
         </div>
 
-        {/* 7. Total Advance Held (Liability) - Full width on 2-col mobile */}
+        {/* 7. Total Deposit Held (Liability) - Full width on 2-col mobile */}
         <div
-          onClick={() => setActiveTab("shops")}
+          onClick={() => setActiveTab("deposits")}
           className="col-span-2 sm:col-span-1 lg:col-span-1 bg-white dark:bg-[#1E1F24] p-3.5 sm:p-4 rounded-2xl border-2 border-black shadow-[4px_4px_0px_#000000] flex flex-col justify-between hover:-translate-y-0.5 active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer group"
         >
           <div className="flex items-center justify-between text-[11px] sm:text-xs font-black uppercase tracking-wider text-black dark:text-gray-200">
-            <span className="truncate">{t("advance.advanceHeld")}</span>
+            <span className="truncate">{locale === "bn" ? "জামানত স্থিতি" : "Deposit Held"}</span>
             <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-[#FED734] text-black border border-black shadow-[1px_1px_0px_#000000]">
               Liability
             </span>
           </div>
           <div className="my-2">
-            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate" title={formatCurrency(kpis.totalAdvanceHeld || 0, locale)}>
-              {formatCurrency(kpis.totalAdvanceHeld || 0, locale)}
+            <div className="text-lg sm:text-xl font-black text-black dark:text-white truncate" title={formatCurrency(kpis.depositHeld ?? kpis.totalAdvanceHeld ?? 0, locale)}>
+              {formatCurrency(kpis.depositHeld ?? kpis.totalAdvanceHeld ?? 0, locale)}
             </div>
+            {kpis.depositMovement && (kpis.depositMovement.received > 0 || kpis.depositMovement.refunded > 0 || kpis.depositMovement.used > 0) ? (
+              <p className="text-[10px] text-gray-700 dark:text-gray-400 font-bold truncate mt-0.5">
+                <span className="text-[#00BA88]">+{formatCurrency(kpis.depositMovement.received, locale)}</span>
+                {" / "}
+                <span className="text-[#FF4B55]">-{formatCurrency(kpis.depositMovement.refunded + kpis.depositMovement.used, locale)}</span>
+              </p>
+            ) : (
+              <p className="text-[10px] text-gray-500 font-medium truncate mt-0.5">
+                {locale === "bn" ? "এ মাসে অপরিবর্তিত" : "No change this mo"}
+              </p>
+            )}
           </div>
           <div className="flex items-center justify-between text-[11px] text-gray-700 dark:text-gray-400 font-bold border-t-2 border-black/10 dark:border-white/10 pt-2">
-            <span className="truncate">{t("advance.title")}</span>
-            <span className="font-black text-[#00BCD4]">{locale === "bn" ? "জামানত" : "Held"}</span>
+            <span className="truncate">{locale === "bn" ? "লেজার দেখুন" : "View Ledger"}</span>
+            <span className="font-black text-[#00BCD4]">{locale === "bn" ? "জামানত" : "Deposit"}</span>
           </div>
         </div>
       </div>

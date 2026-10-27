@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { calculateFinancialStatement, getDhakaMonthRange } from "@/lib/accounting";
+import { computeDepositBalance } from "@/lib/deposit-ledger";
 
 export async function GET(req: Request) {
   try {
@@ -7,6 +9,8 @@ export async function GET(req: Request) {
     const marketId = searchParams.get("marketId") || "ALL";
     const month = searchParams.get("month") ? parseInt(searchParams.get("month")!, 10) : 10;
     const year = searchParams.get("year") ? parseInt(searchParams.get("year")!, 10) : 2026;
+
+    const { startDate: periodStart, endDate: periodEnd } = getDhakaMonthRange(year, month);
 
     // Filter conditions
     const billWhere: any = { month, year };
@@ -45,6 +49,14 @@ export async function GET(req: Request) {
       paymentWhere.bill = { shop: { marketId } };
     }
 
+    const depositWhere: any = {
+      status: "POSTED",
+      transactionDate: { lte: periodEnd },
+    };
+    if (marketId !== "ALL") {
+      depositWhere.marketId = marketId;
+    }
+
     // Execute database queries concurrently via Promise.all for maximum speed
     const [
       currentBills,
@@ -56,6 +68,8 @@ export async function GET(req: Request) {
       currentPayments,
       pendingChangeRequests,
       pendingTopUps,
+      pendingDepositRefunds,
+      historicalDepositTxs,
     ] = await Promise.all([
       // 1. Current month bills
       prisma.bill.findMany({
@@ -122,6 +136,10 @@ export async function GET(req: Request) {
         include: {
           shop: { include: { market: true } },
           advanceTransactions: true,
+          depositTransactions: {
+            where: { status: "POSTED" },
+            include: { reversesTransaction: true },
+          },
           bills: {
             where: { status: { in: ["DUE", "PARTIAL"] } },
             orderBy: [{ year: "asc" }, { month: "asc" }],
@@ -143,6 +161,15 @@ export async function GET(req: Request) {
       // 9. Pending top-up requests
       prisma.advanceTopUpRequest.count({
         where: { status: "PENDING" },
+      }),
+      // 10. Pending deposit refund requests
+      prisma.depositTransaction.count({
+        where: { status: "PENDING_APPROVAL" },
+      }),
+      // 11. Historical deposit transactions up to periodEnd
+      prisma.depositTransaction.findMany({
+        where: depositWhere,
+        include: { reversesTransaction: true },
       }),
     ]);
 
@@ -276,13 +303,65 @@ export async function GET(req: Request) {
       };
     });
 
-    // 6. Market Profitability Comparison
+    // Financial statement from single source of truth (lib/accounting.ts)
+    const currentMonthDepositTxs = historicalDepositTxs.filter((tx) => {
+      const dt = tx.transactionDate || tx.createdAt;
+      return dt >= periodStart && dt <= periodEnd;
+    });
+
+    const financialStatement = calculateFinancialStatement({
+      period: { startDate: periodStart, endDate: periodEnd, year, month },
+      payments: currentPayments.map((p) => ({
+        amount: p.amount,
+        paidOn: p.createdAt,
+        method: p.method,
+      })),
+      expenses: currentExpenses.map((e) => ({
+        amount: e.amount,
+        date: e.date,
+        marketId: e.marketId,
+      })),
+      depositTransactions: currentMonthDepositTxs,
+      allHistoricalDepositTransactions: historicalDepositTxs,
+    });
+
+    const depositReceived = financialStatement.collection.depositReceived;
+    const depositRefunded = financialStatement.outflow.depositRefunded;
+    const depositUsed = financialStatement.outflow.depositUsed;
+    const depositNetMovement = depositReceived - depositRefunded - depositUsed;
+    const depositHeld = financialStatement.summary.depositHeldAtPeriodEnd;
+
+    // 6. Market Profitability Comparison (Ranked by Operating Profit, secondary Net Cash Flow)
     const marketRankings = allMarkets.map((m) => {
       const mBills = m.shops.flatMap((s) => s.bills);
       const mCollected = mBills.reduce((sum, b) => sum + b.paidAmount, 0);
       const mExpected = mBills.reduce((sum, b) => sum + b.totalAmount, 0);
       const mExpenses = m.expenses.reduce((sum, e) => sum + e.amount, 0);
-      const mProfit = mCollected - mExpenses;
+
+      // Deposit activity for this market
+      const mDepositTxs = currentMonthDepositTxs.filter((tx) => tx.marketId === m.id);
+      let mDepositReceived = 0;
+      let mDepositRefunded = 0;
+      let mRentFromDeposit = 0;
+      let mOtherIncomeFromDeposit = 0;
+
+      for (const d of mDepositTxs) {
+        const amt = d.amount || 0;
+        if (d.type === "RECEIVED" || d.type === "TOPUP" || d.type === "DEPOSIT_RECEIVED") {
+          mDepositReceived += amt;
+        } else if (d.type === "REFUND") {
+          mDepositRefunded += amt;
+        } else if (d.type === "ADJUSTED_TO_DUE") {
+          mRentFromDeposit += amt;
+        } else if (d.type === "DEDUCTION") {
+          mOtherIncomeFromDeposit += amt;
+        }
+      }
+
+      // Operating Profit excludes deposit received and refunded
+      const mOperatingProfit = (mCollected + mRentFromDeposit + mOtherIncomeFromDeposit) - mExpenses;
+      // Net Cash Flow = Total Inflow - Total Outflow
+      const mNetCashFlow = (mCollected + mDepositReceived) - (mExpenses + mDepositRefunded);
 
       return {
         id: m.id,
@@ -290,38 +369,44 @@ export async function GET(req: Request) {
         expected: Math.round(mExpected / 100),
         collected: Math.round(mCollected / 100),
         expense: Math.round(mExpenses / 100),
-        netProfit: Math.round(mProfit / 100),
-        rawNetProfit: mProfit, // in paisa
+        operatingProfit: Math.round(mOperatingProfit / 100),
+        rawOperatingProfit: mOperatingProfit,
+        netCashFlow: Math.round(mNetCashFlow / 100),
+        rawNetCashFlow: mNetCashFlow,
+        netProfit: Math.round(mOperatingProfit / 100), // backward compatibility
+        rawNetProfit: mOperatingProfit,
         collectionRate: mExpected > 0 ? Math.round((mCollected / mExpected) * 100) : 0,
       };
     });
 
-    marketRankings.sort((a, b) => b.rawNetProfit - a.rawNetProfit);
+    marketRankings.sort((a, b) => {
+      if (b.rawOperatingProfit !== a.rawOperatingProfit) {
+        return b.rawOperatingProfit - a.rawOperatingProfit;
+      }
+      return b.rawNetCashFlow - a.rawNetCashFlow;
+    });
     const mostProfitableMarket = marketRankings[0] || null;
 
-    let totalAdvanceHeld = 0;
+    let totalAdvanceHeld = depositHeld;
     const atRiskTenants: any[] = [];
 
     for (const t of activeTenants) {
-      let txs = t.advanceTransactions;
-      if (txs.length === 0 && t.advanceDeposit > 0) {
-        txs = [{
-          type: "DEPOSIT_RECEIVED",
-          amount: t.advanceDeposit,
-        } as any];
-      }
-
-      // Compute advance balance
+      // Use new depositTransactions ledger, fallback to advanceDeposit if empty
       let advanceBal = 0;
-      for (const tx of txs) {
-        if (tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP") {
-          advanceBal += tx.amount;
-        } else if (tx.type === "ADJUSTED_TO_DUE" || tx.type === "DEDUCTION" || tx.type === "REFUND") {
-          advanceBal -= tx.amount;
+      if (t.depositTransactions && t.depositTransactions.length > 0) {
+        advanceBal = computeDepositBalance(t.depositTransactions);
+      } else if (t.advanceTransactions && t.advanceTransactions.length > 0) {
+        for (const tx of t.advanceTransactions) {
+          if (tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP") {
+            advanceBal += tx.amount;
+          } else if (tx.type === "ADJUSTED_TO_DUE" || tx.type === "DEDUCTION" || tx.type === "REFUND") {
+            advanceBal -= tx.amount;
+          }
         }
+      } else {
+        advanceBal = t.advanceDeposit || 0;
       }
       advanceBal = Math.max(0, advanceBal);
-      totalAdvanceHeld += advanceBal;
 
       // Evaluate risk
       const unpaidBills = t.bills.map((b) => ({
@@ -397,7 +482,7 @@ export async function GET(req: Request) {
     }
     const collectorBreakdown = Array.from(collectorMap.values()).sort((a, b) => b.amount - a.amount);
 
-    const pendingApprovalsCount = pendingChangeRequests + pendingTopUps;
+    const pendingApprovalsCount = pendingChangeRequests + pendingTopUps + pendingDepositRefunds;
 
     return NextResponse.json(
       {
@@ -408,15 +493,25 @@ export async function GET(req: Request) {
           priorArrears,
           totalDue, // Total portfolio due including prior arrears
           totalExpense,
-          netProfit,
+          netProfit: financialStatement.summary.operatingProfit,
+          operatingProfit: financialStatement.summary.operatingProfit,
+          netCashFlow: financialStatement.summary.netCashFlow,
           collectionRate,
           paidShopsCount,
           partialShopsCount,
           dueShopsCount,
           totalBillsCount,
-          totalAdvanceHeld, // in paisa (Liability)
+          totalAdvanceHeld: depositHeld, // in paisa (Liability)
+          depositHeld,
+          depositMovement: {
+            received: depositReceived,
+            refunded: depositRefunded,
+            used: depositUsed,
+            net: depositNetMovement,
+          },
           atRiskTenantsCount: atRiskTenants.length,
           pendingApprovalsCount,
+          pendingDepositRefundsCount: pendingDepositRefunds,
         },
         collectionsByChannel: channelTotals,
         collectionsByCollector: collectorBreakdown,

@@ -9,6 +9,7 @@ import {
   Store,
   Receipt,
   Wallet,
+  Coins,
   AlertCircle,
   Wrench,
   FileSpreadsheet,
@@ -53,6 +54,7 @@ export function Sidebar() {
       items: [
         { id: "billing", labelKey: "nav.billing", icon: Receipt },
         { id: "collections", labelKey: "nav.collections", icon: Wallet },
+        { id: "deposits", labelKey: "nav.deposits", icon: Coins },
         {
           id: "dues",
           labelKey: "nav.dues",

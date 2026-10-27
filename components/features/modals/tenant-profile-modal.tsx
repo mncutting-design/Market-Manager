@@ -35,12 +35,19 @@ import {
   Camera,
   Layers,
   Coins,
+  Undo2,
+  ArrowDownLeft,
+  ArrowUpRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AdjustAdvanceModal } from "./adjust-advance-modal";
 import { SettlementWizardModal } from "./settlement-wizard-modal";
 import { SettlementStatementModal } from "./settlement-statement-modal";
 import { EditJamanotModal } from "./edit-jamanot-modal";
+import { ReceiveDepositModal } from "./receive-deposit-modal";
+import { RefundDepositModal } from "./refund-deposit-modal";
+import { DepositReceiptModal, DepositReceiptData } from "./deposit-receipt-modal";
+import { DepositRefundReceiptModal, DepositRefundReceiptData } from "./deposit-refund-receipt-modal";
 
 interface TenantProfileModalProps {
   isOpen: boolean;
@@ -71,6 +78,13 @@ export function TenantProfileModal({
   const [isSettleOpen, setIsSettleOpen] = useState(false);
   const [isTopupModalOpen, setIsTopupModalOpen] = useState(false);
   const [isEditJamanotOpen, setIsEditJamanotOpen] = useState(false);
+  const [isReceiveDepositOpen, setIsReceiveDepositOpen] = useState(false);
+  const [isRefundDepositOpen, setIsRefundDepositOpen] = useState(false);
+  const [depositReceiptData, setDepositReceiptData] = useState<DepositReceiptData | null>(null);
+  const [refundReceiptData, setRefundReceiptData] = useState<DepositRefundReceiptData | null>(null);
+  const [reversingTx, setReversingTx] = useState<any | null>(null);
+  const [reversalReason, setReversalReason] = useState("");
+  const [isReversing, setIsReversing] = useState(false);
   const [statementData, setStatementData] = useState<any | null>(null);
 
   // Edit Tenant Form State
@@ -151,7 +165,49 @@ export function TenantProfileModal({
     }
   }, [isOpen, tenantId]);
 
-  if (!isOpen) return null;
+  const handleReverseTransaction = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reversingTx) return;
+    if (!reversalReason.trim()) {
+      toast.error(locale === "bn" ? "বাতিলের কারণ উল্লেখ করুন" : "Please provide a reason for reversal");
+      return;
+    }
+
+    try {
+      setIsReversing(true);
+      const res = await fetch("/api/deposits/reverse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          transactionId: reversingTx.id,
+          reason: reversalReason.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        toast.error(data.error || "Failed to reverse transaction");
+        return;
+      }
+
+      toast.success(
+        locale === "bn"
+          ? "লেনদেন সফলভাবে রিভার্স (বাতিল) করা হয়েছে!"
+          : "Transaction successfully reversed!"
+      );
+      setReversingTx(null);
+      setReversalReason("");
+      await fetchAllData();
+      if (onRefreshNeeded) onRefreshNeeded();
+      if (onUpdated) onUpdated();
+      triggerRefresh("deposits");
+      triggerRefresh("dashboard");
+    } catch (err: any) {
+      toast.error("Reversal error: " + (err as Error).message);
+    } finally {
+      setIsReversing(false);
+    }
+  };
 
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -766,18 +822,28 @@ export function TenantProfileModal({
                     <Button
                       size="sm"
                       variant="neo"
-                      onClick={() => setIsEditJamanotOpen(true)}
-                      className="text-xs bg-[#FED734] hover:bg-[#FED734]/90 text-black border-2 border-black font-black shadow-[2px_2px_0px_#000000]"
+                      onClick={() => setIsReceiveDepositOpen(true)}
+                      className="text-xs bg-[#00BA88] hover:bg-[#00BA88]/90 text-white font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
                     >
-                      <Coins className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
-                      {locale === "bn" ? "জামানত এডিট (Approval)" : "Edit Jamanot"}
+                      <ArrowDownLeft className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
+                      {locale === "bn" ? "জামানত / টপ-আপ জমা" : "Receive / Top-up"}
+                    </Button>
+
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsRefundDepositOpen(true)}
+                      className="text-xs bg-white dark:bg-[#1E1F24] hover:bg-black/5 font-black border-2 border-black shadow-[2px_2px_0px_#000000]"
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5 mr-1.5 text-[#FF4B55] stroke-[2.5]" />
+                      {locale === "bn" ? "জামানত ফেরত" : "Refund Deposit"}
                     </Button>
 
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => setIsAdjustOpen(true)}
-                      className="text-xs"
+                      className="text-xs font-bold border-2 border-black"
                     >
                       <RotateCcw className="w-3.5 h-3.5 mr-1.5" />
                       {t("adjustAdvance.title")}
@@ -786,14 +852,11 @@ export function TenantProfileModal({
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => {
-                        setTopupAmountBDT(Math.round(shortfall / 100) || 10000);
-                        setIsTopupModalOpen(true);
-                      }}
-                      className="text-xs"
+                      onClick={() => setIsEditJamanotOpen(true)}
+                      className="text-xs bg-[#FED734] hover:bg-[#FED734]/90 text-black border-2 border-black font-black shadow-[2px_2px_0px_#000000]"
                     >
-                      <PlusCircle className="w-3.5 h-3.5 mr-1.5 text-black dark:text-white" />
-                      {isAdmin ? t("tenants.directTopUp") : t("tenants.requestTopUp")}
+                      <Coins className="w-3.5 h-3.5 mr-1.5 stroke-[2.5]" />
+                      {locale === "bn" ? "জামানত এডিট (Approval)" : "Edit Jamanot"}
                     </Button>
 
                     <Button
@@ -823,56 +886,83 @@ export function TenantProfileModal({
                   {transactions.length === 0 ? (
                     <p className="text-xs font-bold text-black/60 dark:text-white/60 py-4 text-center">{t("advance.noTransactions")}</p>
                   ) : (
-                    <div className="rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] overflow-hidden text-xs max-h-64 overflow-y-auto bg-white dark:bg-[#1E1F24]">
+                    <div className="rounded-xl border-2 border-black shadow-[3px_3px_0px_#000000] overflow-hidden text-xs max-h-72 overflow-y-auto bg-white dark:bg-[#1E1F24]">
                       <table className="w-full text-left">
                         <thead className="bg-[#FED734] border-b-2 border-black font-black text-black sticky top-0 uppercase tracking-wider text-[11px]">
                           <tr>
                             <th className="p-2.5">Date</th>
-                            <th className="p-2.5">Type</th>
+                            <th className="p-2.5">Type & Status</th>
+                            <th className="p-2.5">Method / Account</th>
                             <th className="p-2.5">Reason / Note</th>
                             <th className="p-2.5">Entered by</th>
                             <th className="p-2.5 text-right">Amount</th>
                             <th className="p-2.5 text-right">{t("advance.runningBalance")}</th>
+                            {isAdmin && <th className="p-2.5 text-center">Action</th>}
                           </tr>
                         </thead>
                         <tbody className="divide-y-2 divide-black/10 dark:divide-white/10 font-bold">
                           {transactions.map((tx: any) => {
-                            const isCredit = tx.type === "DEPOSIT_RECEIVED" || tx.type === "TOPUP";
+                            const isCredit = tx.signedAmount !== undefined
+                              ? tx.signedAmount >= 0
+                              : (tx.type === "DEPOSIT_RECEIVED" || tx.type === "RECEIVED" || tx.type === "TOPUP");
+                            const isPending = tx.status === "PENDING_APPROVAL";
+                            const isReversed = tx.status === "REVERSED";
+
                             return (
-                              <tr key={tx.id} className="hover:bg-black/5 dark:hover:bg-white/5">
+                              <tr key={tx.id} className={`hover:bg-black/5 dark:hover:bg-white/5 ${isReversed ? "opacity-60 bg-black/5 line-through" : ""}`}>
                                 <td className="p-2.5 text-black/70 dark:text-white/70 whitespace-nowrap">
-                                  {formatDate(tx.createdAt, locale)}
+                                  {formatDate(tx.transactionDate || tx.createdAt, locale)}
                                 </td>
                                 <td className="p-2.5 whitespace-nowrap">
-                                  <span
-                                    className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border border-black shadow-[1px_1px_0px_#000000] ${
-                                      tx.type === "DEPOSIT_RECEIVED"
-                                        ? "bg-[#E6F8F2] text-[#00875A] dark:bg-[#122A20] dark:text-[#00BA88]"
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span
+                                      className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider border border-black shadow-[1px_1px_0px_#000000] ${
+                                        tx.type === "DEPOSIT_RECEIVED" || tx.type === "RECEIVED"
+                                          ? "bg-[#E6F8F2] text-[#00875A] dark:bg-[#122A20] dark:text-[#00BA88]"
+                                          : tx.type === "TOPUP"
+                                          ? "bg-[#E0F2FE] text-[#0369A1] dark:bg-[#082F49] dark:text-[#38BDF8]"
+                                          : tx.type === "ADJUSTED_TO_DUE"
+                                          ? "bg-[#FEF3C7] text-[#92400E] dark:bg-[#3D2F14] dark:text-[#FBBF24]"
+                                          : tx.type === "DEDUCTION"
+                                          ? "bg-[#FFEDD5] text-[#9A3412] dark:bg-[#3E1B0E] dark:text-[#FB923C]"
+                                          : tx.type === "REVERSAL"
+                                          ? "bg-[#FFE4E6] text-[#BE123C] dark:bg-[#4C0519] dark:text-[#FDA4AF]"
+                                          : "bg-[#E0E7FF] text-[#3730A3] dark:bg-[#1E1B4B] dark:text-[#818CF8]"
+                                      }`}
+                                    >
+                                      {tx.type === "DEPOSIT_RECEIVED" || tx.type === "RECEIVED"
+                                        ? (locale === "bn" ? "নিরাপত্তা জামানত" : "Security Deposit")
                                         : tx.type === "TOPUP"
-                                        ? "bg-[#E0F2FE] text-[#0369A1] dark:bg-[#082F49] dark:text-[#38BDF8]"
+                                        ? (locale === "bn" ? "টপ-আপ" : "Top-up")
                                         : tx.type === "ADJUSTED_TO_DUE"
-                                        ? "bg-[#FEF3C7] text-[#92400E] dark:bg-[#3D2F14] dark:text-[#FBBF24]"
+                                        ? (locale === "bn" ? "বকেয়া সমন্বয়" : "Adjusted to Due")
                                         : tx.type === "DEDUCTION"
-                                        ? "bg-[#FFEDD5] text-[#9A3412] dark:bg-[#3E1B0E] dark:text-[#FB923C]"
-                                        : "bg-[#E0E7FF] text-[#3730A3] dark:bg-[#1E1B4B] dark:text-[#818CF8]"
-                                    }`}
-                                  >
-                                    {tx.type === "DEPOSIT_RECEIVED"
-                                      ? t("advance.depositReceived")
-                                      : tx.type === "TOPUP"
-                                      ? t("advance.topup")
-                                      : tx.type === "ADJUSTED_TO_DUE"
-                                      ? t("advance.adjustedToDue")
-                                      : tx.type === "DEDUCTION"
-                                      ? t("advance.deduction")
-                                      : t("advance.refund")}
-                                  </span>
+                                        ? (locale === "bn" ? "কর্তন" : "Deduction")
+                                        : tx.type === "REVERSAL"
+                                        ? (locale === "bn" ? "বাতিল (রিভার্স)" : "Reversal")
+                                        : (locale === "bn" ? "ফেরত" : "Refund")}
+                                    </span>
+                                    {isPending && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-[#FEF3C7] text-[#92400E] border border-[#F59E0B]">
+                                        {locale === "bn" ? "অনুমোদনের অপেক্ষায়" : "Pending"}
+                                      </span>
+                                    )}
+                                    {isReversed && (
+                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-red-100 text-red-700 border border-red-300">
+                                        {locale === "bn" ? "বাতিলকৃত" : "Reversed"}
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="p-2.5 text-black/80 dark:text-white/80 whitespace-nowrap text-[11px]">
+                                  {tx.paymentChannel || tx.method || "CASH"}
+                                  {tx.paymentAccount?.accountName ? ` • ${tx.paymentAccount.accountName}` : (tx.bankName ? ` • ${tx.bankName}` : "")}
                                 </td>
                                 <td className="p-2.5 text-black dark:text-white max-w-xs truncate font-bold">
-                                  {tx.reason}
+                                  {tx.reason || tx.notes || "—"}
                                 </td>
                                 <td className="p-2.5 text-black/70 dark:text-white/70 text-[11px] whitespace-nowrap">
-                                  {tx.createdByName || tx.createdBy || "Admin"}
+                                  {tx.enteredByUser?.name || tx.createdByName || tx.createdBy || "Admin"}
                                 </td>
                                 <td
                                   className={`p-2.5 text-right font-mono font-black whitespace-nowrap ${
@@ -882,8 +972,23 @@ export function TenantProfileModal({
                                   {isCredit ? "+" : "-"} {formatCurrency(tx.amount, locale)}
                                 </td>
                                 <td className="p-2.5 text-right font-mono font-black text-black dark:text-white whitespace-nowrap">
-                                  {formatCurrency(tx.runningBalance, locale)}
+                                  {isPending ? "—" : formatCurrency(tx.runningBalance, locale)}
                                 </td>
+                                {isAdmin && (
+                                  <td className="p-2.5 text-center whitespace-nowrap">
+                                    {tx.status === "POSTED" && tx.type !== "REVERSAL" && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => setReversingTx(tx)}
+                                        className="h-6 px-2 text-[10px] text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                                      >
+                                        <Undo2 className="w-3 h-3 mr-1" />
+                                        {locale === "bn" ? "রিভার্স" : "Reverse"}
+                                      </Button>
+                                    )}
+                                  </td>
+                                )}
                               </tr>
                             );
                           })}
@@ -1165,6 +1270,133 @@ export function TenantProfileModal({
           }}
         />
       )}
+
+      {/* Receive Deposit / Top-up Modal */}
+      {tenantData && (
+        <ReceiveDepositModal
+          isOpen={isReceiveDepositOpen}
+          onClose={() => setIsReceiveDepositOpen(false)}
+          initialTenantId={tenantData.id}
+          initialTenantName={tenantData.name}
+          initialShopNumber={tenantData.shop?.shopNumber}
+          initialMarketId={tenantData.shop?.marketId}
+          initialMarketName={tenantData.shop?.market?.name}
+          onSuccess={(receipt) => {
+            setDepositReceiptData(receipt);
+            fetchAllData();
+            if (onRefreshNeeded) onRefreshNeeded();
+            if (onUpdated) onUpdated();
+            triggerRefresh("deposits");
+            triggerRefresh("dashboard");
+          }}
+        />
+      )}
+
+      {/* Refund Deposit Modal */}
+      {tenantData && (
+        <RefundDepositModal
+          isOpen={isRefundDepositOpen}
+          onClose={() => setIsRefundDepositOpen(false)}
+          initialTenantId={tenantData.id}
+          initialTenantName={tenantData.name}
+          initialShopNumber={tenantData.shop?.shopNumber}
+          initialMarketName={tenantData.shop?.market?.name}
+          availableBalance={advanceBalance}
+          onSuccess={(refundReceipt) => {
+            if (refundReceipt) {
+              setRefundReceiptData(refundReceipt);
+            }
+            fetchAllData();
+            if (onRefreshNeeded) onRefreshNeeded();
+            if (onUpdated) onUpdated();
+            triggerRefresh("deposits");
+            triggerRefresh("dashboard");
+          }}
+        />
+      )}
+
+      {/* Deposit Receipt Modal */}
+      <DepositReceiptModal
+        isOpen={!!depositReceiptData}
+        onClose={() => setDepositReceiptData(null)}
+        receipt={depositReceiptData}
+      />
+
+      {/* Deposit Refund Receipt Modal */}
+      <DepositRefundReceiptModal
+        isOpen={!!refundReceiptData}
+        onClose={() => setRefundReceiptData(null)}
+        receipt={refundReceiptData}
+      />
+
+      {/* Reverse Transaction Confirmation Dialog */}
+      <Dialog
+        isOpen={!!reversingTx}
+        onClose={() => {
+          setReversingTx(null);
+          setReversalReason("");
+        }}
+        title={locale === "bn" ? "জামানত লেনদেন রিভার্স (বাতিল)" : "Reverse Deposit Transaction"}
+        maxWidth="md"
+      >
+        <form onSubmit={handleReverseTransaction} className="space-y-4">
+          <div className="p-3 bg-red-50 dark:bg-red-950/30 border-2 border-red-500 rounded-lg text-xs font-bold text-red-700 dark:text-red-300">
+            {locale === "bn"
+              ? "সতর্কতা: এই লেনদেনটি রিভার্স করলে একটি সমান ও বিপরীত লেনদেন তৈরি হবে এবং ভাড়াটিয়ার জামানত ব্যালেন্স স্বয়ংক্রিয়ভাবে সমন্বয় হবে।"
+              : "Warning: Reversing this transaction will create an offsetting entry and recalculate the tenant's deposit balance."}
+          </div>
+
+          {reversingTx && (
+            <div className="text-xs space-y-1.5 p-3 rounded-lg border-2 border-black bg-neutral-50 dark:bg-neutral-800">
+              <div className="flex justify-between">
+                <span className="text-neutral-500">{locale === "bn" ? "লেনদেন ধরন" : "Type"}:</span>
+                <span className="font-bold">{reversingTx.type}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">{locale === "bn" ? "পরিমাণ" : "Amount"}:</span>
+                <span className="font-mono font-bold">{formatCurrency(reversingTx.amount, locale)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-neutral-500">{locale === "bn" ? "মূল কারণ" : "Original Reason"}:</span>
+                <span className="font-medium">{reversingTx.reason || reversingTx.notes || "—"}</span>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-xs font-bold mb-1 text-black dark:text-white">
+              {locale === "bn" ? "রিভার্স / বাতিলের সুনির্দিষ্ট কারণ *" : "Reason for Reversal *"}
+            </label>
+            <Input
+              value={reversalReason}
+              onChange={(e) => setReversalReason(e.target.value)}
+              placeholder={locale === "bn" ? "যেমন: ভুল এন্ট্রি / চেক বাউন্স / ডুপ্লিকেট" : "e.g., Data entry mistake / duplicate record"}
+              required
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2 border-t border-black/10 dark:border-white/10">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setReversingTx(null);
+                setReversalReason("");
+              }}
+            >
+              {t("common.cancel")}
+            </Button>
+            <Button
+              type="submit"
+              variant="destructive"
+              isLoading={isReversing}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold"
+            >
+              {locale === "bn" ? "রিভার্স নিশ্চিত করুন" : "Confirm Reversal"}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
     </>
   );
 }

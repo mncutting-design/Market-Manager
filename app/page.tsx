@@ -21,6 +21,7 @@ import { MarketsView } from "@/components/features/markets-view";
 import { ShopsView } from "@/components/features/shops-view";
 import { BillingView } from "@/components/features/billing-view";
 import { CollectionsView } from "@/components/features/collections-view";
+import { DepositSummaryView } from "@/components/features/deposit-summary-view";
 import { DuesView } from "@/components/features/dues-view";
 import { ExpensesView } from "@/components/features/expenses-view";
 import { ReportsView } from "@/components/features/reports-view";
@@ -70,6 +71,9 @@ function MainApp() {
         </div>
         <div className={activeTab === "collections" ? "block" : "hidden"}>
           {visitedTabs.has("collections") && <CollectionsView />}
+        </div>
+        <div className={activeTab === "deposits" ? "block" : "hidden"}>
+          {visitedTabs.has("deposits") && <DepositSummaryView />}
         </div>
         <div className={activeTab === "dues" ? "block" : "hidden"}>
           {visitedTabs.has("dues") && <DuesView />}

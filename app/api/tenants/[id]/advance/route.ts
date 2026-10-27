@@ -6,6 +6,10 @@ import {
   calculateRunningBalances,
 } from "@/lib/advance";
 import {
+  computeDepositBalance,
+  calculateDepositRunningBalances,
+} from "@/lib/deposit-ledger";
+import {
   getEffectivePolicy,
   calculateRequiredAdvance,
   calculateAdvanceShortfall,
@@ -30,6 +34,18 @@ export async function GET(
         advanceTransactions: {
           orderBy: { createdAt: "asc" },
         },
+        depositTransactions: {
+          include: {
+            paymentAccount: true,
+            enteredByUser: { select: { id: true, name: true, role: true } },
+            counterpartyUser: { select: { id: true, name: true, role: true } },
+            approvedByUser: { select: { id: true, name: true, role: true } },
+            reversesTransaction: {
+              select: { id: true, type: true, amount: true, reason: true },
+            },
+          },
+          orderBy: [{ transactionDate: "asc" }, { createdAt: "asc" }],
+        },
       },
     });
 
@@ -37,24 +53,30 @@ export async function GET(
       return NextResponse.json({ error: "Tenant not found" }, { status: 404 });
     }
 
-    // Backfill initial deposit if tenant has legacy advanceDeposit but no ledger entries
-    let transactions = tenant.advanceTransactions;
-    if (transactions.length === 0 && tenant.advanceDeposit > 0) {
-      const initialTx = await prisma.advanceTransaction.create({
-        data: {
-          tenantId: tenant.id,
-          type: "DEPOSIT_RECEIVED",
-          amount: tenant.advanceDeposit,
-          reason: "Initial lease advance deposit",
-          createdBy: "System",
-          createdAt: tenant.startDate || tenant.createdAt,
-        },
-      });
-      transactions = [initialTx];
-    }
+    let currentBalance = 0;
+    let timeline: any[] = [];
 
-    const currentBalance = computeAdvanceBalance(transactions);
-    const timeline = calculateRunningBalances(transactions);
+    if (tenant.depositTransactions.length > 0) {
+      currentBalance = computeDepositBalance(tenant.depositTransactions);
+      timeline = calculateDepositRunningBalances(tenant.depositTransactions);
+    } else {
+      let transactions = tenant.advanceTransactions;
+      if (transactions.length === 0 && tenant.advanceDeposit > 0) {
+        const initialTx = await prisma.advanceTransaction.create({
+          data: {
+            tenantId: tenant.id,
+            type: "DEPOSIT_RECEIVED",
+            amount: tenant.advanceDeposit,
+            reason: "Initial lease advance deposit",
+            createdBy: "System",
+            createdAt: tenant.startDate || tenant.createdAt,
+          },
+        });
+        transactions = [initialTx];
+      }
+      currentBalance = computeAdvanceBalance(transactions);
+      timeline = calculateRunningBalances(transactions);
+    }
 
     // Resolve policy to determine required advance and shortfall
     const policyResult = await getEffectivePolicy({

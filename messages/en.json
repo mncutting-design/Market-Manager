@@ -53,6 +53,7 @@
     "reports": "Reports",
     "users": "Users & Access",
     "backup": "Backup & Restore",
+    "deposits": "Security Deposits",
     "settings": "Settings",
     "logout": "Logout",
     "admin": "Admin"
@@ -328,7 +329,10 @@
     "occupancyRate": "Occupancy Rate",
     "settlements": "Settlement & Exit Report",
     "unrecoveredReceivables": "Unrecovered Receivables",
-    "advanceHeldLiability": "Security Advance Held (Liability)"
+    "advanceHeldLiability": "Security Advance Held (Liability)",
+    "depositReport": "Deposit & Jamanat Summary",
+    "perMarketSummary": "Per-Market Summary",
+    "financialStatement": "Comprehensive Accounting Statement"
   },
   "settings": {
     "title": "System Settings",
@@ -538,5 +542,34 @@
     "restoreError": "Failed to restore data.",
     "securityNoteTitle": "Data Security & Best Practices",
     "securityNoteDesc": "Each backup contains all sensitive records of your property rental business. Store backup files in secure offline or encrypted cloud storage."
+  },
+  "deposit": {
+    "title": "Security Deposit Management",
+    "subtitle": "Track security deposits (Jamanat), receipts, refunds, dues adjustments, and ledger history",
+    "totalDepositHeld": "Total Deposit Held",
+    "totalTenantsWithDeposit": "Tenants with Deposit",
+    "periodReceived": "Received in Period",
+    "periodRefunded": "Refunded in Period",
+    "receiveDeposit": "Receive Deposit / Top-up",
+    "refundDeposit": "Refund Deposit",
+    "adjustToDue": "Adjust to Due",
+    "reverseTransaction": "Reverse Transaction",
+    "reversalReason": "Reason for Reversal",
+    "reversalConfirm": "Are you sure you want to reverse this transaction? This creates an offsetting entry and updates balances.",
+    "receiptTitle": "Deposit Receipt (Money Receipt)",
+    "refundVoucherTitle": "Deposit Refund Voucher",
+    "depositLedger": "Deposit Ledger",
+    "channelBreakdown": "Channel & Account Breakdown",
+    "tenantSummary": "Tenant Deposit Summary",
+    "pendingApprovalNotice": "Refund request submitted. Pending Admin approval.",
+    "refundSuccess": "Deposit refund recorded successfully",
+    "reverseSuccess": "Transaction reversed successfully",
+    "receiveSuccess": "Deposit recorded successfully",
+    "statusPosted": "Posted",
+    "statusPending": "Pending Approval",
+    "statusReversed": "Reversed",
+    "statusRejected": "Rejected",
+    "liabilityNote": "Deposits are held on balance sheet as liabilities and excluded from rental revenue."
   }
 }
+

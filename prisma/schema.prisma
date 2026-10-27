@@ -19,10 +19,13 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  paymentsReceived Payment[]             @relation("PaymentReceivedBy")
-  paymentsEntered  Payment[]             @relation("PaymentEnteredBy")
-  expensesEntered  Expense[]             @relation("ExpenseEnteredBy")
-  topUpRequests    AdvanceTopUpRequest[] @relation("TopUpRequestedBy")
+  paymentsReceived    Payment[]             @relation("PaymentReceivedBy")
+  paymentsEntered     Payment[]             @relation("PaymentEnteredBy")
+  expensesEntered     Expense[]             @relation("ExpenseEnteredBy")
+  topUpRequests       AdvanceTopUpRequest[] @relation("TopUpRequestedBy")
+  depositCounterparty DepositTransaction[]  @relation("DepositCounterpartyUser")
+  depositEntered      DepositTransaction[]  @relation("DepositEnteredByUser")
+  depositApproved     DepositTransaction[]  @relation("DepositApprovedByUser")
 }
 
 model Market {
@@ -35,8 +38,9 @@ model Market {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  shops    Shop[]
-  expenses Expense[]
+  shops               Shop[]
+  expenses            Expense[]
+  depositTransactions DepositTransaction[]
 
   @@index([isActive])
 }
@@ -53,11 +57,12 @@ model Shop {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  market      Market        @relation(fields: [marketId], references: [id], onDelete: Cascade)
-  tenants     Tenant[]
-  bills       Bill[]
-  rentHistory RentHistory[]
-  settlements Settlement[]
+  market              Market               @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  tenants             Tenant[]
+  bills               Bill[]
+  rentHistory         RentHistory[]
+  settlements         Settlement[]
+  depositTransactions DepositTransaction[]
 
   @@unique([marketId, shopNumber])
   @@index([marketId])
@@ -77,6 +82,7 @@ model Tenant {
   referenceRelation String?
   photoUrl          String?
   documentUrl       String?
+  /// @deprecated Stored for backwards compatibility. All deposit balances MUST be computed from DepositTransaction ledger.
   advanceDeposit    Int       @default(0) // in paisa (legacy/migration reference)
   rentAmount        Int       // current agreed rent in paisa
   status            String    @default("ACTIVE") // ACTIVE, NOTICE_GIVEN, SETTLED, ARCHIVED
@@ -90,6 +96,7 @@ model Tenant {
   bills               Bill[]
   rentHistory         RentHistory[]
   advanceTransactions AdvanceTransaction[]
+  depositTransactions DepositTransaction[]
   settlements         Settlement[]
   topUpRequests       AdvanceTopUpRequest[]
 
@@ -143,6 +150,7 @@ model Settlement {
   shop                Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
   policyVersion       PolicyVersion?       @relation(fields: [policyVersionId], references: [id], onDelete: SetNull)
   advanceTransactions AdvanceTransaction[]
+  depositTransactions DepositTransaction[]
 
   @@index([tenantId])
   @@index([shopId])
@@ -269,6 +277,7 @@ model Bill {
   billItems           BillItem[]
   payments            Payment[]
   advanceTransactions AdvanceTransaction[]
+  depositTransactions DepositTransaction[]
 
   @@unique([shopId, month, year])
   @@index([shopId])
@@ -433,7 +442,8 @@ model PaymentAccount {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  payments    Payment[]
+  payments            Payment[]
+  depositTransactions DepositTransaction[]
 
   @@index([accountType])
   @@index([isActive])
@@ -454,5 +464,51 @@ model Notification {
   @@index([role])
   @@index([isRead])
   @@index([createdAt])
+}
+
+model DepositTransaction {
+  id                    String    @id @default(cuid())
+  marketId              String
+  tenantId              String
+  shopId                String
+  type                  String    // RECEIVED, TOPUP, REFUND, ADJUSTED_TO_DUE, DEDUCTION, REVERSAL
+  amount                Int       // in paisa (positive integer paisa, always positive)
+  transactionDate       DateTime  @default(now())
+  method                String    @default("CASH") // CASH, BKASH, NAGAD, BANK, CHEQUE
+  paymentAccountId      String?
+  bankName              String?
+  transactionRef        String?   // TrxID / Cheque Number
+  counterpartyUserId    String?   // received by for inflow, paid by for outflow
+  enteredById           String?   // set by server from session, never from client
+  reason                String    // supports Bangla
+  relatedBillId         String?
+  relatedSettlementId   String?
+  reversesTransactionId String?
+  status                String    @default("POSTED") // POSTED, PENDING_APPROVAL, REJECTED
+  rejectionReason       String?
+  approvedById          String?
+  approvedAt            DateTime?
+  createdAt             DateTime  @default(now())
+
+  market              Market               @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  tenant              Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  shop                Shop                 @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  relatedBill         Bill?                @relation(fields: [relatedBillId], references: [id], onDelete: SetNull)
+  relatedSettlement   Settlement?          @relation(fields: [relatedSettlementId], references: [id], onDelete: SetNull)
+  paymentAccount      PaymentAccount?      @relation(fields: [paymentAccountId], references: [id], onDelete: SetNull)
+  counterpartyUser    User?                @relation("DepositCounterpartyUser", fields: [counterpartyUserId], references: [id], onDelete: SetNull)
+  enteredByUser       User?                @relation("DepositEnteredByUser", fields: [enteredById], references: [id], onDelete: SetNull)
+  approvedByUser      User?                @relation("DepositApprovedByUser", fields: [approvedById], references: [id], onDelete: SetNull)
+  reversesTransaction DepositTransaction?  @relation("DepositReversal", fields: [reversesTransactionId], references: [id], onDelete: SetNull)
+  reversedBy          DepositTransaction[] @relation("DepositReversal")
+
+  @@index([tenantId, transactionDate])
+  @@index([marketId, transactionDate])
+  @@index([type])
+  @@index([status])
+  @@index([shopId])
+  @@index([reversesTransactionId])
+  @@index([enteredById])
+  @@index([paymentAccountId])
 }
 

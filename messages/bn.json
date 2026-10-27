@@ -53,6 +53,7 @@
     "reports": "প্রতিবেদন",
     "users": "ব্যবহারকারী ব্যবস্থাপনা",
     "backup": "ব্যাকআপ ও রিস্টোর",
+    "deposits": "নিরাপত্তা জামানত",
     "settings": "সেটিংস",
     "logout": "লগআউট",
     "admin": "প্রশাসক"
@@ -328,7 +329,10 @@
     "occupancyRate": "বরাদ্দের হার",
     "settlements": "দোকান নিষ্পত্তি ও প্রস্থান রিপোর্ট",
     "unrecoveredReceivables": "অনাদায়ী পাওনা রিপোর্ট",
-    "advanceHeldLiability": "সংরক্ষিত জামানত দায় (Liability)"
+    "advanceHeldLiability": "সংরক্ষিত জামানত দায় (Liability)",
+    "depositReport": "জামানত সারসংক্ষেপ প্রতিবেদন",
+    "perMarketSummary": "মার্কেটভিত্তিক সারসংক্ষেপ",
+    "financialStatement": "সামগ্রিক আর্থিক বিবরণী"
   },
   "settings": {
     "title": "সিস্টেম সেটিংস",
@@ -538,5 +542,33 @@
     "restoreError": "ডেটা রিস্টোর প্রক্রিয়াটি ব্যর্থ হয়েছে।",
     "securityNoteTitle": "ডেটা নিরাপত্তা ও সুরক্ষা নির্দেশিকা",
     "securityNoteDesc": "প্রতিটি ব্যাকআপ ফাইলে আপনার ব্যবসার সমস্ত সংবেদনশীল ডেটা থাকে। ব্যাকআপ ফাইলটি সুরক্ষিত ড্রাইভে বা অফলাইনে সংরক্ষণ করুন।"
+  },
+  "deposit": {
+    "title": "নিরাপত্তা জামানত ব্যবস্থাপনা",
+    "subtitle": "জামানত গ্রহণ, রশিদ, ফেরত, বকেয়া সমন্বয় ও লেজার স্টেটমেন্ট পরিচালনা",
+    "totalDepositHeld": "মোট সংরক্ষিত জামানত",
+    "totalTenantsWithDeposit": "জামানতধারী ভাড়াটিয়া",
+    "periodReceived": "নির্দিষ্ট সময়ে গ্রহণ",
+    "periodRefunded": "নির্দিষ্ট সময়ে ফেরত",
+    "receiveDeposit": "জামানত / টপ-আপ গ্রহণ",
+    "refundDeposit": "জামানত ফেরত",
+    "adjustToDue": "বকেয়ায় সমন্বয়",
+    "reverseTransaction": "লেনদেন বাতিল (রিভার্স)",
+    "reversalReason": "বাতিলের কারণ",
+    "reversalConfirm": "আপনি কি নিশ্চিতভাবে এই লেনদেনটি রিভার্স করতে চান? এটি একটি বিপরীত এন্ট্রি তৈরি করে ব্যালেন্স সমন্বয় করবে।",
+    "receiptTitle": "জামানত মানি রিসিট",
+    "refundVoucherTitle": "জামানত ফেরত ভাউচার",
+    "depositLedger": "জামানত লেজার",
+    "channelBreakdown": "পেমেন্ট চ্যানেল ও অ্যাকাউন্ট বিশ্লেষণ",
+    "tenantSummary": "ভাড়াটিয়া জামানত তালিকা",
+    "pendingApprovalNotice": "ফেরত আবেদন পাঠানো হয়েছে। অ্যাডমিন অনুমোদনের অপেক্ষায়।",
+    "refundSuccess": "জামানত ফেরত সফলভাবে সম্পন্ন হয়েছে",
+    "reverseSuccess": "লেনদেন সফলভাবে বাতিল (রিভার্স) করা হয়েছে",
+    "receiveSuccess": "জামানত সফলভাবে সংরক্ষণ করা হয়েছে",
+    "statusPosted": "অনুমোদিত ও সংরক্ষিত",
+    "statusPending": "অনুমোদনের অপেক্ষায়",
+    "statusReversed": "বাতিলকৃত (রিভার্সড)",
+    "statusRejected": "প্রত্যাখ্যাত",
+    "liabilityNote": "জামানত আর্থিক দায় (Liability) হিসেবে সংরক্ষিত এবং এটি ভাড়ার আয়ের অংশ নয়।"
   }
 }

@@ -111,7 +111,7 @@ export async function POST(
         updatedBills.push(updatedBill);
       }
 
-      // 3. Create ADJUSTED_TO_DUE AdvanceTransaction
+      // 3. Create ADJUSTED_TO_DUE AdvanceTransaction (legacy)
       const advanceTx = await tx.advanceTransaction.create({
         data: {
           tenantId: tenant.id,
@@ -121,6 +121,31 @@ export async function POST(
           reason: note || `Adjusted ৳${Math.round(adjustAmount / 100)} against rent dues (${allocations.length} bills cleared/partial)`,
           createdBy: session.name,
         },
+      });
+
+      // 3b. Create DepositTransaction in the single-source append-only ledger
+      await tx.depositTransaction.create({
+        data: {
+          tenantId: tenant.id,
+          marketId: tenant.shop.marketId,
+          shopId: tenant.shopId,
+          type: "ADJUSTED_TO_DUE",
+          amount: adjustAmount,
+          method: "CASH",
+          enteredById: session.id,
+          counterpartyUserId: session.id,
+          reason: note || `Adjusted ৳${Math.round(adjustAmount / 100)} against rent dues (${allocations.length} bills cleared/partial)`,
+          relatedBillId: allocations[0]?.billId || null,
+          status: "POSTED",
+          approvedById: session.id,
+          approvedAt: new Date(),
+        },
+      });
+
+      // Keep legacy column in sync
+      await tx.tenant.update({
+        where: { id: tenant.id },
+        data: { advanceDeposit: Math.max(0, availableAdvance - adjustAmount) },
       });
 
       // 4. Audit Log entry

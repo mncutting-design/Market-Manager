@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       where.entityType = entityType;
     }
 
-    const [requests, pendingCount, topUpRequests, pendingTopUpCount] = await Promise.all([
+    const [requests, pendingCount, topUpRequests, pendingTopUpCount, depositRefundRequests, pendingDepositRefundCount] = await Promise.all([
       prisma.changeRequest.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -34,6 +34,26 @@ export async function GET(req: Request) {
       }),
       prisma.advanceTopUpRequest.count({
         where: { status: "PENDING" },
+      }),
+      prisma.depositTransaction.findMany({
+        where: {
+          type: "REFUND",
+          ...(status === "PENDING" ? { status: "PENDING_APPROVAL" } : status === "APPROVED" ? { status: "POSTED" } : status !== "ALL" ? { status } : {}),
+        },
+        include: {
+          tenant: { include: { shop: { include: { market: true } } } },
+          enteredByUser: { select: { id: true, name: true, role: true } },
+          counterpartyUser: { select: { id: true, name: true } },
+          paymentAccount: true,
+        },
+        orderBy: { createdAt: "desc" },
+        take: 50,
+      }),
+      prisma.depositTransaction.count({
+        where: {
+          type: "REFUND",
+          status: "PENDING_APPROVAL",
+        },
       }),
     ]);
 
@@ -84,13 +104,54 @@ export async function GET(req: Request) {
       reviewedAt: tu.decidedAt,
     }));
 
-    const combined = [...parsedCR, ...parsedTopUp].sort(
+    const parsedDepositRefunds = depositRefundRequests.map((dr) => ({
+      id: dr.id,
+      isDepositRefundRequest: true,
+      entityType: "DEPOSIT_REFUND",
+      entityId: dr.tenantId,
+      entityTitle: `${dr.tenant.name} (${dr.tenant.shop.shopNumber}) - জামানত ফেরত আবেদন`,
+      actionType: "REFUND",
+      status: dr.status === "POSTED" ? "APPROVED" : dr.status,
+      rawStatus: dr.status,
+      currentData: JSON.stringify({
+        refundAmount: dr.amount,
+        method: dr.method,
+        reason: dr.reason,
+        account: dr.paymentAccount?.name_bn || dr.paymentAccount?.name_en || dr.bankName || dr.method,
+      }),
+      proposedData: JSON.stringify({
+        refundAmount: dr.amount,
+        method: dr.method,
+        reason: dr.reason,
+        transactionRef: dr.transactionRef,
+      }),
+      currentDataParsed: {
+        refundAmount: dr.amount,
+        method: dr.method,
+        reason: dr.reason,
+        account: dr.paymentAccount?.name_bn || dr.paymentAccount?.name_en || dr.bankName || dr.method,
+      },
+      proposedDataParsed: {
+        refundAmount: dr.amount,
+        method: dr.method,
+        reason: dr.reason,
+        transactionRef: dr.transactionRef,
+      },
+      requestedBy: dr.enteredByUser?.name || "Staff",
+      requesterRole: dr.enteredByUser?.role || "MANAGER",
+      createdAt: dr.createdAt,
+      reviewedBy: dr.approvedById,
+      reviewNote: dr.rejectionReason,
+      reviewedAt: dr.approvedAt,
+    }));
+
+    const combined = [...parsedCR, ...parsedTopUp, ...parsedDepositRefunds].sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     return NextResponse.json({
       requests: combined,
-      pendingCount: pendingCount + pendingTopUpCount,
+      pendingCount: pendingCount + pendingTopUpCount + pendingDepositRefundCount,
     });
   } catch (error) {
     console.error("Failed to fetch change requests:", error);
@@ -205,7 +266,135 @@ export async function PUT(req: Request) {
       });
 
       if (!topUpReq) {
-        return NextResponse.json({ error: "Request not found" }, { status: 404 });
+        const depositReq = await prisma.depositTransaction.findUnique({
+          where: { id },
+          include: {
+            tenant: { include: { shop: true } },
+            enteredByUser: true,
+          },
+        });
+
+        if (!depositReq) {
+          return NextResponse.json({ error: "Request not found" }, { status: 404 });
+        }
+
+        if (depositReq.status !== "PENDING_APPROVAL") {
+          return NextResponse.json({ error: `This request is already ${depositReq.status}` }, { status: 400 });
+        }
+
+        if (status === "REJECTED") {
+          if (!reviewNote || !reviewNote.trim()) {
+            return NextResponse.json(
+              { error: "A reason is required when rejecting a refund request" },
+              { status: 400 }
+            );
+          }
+
+          const updated = await prisma.$transaction(async (tx) => {
+            const res = await tx.depositTransaction.update({
+              where: { id },
+              data: {
+                status: "REJECTED",
+                rejectionReason: reviewNote.trim(),
+                approvedById: session.id,
+                approvedAt: new Date(),
+              },
+            });
+
+            if (depositReq.enteredById) {
+              await tx.notification.create({
+                data: {
+                  userId: depositReq.enteredById,
+                  title: "জামানত ফেরত আবেদন প্রত্যাখ্যাত",
+                  message: `দোকান ${depositReq.tenant.shop.shopNumber}-এর ${depositReq.tenant.name}-এর জামানত ফেরত আবেদনটি প্রত্যাখ্যাত হয়েছে। কারণ: ${reviewNote.trim()}`,
+                  type: "WARNING",
+                  link: "/dashboard",
+                },
+              });
+            }
+
+            await logAudit({
+              userId: session.id,
+              userName: session.name || "Admin",
+              action: "DEPOSIT_REFUND_REJECTED",
+              entityType: "DepositTransaction",
+              entityId: id,
+              details: { reason: reviewNote.trim(), tenantId: depositReq.tenantId, amount: depositReq.amount },
+              tx,
+            });
+
+            return res;
+          });
+
+          return NextResponse.json({ success: true, request: updated });
+        }
+
+        // status === "APPROVED"
+        try {
+          const updated = await prisma.$transaction(async (tx) => {
+            const allTxs = await tx.depositTransaction.findMany({
+              where: { tenantId: depositReq.tenantId, status: "POSTED" },
+              include: { reversesTransaction: true },
+            });
+
+            let currentBal = 0;
+            for (const t of allTxs) {
+              if (t.type === "RECEIVED" || t.type === "TOPUP") currentBal += t.amount;
+              else if (t.type === "REFUND" || t.type === "ADJUSTED_TO_DUE" || t.type === "DEDUCTION") currentBal -= t.amount;
+              else if (t.type === "REVERSAL" && t.reversesTransaction) {
+                const revType = t.reversesTransaction.type;
+                if (revType === "RECEIVED" || revType === "TOPUP") currentBal -= t.amount;
+                else currentBal += t.amount;
+              }
+            }
+
+            if (currentBal < depositReq.amount) {
+              throw new Error(`Cannot approve refund: tenant deposit balance is only ৳${(currentBal / 100).toFixed(2)}, but requested refund is ৳${(depositReq.amount / 100).toFixed(2)}`);
+            }
+
+            const res = await tx.depositTransaction.update({
+              where: { id },
+              data: {
+                status: "POSTED",
+                approvedById: session.id,
+                approvedAt: new Date(),
+              },
+            });
+
+            await tx.tenant.update({
+              where: { id: depositReq.tenantId },
+              data: { advanceDeposit: Math.max(0, currentBal - depositReq.amount) },
+            });
+
+            if (depositReq.enteredById) {
+              await tx.notification.create({
+                data: {
+                  userId: depositReq.enteredById,
+                  title: "জামানত ফেরত আবেদন অনুমোদিত",
+                  message: `দোকান ${depositReq.tenant.shop.shopNumber}-এর ${depositReq.tenant.name}-এর জামানত ফেরত (৳${(depositReq.amount / 100).toFixed(2)}) সফলভাবে অনুমোদিত হয়েছে।`,
+                  type: "SUCCESS",
+                  link: "/dashboard",
+                },
+              });
+            }
+
+            await logAudit({
+              userId: session.id,
+              userName: session.name || "Admin",
+              action: "DEPOSIT_REFUND_APPROVED",
+              entityType: "DepositTransaction",
+              entityId: id,
+              details: { tenantId: depositReq.tenantId, amount: depositReq.amount, method: depositReq.method },
+              tx,
+            });
+
+            return res;
+          });
+
+          return NextResponse.json({ success: true, request: updated });
+        } catch (err: any) {
+          return NextResponse.json({ error: err.message || "Failed to approve refund" }, { status: 400 });
+        }
       }
 
       if (topUpReq.status !== "PENDING") {

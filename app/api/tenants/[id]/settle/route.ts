@@ -263,7 +263,7 @@ export async function POST(
         }
       }
 
-      // 3. Create Advance Transactions
+      // 3. Create Advance Transactions and Deposit Transactions
       // 3a. Dues adjusted from advance
       if (calc.advanceAllocatedToDues > 0) {
         await tx.advanceTransaction.create({
@@ -276,6 +276,23 @@ export async function POST(
             createdBy: session.name,
           },
         });
+
+        await tx.depositTransaction.create({
+          data: {
+            tenantId: tenant.id,
+            marketId: tenant.shop.marketId,
+            shopId: tenant.shop.id,
+            type: "ADJUSTED_TO_DUE",
+            amount: calc.advanceAllocatedToDues,
+            transactionDate: settlementDate ? new Date(settlementDate) : new Date(),
+            method: "CASH",
+            relatedSettlementId: settlement.id,
+            reason: `চূড়ান্ত হিসাব নিষ্পত্তি: বকেয়া ভাড়ায় জামানত সমন্বয়`,
+            enteredById: session.id,
+            counterpartyUserId: session.id,
+            status: "POSTED",
+          },
+        });
       }
 
       // 3b. Deductions from advance
@@ -283,14 +300,32 @@ export async function POST(
         for (const item of deductions) {
           const itemAmount = Math.max(0, Math.round(Number(item.amount) || 0));
           if (itemAmount > 0) {
+            const deductionReason = `${item.label_bn || item.label_en}: ${item.note || ""}`.trim();
             await tx.advanceTransaction.create({
               data: {
                 tenantId: tenant.id,
                 type: "DEDUCTION",
                 amount: itemAmount,
                 relatedSettlementId: settlement.id,
-                reason: `${item.label_bn || item.label_en}: ${item.note || ""}`.trim(),
+                reason: deductionReason,
                 createdBy: session.name,
+              },
+            });
+
+            await tx.depositTransaction.create({
+              data: {
+                tenantId: tenant.id,
+                marketId: tenant.shop.marketId,
+                shopId: tenant.shop.id,
+                type: "DEDUCTION",
+                amount: itemAmount,
+                transactionDate: settlementDate ? new Date(settlementDate) : new Date(),
+                method: "CASH",
+                relatedSettlementId: settlement.id,
+                reason: `চূড়ান্ত হিসাব নিষ্পত্তি কর্তন (${deductionReason})`,
+                enteredById: session.id,
+                counterpartyUserId: session.id,
+                status: "POSTED",
               },
             });
           }
@@ -307,6 +342,25 @@ export async function POST(
             relatedSettlementId: settlement.id,
             reason: `Final settlement: refund balance returned to tenant`,
             createdBy: session.name,
+          },
+        });
+
+        await tx.depositTransaction.create({
+          data: {
+            tenantId: tenant.id,
+            marketId: tenant.shop.marketId,
+            shopId: tenant.shop.id,
+            type: "REFUND",
+            amount: calc.refundAmount,
+            transactionDate: settlementDate ? new Date(settlementDate) : new Date(),
+            method: "CASH",
+            relatedSettlementId: settlement.id,
+            reason: `চূড়ান্ত হিসাব নিষ্পত্তি: অবশিষ্ট জামানত ফেরত`,
+            enteredById: session.id,
+            counterpartyUserId: session.id,
+            approvedById: session.id,
+            approvedAt: new Date(),
+            status: "POSTED",
           },
         });
       }
