@@ -47,17 +47,41 @@ export interface LogAuditOptions {
  * Appends an audit log entry. Can run within a prisma transaction if `tx` is provided.
  */
 export async function logAudit(options: LogAuditOptions) {
-  const client = options.tx || prisma;
+  try {
+    const client = options.tx || prisma;
 
-  return await client.auditLog.create({
-    data: {
-      userId: options.userId || null,
-      userName: options.userName || "Admin",
-      action: options.action,
-      entityType: options.entityType,
-      entityId: options.entityId,
-      detailsJson: options.details ? JSON.stringify(options.details) : "{}",
-      ipAddress: options.ipAddress || null,
-    },
-  });
+    return await client.auditLog.create({
+      data: {
+        userId: options.userId || null,
+        userName: options.userName || "Admin",
+        action: options.action,
+        entityType: options.entityType,
+        entityId: options.entityId,
+        detailsJson: options.details ? JSON.stringify(options.details) : "{}",
+        ipAddress: options.ipAddress || null,
+      },
+    });
+  } catch (err: any) {
+    // If it failed because options.tx was closed, timed out, or disconnected, fallback to root prisma client
+    if (options.tx) {
+      try {
+        return await prisma.auditLog.create({
+          data: {
+            userId: options.userId || null,
+            userName: options.userName || "Admin",
+            action: options.action,
+            entityType: options.entityType,
+            entityId: options.entityId,
+            detailsJson: options.details ? JSON.stringify(options.details) : "{}",
+            ipAddress: options.ipAddress || null,
+          },
+        });
+      } catch (fallbackErr) {
+        console.warn("logAudit root client fallback failed (non-fatal):", fallbackErr);
+        return null;
+      }
+    }
+    console.warn("logAudit failed (non-fatal):", err);
+    return null;
+  }
 }

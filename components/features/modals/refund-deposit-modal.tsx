@@ -211,48 +211,38 @@ export function RefundDepositModal({
       triggerRefresh("deposits");
       triggerRefresh("shops");
 
-      if (data.status === "PENDING_APPROVAL") {
-        toast.info(
-          locale === "bn"
-            ? "জামানত ফেরতের আবেদন সফলভাবে দাখিল হয়েছে। প্রধান অ্যাডমিনের অনুমোদনের পর তা কার্যকর হবে।"
-            : "Refund request submitted successfully. It will take effect upon Admin approval."
-        );
-        onClose();
-        if (onSuccess) onSuccess();
-      } else {
-        toast.success(
-          locale === "bn"
-            ? "জামানত ফেরত সফলভাবে সম্পন্ন হয়েছে!"
-            : "Deposit refund processed and posted successfully!"
-        );
+      toast.success(
+        locale === "bn"
+          ? "জামানত ফেরত সফলভাবে সম্পন্ন হয়েছে!"
+          : "Deposit refund processed and posted successfully!"
+      );
 
-        const refundReceiptData: DepositRefundReceiptData = {
-          id: data.transaction?.id || new Date().getTime().toString(),
-          transactionDate: date,
-          tenantName: initialTenantName || selectedTenant?.tenantName || "Tenant",
-          tenantPhone: selectedTenant?.phone || "",
-          shopNumber: initialShopNumber || selectedTenant?.shopNumber || "",
-          marketName: initialMarketName || selectedTenant?.marketName || "",
-          amount: amountPaisa,
-          method,
-          accountName:
-            paymentAccounts.find((a) => a.id === selectedAccountId)?.name_bn ||
-            bankName,
-          transactionRef,
-          paidBy:
-            staffUsers.find((u) => u.id === paidById)?.name ||
-            currentUser?.name ||
-            "Admin",
-          enteredBy: currentUser?.name || "Admin",
-          approvedBy: currentUser?.name || "Admin",
-          reason: reason.trim(),
-          remainingBalance: Math.max(0, currentBalance - amountPaisa),
-        };
+      const refundReceiptData: DepositRefundReceiptData = {
+        id: data.transaction?.id || new Date().getTime().toString(),
+        transactionDate: date,
+        tenantName: initialTenantName || selectedTenant?.tenantName || "Tenant",
+        tenantPhone: selectedTenant?.phone || "",
+        shopNumber: initialShopNumber || selectedTenant?.shopNumber || "",
+        marketName: initialMarketName || selectedTenant?.marketName || "",
+        amount: amountPaisa,
+        method,
+        accountName:
+          paymentAccounts.find((a) => a.id === selectedAccountId)?.name_bn ||
+          bankName,
+        transactionRef,
+        paidBy:
+          staffUsers.find((u) => u.id === paidById)?.name ||
+          currentUser?.name ||
+          "Admin",
+        enteredBy: currentUser?.name || "Admin",
+        approvedBy: currentUser?.name || "Admin",
+        reason: reason.trim(),
+        remainingBalance: Math.max(0, currentBalance - amountPaisa),
+      };
 
-        onClose();
-        if (onSuccess) {
-          onSuccess(refundReceiptData);
-        }
+      onClose();
+      if (onSuccess) {
+        onSuccess(refundReceiptData);
       }
     } catch (err: any) {
       toast.error("Refund failed: " + err.message);
@@ -278,17 +268,6 @@ export function RefundDepositModal({
       maxWidth="lg"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Role Notice */}
-        {!isAdmin && (
-          <div className="p-3 bg-[#FFEBEF] rounded-xl border-2 border-[#FFA2B2] flex items-center gap-2 text-xs font-bold text-[#FF4B55]">
-            <ShieldAlert className="w-4 h-4 shrink-0 stroke-[2.5]" />
-            <span>
-              {locale === "bn"
-                ? "বিজ্ঞপ্তি: ম্যানেজমেন্ট পলিসি অনুযায়ী আপনার দাখিলকৃত ফেরত আবেদন প্রধান অ্যাডমিনের অনুমোদনের পর চূড়ান্ত হবে।"
-                : "Notice: Per security policy, your refund submission requires Admin approval before posting."}
-            </span>
-          </div>
-        )}
 
         {/* Tenant selector if not preselected */}
         {!initialTenantId && (
@@ -492,13 +471,7 @@ export function RefundDepositModal({
           </Button>
           <Button type="submit" variant="destructive" isLoading={isSubmitting}>
             <RotateCcw className="w-4 h-4 mr-1.5" />
-            {isAdmin
-              ? locale === "bn"
-                ? "জামানত ফেরত সম্পন্ন করুন"
-                : "Post Deposit Refund"
-              : locale === "bn"
-              ? "অনুমোদনের আবেদন জমা দিন"
-              : "Submit for Approval"}
+            {locale === "bn" ? "জামানত ফেরত সম্পন্ন করুন" : "Process Deposit Refund"}
           </Button>
         </div>
       </form>

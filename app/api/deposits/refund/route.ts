@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       bankName,
       transactionRef,
       counterpartyUserId,
+      paidById,
       reason,
     } = body;
 
@@ -36,83 +37,83 @@ export async function POST(req: Request) {
       );
     }
 
-    const isAdmin = session.role === "ADMIN";
-    const status = isAdmin ? "POSTED" : "PENDING_APPROVAL";
+    // Direct posting: No Admin approval needed for deposit refunds per business policy
+    const status = "POSTED";
 
-    const result = await prisma.$transaction(async (tx) => {
-      // Row locking / fresh query inside transaction to prevent concurrent overspending
-      const tenant = await tx.tenant.findUnique({
-        where: { id: tenantId },
-        include: {
-          shop: { include: { market: true } },
-          depositTransactions: {
-            where: { status: "POSTED" },
+    const result = await prisma.$transaction(
+      async (tx) => {
+        // Query inside transaction to prevent concurrent overspending
+        const tenant = await tx.tenant.findUnique({
+          where: { id: tenantId },
+          include: {
+            shop: { include: { market: true } },
+            depositTransactions: {
+              where: { status: "POSTED" },
+            },
           },
-        },
-      });
+        });
 
-      if (!tenant) {
-        throw new Error("Tenant not found");
-      }
+        if (!tenant) {
+          throw new Error("Tenant not found");
+        }
 
-      // If tenant has no depositTransactions yet, auto-bootstrap from advanceDeposit
-      if (tenant.depositTransactions.length === 0 && tenant.advanceDeposit > 0) {
-        const initialTx = await tx.depositTransaction.create({
+        // If tenant has no depositTransactions yet, auto-bootstrap from advanceDeposit
+        if (tenant.depositTransactions.length === 0 && tenant.advanceDeposit > 0) {
+          const initialTx = await tx.depositTransaction.create({
+            data: {
+              tenantId: tenant.id,
+              marketId: tenant.shop.marketId,
+              shopId: tenant.shop.id,
+              type: "RECEIVED",
+              amount: tenant.advanceDeposit,
+              transactionDate: tenant.startDate || tenant.createdAt,
+              method: "CASH",
+              reason: "Initial lease security deposit",
+              status: "POSTED",
+            },
+          });
+          tenant.depositTransactions = [initialTx];
+        }
+
+        // Compute current available balance
+        const currentBalance = computeDepositBalance(tenant.depositTransactions);
+        const validation = validateDepositDebit(currentBalance, refundAmount, "REFUND");
+        if (!validation.valid) {
+          throw new Error(validation.error || "Refund amount exceeds available deposit balance");
+        }
+
+        const txDate = transactionDate ? new Date(transactionDate) : new Date();
+
+        const depositTx = await tx.depositTransaction.create({
           data: {
             tenantId: tenant.id,
             marketId: tenant.shop.marketId,
             shopId: tenant.shop.id,
-            type: "RECEIVED",
-            amount: tenant.advanceDeposit,
-            transactionDate: tenant.startDate || tenant.createdAt,
-            method: "CASH",
-            reason: "Initial lease security deposit",
-            status: "POSTED",
+            type: "REFUND",
+            amount: refundAmount,
+            transactionDate: txDate,
+            method: (method || "CASH").toUpperCase(),
+            paymentAccountId: paymentAccountId || null,
+            bankName: bankName?.trim() || null,
+            transactionRef: transactionRef?.trim() || null,
+            counterpartyUserId: counterpartyUserId || paidById || session.id, // Paid by
+            enteredById: session.id,
+            approvedById: session.id,
+            approvedAt: new Date(),
+            reason: reason?.trim() || "জামানত ফেরত (Security Deposit Refund)",
+            status,
+          },
+          include: {
+            tenant: { select: { id: true, name: true, phone: true } },
+            shop: { select: { id: true, shopNumber: true } },
+            market: { select: { id: true, name: true } },
+            paymentAccount: true,
+            counterpartyUser: { select: { id: true, name: true } },
+            enteredByUser: { select: { id: true, name: true } },
           },
         });
-        tenant.depositTransactions = [initialTx];
-      }
 
-      // Compute current available balance
-      const currentBalance = computeDepositBalance(tenant.depositTransactions);
-      const validation = validateDepositDebit(currentBalance, refundAmount, "REFUND");
-      if (!validation.valid) {
-        throw new Error(validation.error || "Refund amount exceeds available deposit balance");
-      }
-
-      const txDate = transactionDate ? new Date(transactionDate) : new Date();
-
-      const depositTx = await tx.depositTransaction.create({
-        data: {
-          tenantId: tenant.id,
-          marketId: tenant.shop.marketId,
-          shopId: tenant.shop.id,
-          type: "REFUND",
-          amount: refundAmount,
-          transactionDate: txDate,
-          method: (method || "CASH").toUpperCase(),
-          paymentAccountId: paymentAccountId || null,
-          bankName: bankName?.trim() || null,
-          transactionRef: transactionRef?.trim() || null,
-          counterpartyUserId: counterpartyUserId || session.id, // Paid by
-          enteredById: session.id,
-          approvedById: isAdmin ? session.id : null,
-          approvedAt: isAdmin ? new Date() : null,
-          reason: reason?.trim() || "জামানত ফেরত (Security Deposit Refund)",
-          status,
-        },
-        include: {
-          tenant: { select: { id: true, name: true, phone: true } },
-          shop: { select: { id: true, shopNumber: true } },
-          market: { select: { id: true, name: true } },
-          paymentAccount: true,
-          counterpartyUser: { select: { id: true, name: true } },
-          enteredByUser: { select: { id: true, name: true } },
-        },
-      });
-
-      if (isAdmin) {
-        // Decrement legacy advanceDeposit if posted directly
+        // Decrement advanceDeposit on tenant
         await tx.tenant.update({
           where: { id: tenant.id },
           data: {
@@ -120,6 +121,7 @@ export async function POST(req: Request) {
           },
         });
 
+        // Also record in legacy advanceTransaction for backward parity
         await tx.advanceTransaction.create({
           data: {
             tenantId: tenant.id,
@@ -131,40 +133,41 @@ export async function POST(req: Request) {
             createdAt: txDate,
           },
         });
-      } else {
-        // Manager or Collector requested refund - notify Admin
-        await tx.notification.create({
-          data: {
-            role: "ADMIN",
-            type: "APPROVAL",
-            title: "নতুন জামানত রিফান্ড আবেদন",
-            message: `${session.name} (${session.role}) ভাড়াটিয়া "${tenant.name}" এর জন্য ৳${(refundAmount / 100).toLocaleString()} জামানত ফেরতের আবেদন করেছেন।`,
-            link: `/deposits`,
-          },
-        });
-      }
 
+        return {
+          depositTx,
+          tenantName: tenant.name,
+          shopNumber: tenant.shop.shopNumber,
+          marketName: tenant.shop.market.name,
+          currentBalance,
+          newBalance: currentBalance - refundAmount,
+        };
+      },
+      { maxWait: 15000, timeout: 30000 }
+    );
+
+    // Audit log outside transaction so it never times out the main financial transaction
+    try {
       await logAudit({
         userId: session.id,
         userName: session.name,
         action: "ADVANCE_REFUND",
         entityType: "DepositTransaction",
-        entityId: depositTx.id,
+        entityId: result.depositTx.id,
         details: {
-          tenantName: tenant.name,
-          shopNumber: tenant.shop.shopNumber,
-          marketName: tenant.shop.market.name,
+          tenantName: result.tenantName,
+          shopNumber: result.shopNumber,
+          marketName: result.marketName,
           amount: refundAmount,
           status,
-          method: depositTx.method,
-          reason: depositTx.reason,
-          paidBy: depositTx.counterpartyUser?.name || session.name,
+          method: result.depositTx.method,
+          reason: result.depositTx.reason,
+          paidBy: result.depositTx.counterpartyUser?.name || session.name,
         },
-        tx,
       });
-
-      return { depositTx, currentBalance, newBalance: isAdmin ? currentBalance - refundAmount : currentBalance };
-    });
+    } catch (auditErr) {
+      console.warn("Audit log warning (non-fatal):", auditErr);
+    }
 
     return NextResponse.json({
       success: true,
